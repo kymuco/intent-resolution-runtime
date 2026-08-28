@@ -58,7 +58,9 @@ Admission means contract-valid, not factually true, safe, approved, or permitted
 
 ### ResolvedIntent
 
-A future IRR representation of admitted intent semantics sufficient for the next bounded step, such as clarification, planning, answer-only completion, or downstream proposal.
+A future IRR representation of admitted intent semantics sufficient for the next bounded step, such as clarification, planning, answer-only completion, no-operational-work completion, or downstream proposal.
+
+A ResolvedIntent does not necessarily produce a WorkPlan.
 
 The exact schema and terminal states are not frozen in M0.1.
 
@@ -96,7 +98,9 @@ A successor resolution step that consumes attributable prior state plus new clar
 
 ### WorkPlan
 
-A future bounded semantic representation of operational work derived from a resolved intent.
+A future bounded semantic representation of operational work derived from a resolved intent when operational work is actually required.
+
+Not every ResolvedIntent yields a WorkPlan.
 
 A WorkPlan is not executable authority and is not a general-purpose script.
 
@@ -175,6 +179,7 @@ origin attribution != origin verification
 context != authority
 intent != permission
 resolution != approval
+resolved intent != work plan requirement
 candidate validity != factual truth
 candidate validity != safety
 candidate validity != permission
