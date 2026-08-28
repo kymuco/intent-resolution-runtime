@@ -64,40 +64,51 @@ human / companion / worker / system
                                                      capability-matched where required
                                                                      |
                                                                      v
-                                                                WorkProposal
-                                                          exact proposed semantics
+                                                         applicable authority boundary
+                                                            when required
                                                                      |
-                                                                     v
-                                                                  Governance
-                                                      /-----------+-----------+-----------\
-                                                     v            v           v            v
-                                                Authorization   Denial    Constraint   require_review
-                                                     |                        |            |
-                                                     |                        v            v
-                                                     |                 IRR Continuation   no execution
-                                                     |                        |          authority yet
-                                                     |                        v
-                                                     |               Successor semantics
-                                                     |
-                                        +------------+------------------+
-                                        |                               |
-                                        v                               v
-                                CapabilityHandoff              DelegatedWorkHandoff
-                                bounded operation              bounded long-form subtask
-                                        |                               |
-                                        v                               v
-                                    Executor                          Worker
-                                  /         \                    subordinate lifecycle
-                                 v           v                         |
-                              Effect      Outcome                      v
-                                                         WorkerResult / escalation need
-                                                                     |
-                                                                     v
-                                                               IRR Continuation
-                                                                     |
-                                                        parent continues / completes
-                                                        only if actually satisfied
+                                                     +---------------+----------------+
+                                                     |                                |
+                                                     v                                v
+                                                WorkProposal                    no new authority
+                                                     |                         required at this seam
+                                                     v                                |
+                                                  Governance                           |
+                                      /-----------+-----------+-----------\            |
+                                     v            v           v            v           |
+                                Authorization   Denial    Constraint   require_review   |
+                                     |                        |            |            |
+                                     |                        v            v            |
+                                     |                 IRR Continuation   no authority  |
+                                     |                        |            yet          |
+                                     |                        v                         |
+                                     |               Successor semantics               |
+                                     +------------------------+-------------------------+
+                                                              |
+                                                   applicable authority conditions
+                                                        satisfied for the handoff
+                                                              |
+                                           +------------------+------------------+
+                                           |                                     |
+                                           v                                     v
+                                   CapabilityHandoff                    DelegatedWorkHandoff
+                                   bounded operation                    bounded long-form subtask
+                                           |                                     |
+                                           v                                     v
+                                       Executor                                Worker
+                                     /         \                         subordinate lifecycle
+                                    v           v                              |
+                                 Effect      Outcome                           v
+                                                                  WorkerResult / escalation need
+                                                                              |
+                                                                              v
+                                                                        IRR Continuation
+                                                                              |
+                                                                 parent continues / completes
+                                                                 only if actually satisfied
 ```
+
+The diagram is conceptual, not a universal timing rule. M0.6/M0.8 do not require every non-effectful analysis handoff to pass through the same Governance sequence, nor do they imply that handing work to a Worker grants authority. The invariant is narrower and stronger: whenever an invocation, disclosure, mutation, external effect, or other downstream operation requires authority, applicable Authorization coverage must exist before that authority-requiring effect occurs.
 
 A Cognitive Provider is a replaceable proposal source, not the owner of IRR state. IRR discloses only an explicitly permitted bounded input surface to a provider; the provider returns attributable `CandidateResolution` material; IRR independently validates and admits or rejects those semantics under the same M0.1–M0.6 contracts used without a provider.
 
@@ -132,11 +143,15 @@ WorkerResult != parent intent completion
 
 A DelegatedWork envelope explicitly bounds the objective, scope, context surface, allowed capability ceiling, forbidden effects, expected deliverables, completion semantics, lineage, and applicable authority requirements. Worker-local planning or iteration is allowed only inside those already admitted bounds. A newly required recipient, repository/account, disclosure, mutation class, provider/service, capability class, cost/commitment, authority scope, or external effect is material widening and returns to IRR rather than becoming hidden Worker discretion.
 
-Worker context is explicit. Context available to IRR is not automatically Worker-disclosable, and a local Worker does not gain blanket local access merely by being local. A remote Worker may introduce network or external-disclosure effects. The allowed capability surface is only a ceiling: it does not prove capability existence, availability, invocation readiness, Authorization, or success, and a Worker cannot invent shell/browser/another-worker fallback when a required capability is absent.
+The allowed capability surface is a **ceiling**, not a hidden selection policy. Listing multiple allowed capabilities does not declare them semantically interchangeable. A Worker may choose locally only where the choice preserves all material admitted semantics; a choice that changes provider/service, disclosure, effect, cost, authority, completion meaning, or another material dimension returns to IRR instead of being justified merely because both capabilities were listed.
 
-Worker authority is also explicit and non-transitive. Delegation itself does not create Authorization; a necessary subordinate step does not inherit authority just because it helps the delegated objective; and `not forbidden` is not the same as authorized. A Worker cannot recursively delegate another Worker by default, cannot self-expand future privileges through its own output, and cannot relabel worker-originated continuation as human Origin.
+Worker context is explicit. Context available to IRR is not automatically Worker-disclosable, and a local Worker does not gain blanket local access merely by being local. A remote Worker may introduce network or external-disclosure effects. The allowed capability surface does not prove capability existence, availability, invocation readiness, Authorization, or success, and a Worker cannot invent shell/browser/another-worker fallback when a required capability is absent.
 
-A `WorkerResult` is attributable Worker-produced result material. It may contain deliverables, findings, artifact references, uncertainty, blocked needs, covered scope, and subordinate outcome references, but it is not automatically factual truth, Observation, Outcome, Governance Decision, Authorization, or parent completion. Material WorkerResult data re-enters through an explicit attributable continuation boundary; IRR decides whether the parent continues, produces successor semantics, or is actually satisfied.
+Worker authority is also explicit and non-transitive. Delegation itself does not create Authorization; a necessary subordinate step does not inherit authority just because it helps the delegated objective; and `not forbidden` is not the same as authorized. A Worker cannot recursively delegate another IRR Worker by default, cannot self-expand future privileges through its own output, and cannot relabel worker-originated continuation as human Origin. Internal helper agents or model components are implementation detail unless they cross a distinct delegated-worker semantic boundary.
+
+A `WorkerResult` is attributable Worker-produced result material. It may contain deliverables, findings, artifact references, uncertainty, blocked needs, covered scope, and subordinate outcome references, but it is not automatically factual truth, Observation, Outcome, Governance Decision, Authorization, or parent completion. A Worker asserting `done` is not enough to establish even the delegated completion contract: the returned deliverables/result semantics must actually satisfy that contract under the receiving IRR/Host boundary. Material WorkerResult data re-enters through an explicit attributable continuation boundary; IRR decides whether the parent continues, produces successor semantics, or is actually satisfied.
+
+Worker-mediated research also preserves source lineage. If a Worker reads an external source and returns a finding, the Worker is an intermediary and the original source remains materially distinct when evidentiary provenance matters. The result cannot be rewritten as if IRR directly observed the source or as if Worker identity were the original factual source.
 
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
 
@@ -187,7 +202,7 @@ Governance may authorize an already represented bounded subset of a WorkProposal
 
 Absence of sufficient Authorization remains fail-closed for authority-requiring execution, but it is not the same semantic state as an explicit Denial. `require_review` is also not Authorization and does not predict eventual approval.
 
-M0.6 does not force one universal ordering between Binding and Governance. Governance may authorize bounded symbolic work when its scope explicitly covers the symbolic rule/class; a later Bound Value must still remain within that authority. A concrete binding can therefore remain semantically valid yet require Governance re-review without requiring a successor WorkPlan when no semantic meaning changed.
+M0.6 does not force one universal ordering between Binding and Governance, and M0.8 likewise does not force one universal ordering between worker delegation and Governance. Governance may authorize bounded symbolic or delegated classes when its scope explicitly covers them; a later concrete subordinate effect must still remain inside that authority. A semantically unchanged Worker handoff may therefore be valid while some later authority-requiring subordinate effect still requires external review.
 
 Capability Drift, rebinding, provider or Worker substitution, new recipients, new disclosure, or other material changes do not silently inherit prior Authorization. Pure availability drift is different: an executor or Worker going offline does not by itself rewrite what Governance authorized.
 
@@ -208,7 +223,7 @@ An ordinary WorkStep must itself have bounded, inspectable semantics. IRR cannot
 
 Platform neutrality also does not permit effect-changing substitution: an implementation cannot silently introduce a material effect such as external disclosure merely because it is one way to perform an operation.
 
-A semantically valid WorkPlan or DelegatedWork representation is still only proposed work. It does not imply current executability, authorization, execution, Worker acceptance, or successful effect.
+A semantically valid WorkPlan or DelegatedWork representation is still only proposed work. It does not imply current executability, authorization, execution, Worker acceptance, delegated completion, or successful effect.
 
 ## What IRR is not
 
