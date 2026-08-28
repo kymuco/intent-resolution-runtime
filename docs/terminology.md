@@ -104,7 +104,7 @@ Exact provenance fields, digests, seeds, prompt hashes, and cryptographic repres
 
 The IRR-controlled validation boundary through which CandidateResolution material may become admitted IRR semantics.
 
-Candidate Admission preserves all applicable M0.1–M0.7 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, external Governance separation, and the distinction between Cognitive Provider and Worker roles.
+Candidate Admission preserves all applicable frozen M0.1–M0.9 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, external Governance separation, Worker delegation boundaries, and recovery semantics. A provider candidate never bypasses M0.8/M0.9 merely because its proposed semantics concern Worker delegation, failure, Retry, fallback, or Outcome handling.
 
 Candidate Admission may perform semantics-preserving normalization but MUST NOT hide material semantic repair.
 
@@ -384,7 +384,7 @@ Every operational WorkPlan is attributable to the exact applicable Capability Ca
 
 Authorization remains external and separate from the WorkPlan.
 
-A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR candidate admission validates the applicable M0.1–M0.7 semantics.
+A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR Candidate Admission validates all applicable frozen M0.1–M0.9 semantics.
 
 A Worker subordinate plan is not automatically an IRR WorkPlan and does not mutate the parent WorkPlan.
 
@@ -711,11 +711,11 @@ A Governance Decision is not an Effect, Outcome, or WorkerResult.
 
 An attributable external Governance decision permitting explicitly bounded work under stated conditions.
 
-Authorization remains separate from WorkPlan, WorkProposal, DelegatedWork, Capability Descriptor, CandidateResolution, WorkerResult, Effect, Outcome, Retry Eligibility, and recovery policy. It does not prove safety, factual truth, capability existence, availability, execution, Worker acceptance, retry safety, or successful completion.
+Authorization remains separate from WorkPlan, WorkProposal, DelegatedWork, Capability Descriptor, CandidateResolution, WorkerResult, Effect, Outcome, Retry Eligibility, and Recovery Policy. It does not prove safety, factual truth, capability existence, availability, execution, Worker acceptance, retry safety, or successful completion.
 
 Authorization scope may cover an exact proposal, an explicitly identified bounded subset, or another bounded authority class established by a later Governance contract. IRR never invents or amplifies that scope.
 
-A materially changed Successor WorkPlan, rebound resource, provider/Worker boundary, recipient, disclosure, scope, effect, or new retry Attempt does not silently inherit prior Authorization unless the external authority scope explicitly covers the changed/repeated semantics.
+A materially changed Successor WorkPlan, rebound resource, provider/Worker boundary, recipient, disclosure, scope, effect, or new Retry Attempt does not silently inherit prior Authorization unless the external authority scope explicitly covers the changed/repeated semantics.
 
 ### Authorization Condition
 
@@ -729,7 +729,7 @@ An attributable Governance decision requiring narrower or otherwise changed oper
 
 A semantic Governance Constraint does not mutate the prior WorkPlan or DelegatedWork in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
 
-The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, candidate admission, Worker delegation constraints, recovery semantics, or other IRR validation.
+The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, Candidate Admission, Worker delegation constraints, recovery semantics, or other IRR validation.
 
 ### Denial
 
@@ -779,7 +779,7 @@ The Worker-owned lifecycle used to pursue one DelegatedWork objective inside the
 
 Its internal states, orchestration, prompts, agents, tools, and persistence are not IRR core semantics. Material widening outside the envelope must return to IRR rather than becoming hidden Worker discretion.
 
-M0.9 constrains material retry/unknown-outcome behavior without freezing the Worker's exact lifecycle state machine; exact lifecycle states remain deferred to M7/later runtime milestones.
+M0.9 constrains material Retry/unknown-outcome behavior without freezing the Worker's exact lifecycle state machine; exact lifecycle states remain deferred to M7/later runtime milestones.
 
 ### WorkerResult
 
@@ -815,7 +815,7 @@ An attributable downstream operational or lifecycle result record for a specific
 
 A WorkerResult is a broader delegated-result envelope that may contain or reference one or more Outcome records but is not automatically itself an Outcome.
 
-M0.9 freezes conceptual outcome conditions such as `succeeded`, `failed`, `blocked`, `interrupted`, and `unknown_outcome` without requiring one flat mutually exclusive Python enum. Known effects, unknown effects, completion evidence, and Attempt lineage remain separately material.
+M0.9 freezes conceptual result/recovery conditions including `succeeded`, `failed`, `blocked`, `interrupted`, and `unknown_outcome` without requiring them to be values of one flat mutually exclusive runtime enum. In particular, `blocked` may describe a pre-Attempt path with no execution Outcome, while interruption and effect certainty may later be represented as separate dimensions. Known effects, unknown effects, completion evidence, and Attempt lineage remain separately material.
 
 Outcome semantics remain distinct from Observation, CandidateResolution, WorkerResult, Governance Decision, Authorization, Capability Match, and arbitrary factual truth even when one downstream event supplies several related records.
 
@@ -825,13 +825,13 @@ Exact wire values/state-machine representation are deferred to M1/later lifecycl
 
 One attributable effort to perform one already admitted bounded downstream operation or delegated lifecycle transition.
 
-A Retry is a new Attempt, not continuation of the same Attempt. Attempt lineage preserves that repeated efforts aimed at the same semantic work may each have produced external effects.
+A Retry is a new Attempt, not continuation of the same Attempt. An executed Fallback is also a new Attempt when it actually pursues work through an alternate downstream path. Attempt lineage preserves that repeated/alternate efforts may each have produced material effects.
 
 Exact Attempt identity/sequence representation is deferred.
 
-### Outcome Status
+### Outcome / Recovery Condition
 
-A conceptual classification of what sufficient attributable evidence establishes about one Outcome scope.
+A conceptual classification of what attributable evidence establishes about one bounded downstream path or Attempt.
 
 M0.9 distinguishes at least:
 
@@ -843,7 +843,7 @@ interrupted
 unknown_outcome
 ```
 
-These names freeze semantic distinctions, not a required wire enum. A status never erases separately known partial effects, uncertainty, provenance, or parent-lifecycle state.
+These names freeze semantic distinctions, not a required wire enum. `blocked` can exist before any Attempt begins. `interrupted` describes lifecycle discontinuity and does not itself determine effect certainty. A condition never erases known partial effects, uncertainty, provenance, or parent-lifecycle state.
 
 ### succeeded
 
@@ -866,9 +866,12 @@ failed != automatic retry
 
 A condition where a required transition cannot currently begin or continue because a known prerequisite/boundary condition is unsatisfied.
 
-The cause remains separately classified; examples may include missing capability, unavailability, invocation unreadiness, missing information, unresolved ambiguity, insufficient Authorization, Denial, or Worker escalation.
+The cause remains separately classified; examples may include `missing_capability`, Capability unavailability, invocation unreadiness, missing information, unresolved ambiguity, insufficient Authorization, Denial, or Worker escalation.
+
+`blocked` does not require an execution Attempt to exist. A larger lifecycle may also become blocked after earlier subordinate Attempts/effects.
 
 ```text
+blocked != proof that an Attempt started
 blocked != Denial
 blocked != missing_capability
 blocked != failed by definition
@@ -882,6 +885,7 @@ Interruption describes lifecycle discontinuity and does not by itself establish 
 
 ```text
 interrupted != no effect
+interrupted != failed by definition
 interrupted != unknown_outcome by definition
 ```
 
@@ -893,19 +897,23 @@ A condition where material attributable evidence is insufficient to establish wh
 unknown_outcome != failed
 ```
 
-Unknown outcome preserves what is known and what remains unknown. It must not be collapsed into failure merely to enable retry.
+Unknown outcome preserves what is known and what remains unknown. It must not be collapsed into failure merely to enable Retry.
 
 ### Retry
 
-A new attributable Attempt to perform semantic work substantially corresponding to an earlier Attempt.
+A new attributable Attempt against the same admitted semantic operation or delegated objective and the same material effect/completion semantics as an earlier Attempt.
 
-Retry is not a hidden WorkPlan loop, harmless repetition, semantic mutation permission, or continuation of the original Attempt.
+Non-material runtime details may vary only where that variation was already admitted and does not change resource, recipient, provider/service semantics, disclosure, effect surface, scope, cost/commitment, completion meaning, or authority requirements.
 
-A retry preserves prior Attempt/Outcome history and can itself create a new material effect.
+```text
+Retry = new Attempt over unchanged admitted material semantics
+```
+
+Material semantic change is not merely Retry; it returns through applicable Continuation/Fallback/successor/review boundaries.
 
 ### Retry Eligibility
 
-A bounded recovery determination that a new Attempt may be semantically admissible under the known prior effect state, replay/duplication properties, current bindings/capabilities, and unchanged work semantics.
+A bounded recovery determination that a new Attempt over unchanged admitted material semantics may be semantically admissible under the known prior effect state, replay/duplication properties, current bindings/capabilities, and recovery contract.
 
 Retry Eligibility is not Authorization, Capability Availability, or proof of success.
 
@@ -937,9 +945,9 @@ A client-generated key or label is not proof of suppression unless the downstrea
 
 A proposed alternate downstream path after an earlier path is unavailable, blocked, failed, interrupted, or otherwise unsuitable.
 
-Fallback is not capability synthesis, semantic substitution authority, Authority inheritance, or erasure of prior Outcome/effect history.
+Fallback is not capability synthesis, semantic substitution authority, Authorization inheritance, or erasure of prior Outcome/effect history.
 
-A materially different fallback provider/Worker/capability/scope/disclosure/cost/completion path returns through the applicable IRR Continuation/successor/review boundaries.
+Fallback selection requires an explicit semantic basis. If a Fallback is actually executed, that invocation is a new attributable Attempt with separate Outcome/effect lineage. A materially different fallback provider/Worker/capability/scope/disclosure/cost/completion path returns through applicable IRR Continuation/successor/review boundaries.
 
 ### Cancellation
 
@@ -963,7 +971,7 @@ compensation != retry
 
 ### Recovery Policy
 
-A future bounded policy that may determine what retry/fallback/recovery action is semantically admissible to propose under M0.9 evidence and contracts.
+A future bounded policy that may determine what Retry/Fallback/recovery action is semantically admissible to propose under M0.9 evidence and contracts.
 
 Recovery Policy is not Governance policy, Authorization, capability creation, or Outcome evidence.
 
@@ -1333,10 +1341,12 @@ authorization != effect evidence
 unknown_outcome != failed
 failed != no effect
 failed != safe to retry
+blocked != proof that an Attempt started
 blocked != Denial
 blocked != missing_capability
 blocked != failed by definition
 interrupted != no effect
+interrupted != failed by definition
 interrupted != unknown_outcome by definition
 timeout != failed
 timeout != no effect
@@ -1344,6 +1354,7 @@ timeout != unknown_outcome by definition
 lost acknowledgement != proof of no effect
 transport success != semantic success
 request accepted != requested effect completed by default
+Retry = new Attempt over unchanged admitted material semantics
 retry != hidden loop
 retry != same attempt resuming
 retry != harmless repetition
@@ -1364,6 +1375,9 @@ failed != automatic retry
 fallback != capability synthesis
 fallback != semantic substitution authority
 fallback != authority inheritance
+fallback selection != effect
+executed fallback -> new Attempt
+executed fallback != continuation of prior Attempt
 fallback after unknown != prior effect absent
 recovery convenience != intent reinterpretation
 failure != permission to guess
