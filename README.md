@@ -1,6 +1,6 @@
 # Intent Resolution Runtime
 
-Intent Resolution Runtime (IRR) interprets and resolves human-, companion-, worker-, or system-originated intent through bounded, inspectable resolution paths. When operational work is required, IRR produces bounded semantic work representations and downstream handoffs.
+Intent Resolution Runtime (IRR) interprets and resolves human-, companion-, worker-, or system-originated intent through bounded, inspectable resolution paths. When operational work is required, IRR may produce bounded semantic work representations suitable for downstream handoff.
 
 > **Intent != Permission != Effect**
 
