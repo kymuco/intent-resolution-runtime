@@ -50,13 +50,19 @@ Provider-produced candidate semantic material offered to IRR for validation and 
 
 Admission means contract-valid, not factually true, safe, approved, or permitted.
 
+### Resolution
+
+The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, and continuation constraints.
+
+Resolution does not imply approval, authorization, WorkPlan creation, or effect.
+
 ### ResolvedIntent
 
-A future IRR representation of admitted intent semantics after Material Ambiguity that blocks the next bounded path has been addressed.
+A future IRR representation of admitted intent semantics after Material Ambiguity and material Conflict blocking the next bounded path have been addressed.
 
 A ResolvedIntent may support planning, answer-only completion, no-operational-work completion, or a downstream proposal. It does not necessarily produce a WorkPlan.
 
-A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new Material Ambiguity, continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
+A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
 The exact schema and terminal states are not frozen in M0.2.
 
@@ -93,6 +99,8 @@ An Observation Need is not execution authority.
 Attributable information returned from an external boundary or prior bounded step and supplied back to IRR for continuation.
 
 Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
+
+Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation.
 
 ### Late Binding
 
@@ -152,9 +160,9 @@ IRR MUST NOT perform Trust Amplification.
 
 ### Conflict
 
-A condition where attributable semantic inputs make materially incompatible Claims relevant to the same resolution.
+A condition where attributable semantic inputs make incompatible Claims relevant to the same resolution.
 
-A material Conflict must be preserved until an explicit bounded precedence rule, clarification, or further attributable information resolves it.
+A Conflict that can materially change the next bounded path blocks ResolvedIntent admission until an explicit bounded precedence rule, clarification, or further attributable information resolves it. A non-blocking Conflict may remain explicit in a ResolvedIntent.
 
 ### Completeness
 
@@ -316,6 +324,7 @@ clarification != resolved intent
 assumption != hidden default
 assumption != established fact
 information need != observation authority
+cognitive provider output != observation by default
 resolution != approval
 resolved intent != work plan requirement
 handoff != authorization
