@@ -174,9 +174,11 @@ Material semantic ambiguity MUST NOT be hidden behind late binding.
 
 A clarification request is not itself a ResolvedIntent. Material ambiguity that still blocks resolution MUST be addressed before a ResolvedIntent is admitted.
 
-**Late binding** is reserved for cases where the semantic selection rule is already explicit and bounded and a future observation merely supplies a value required to apply that rule.
+**Late binding** is reserved for cases where the semantic selection rule is already explicit and bounded and future attributable data merely supplies a value required to apply that rule.
 
-If a later observation exposes a new material choice that the existing rule cannot resolve, the intent MUST return to continuation or clarification rather than make a silent discretionary choice.
+M0.4 refines the carrier of that future value as compatible attributable `Binding Input`. An `Observation` returned to IRR is one possible Binding Input, but a plan-local bounded WorkStep output may also serve as Binding Input without being reclassified as an Observation. This refinement changes no M0.1 semantic invariant: the rule must still be fixed before the value arrives, and late binding still cannot conceal Material Ambiguity.
+
+If later attributable input exposes a new material choice that the existing rule cannot resolve, the intent MUST return to continuation or clarification rather than make a silent discretionary choice.
 
 ## 8. Capability boundary
 
