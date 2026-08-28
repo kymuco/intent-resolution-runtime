@@ -32,7 +32,7 @@ Conceptual origin classes are `human`, `companion`, `worker`, and `system`.
 
 Origin is provenance metadata, not authority. The evidence supporting an Origin attribution is a separate trust concern and is frozen later by M0.2.
 
-IRR must not silently strengthen an Origin attribution into verified identity, authority, permission, or approval.
+IRR MUST NOT silently strengthen an Origin attribution into verified identity, authority, permission, or approval.
 
 ### Host
 
