@@ -51,64 +51,40 @@ human / companion / worker / system
                             v                          v
                     non-operational                WorkPlan
                       resolution                      |
-                  (answer / no work)                  |
-                                                      |       explicit attributable
-                                                      |       Capability Catalog Snapshot
-                                                      |                  |
-                                                      +------------------+
-                                                                     |
-                                                                     v
-                                                                 WorkStep[]
-                                                         semantic, finite,
-                                                         bounded, inspectable,
-                                                     capability-matched where required
-                                                                     |
-                                                                     v
-                                                         applicable authority boundary
-                                                            when required
-                                                                     |
-                                                     +---------------+----------------+
-                                                     |                                |
-                                                     v                                v
-                                                WorkProposal                    no new authority
-                                                     |                         required at this seam
-                                                     v                                |
-                                                  Governance                           |
-                                      /-----------+-----------+-----------\            |
-                                     v            v           v            v           |
-                                Authorization   Denial    Constraint   require_review   |
-                                     |                        |            |            |
-                                     |                        v            v            |
-                                     |                 IRR Continuation   no authority  |
-                                     |                        |            yet          |
-                                     |                        v                         |
-                                     |               Successor semantics               |
-                                     +------------------------+-------------------------+
-                                                              |
-                                                   applicable authority conditions
-                                                        satisfied for the handoff
-                                                              |
-                                           +------------------+------------------+
-                                           |                                     |
-                                           v                                     v
-                                   CapabilityHandoff                    DelegatedWorkHandoff
-                                   bounded operation                    bounded long-form subtask
-                                           |                                     |
-                                           v                                     v
-                                       Executor                                Worker
-                                     /         \                         subordinate lifecycle
-                                    v           v                              |
-                                 Effect      Outcome                           v
-                                                                  WorkerResult / escalation need
-                                                                              |
-                                                                              v
-                                                                        IRR Continuation
-                                                                              |
-                                                                 parent continues / completes
-                                                                 only if actually satisfied
+                  (answer / no work)         +--------+--------+
+                                             |                 |
+                                  ordinary bounded work   long-form subtask
+                                             |                 |
+                                             v                 v
+                                         WorkStep[]       DelegatedWork
+                                   semantic, finite,      explicit objective,
+                                   bounded, inspectable   scope, context,
+                                   capability-matched     capability ceiling,
+                                   where required         deliverables/completion
+                                             |                 |
+                                             v                 v
+                                      applicable authority boundary
+                                             when required for each path
+                                             |                 |
+                                             v                 v
+                                  CapabilityHandoff   DelegatedWorkHandoff
+                                  bounded operation   bounded delegated subtask
+                                             |                 |
+                                             v                 v
+                                         Executor            Worker
+                                       /         \      subordinate lifecycle
+                                      v           v            |
+                                   Effect      Outcome         v
+                                                    WorkerResult / escalation need
+                                                               |
+                                                               v
+                                                         IRR Continuation
+                                                               |
+                                                  parent continues / completes
+                                                  only if actually satisfied
 ```
 
-The diagram is conceptual, not a universal timing rule. M0.6/M0.8 do not require every non-effectful analysis handoff to pass through the same Governance sequence, nor do they imply that handing work to a Worker grants authority. The invariant is narrower and stronger: whenever an invocation, disclosure, mutation, external effect, or other downstream operation requires authority, applicable Authorization coverage must exist before that authority-requiring effect occurs.
+The diagram is conceptual, not a universal timing rule. A `WorkProposal` and Governance review bind exact proposed semantics when external authority review is required; they are not omitted from the contract merely because the diagram keeps the two downstream handoff branches readable. M0.6/M0.8 do not require every non-effectful analysis handoff to pass through one universal Governance sequence, nor do they imply that handing work to a Worker grants authority. The invariant is narrower and stronger: whenever an invocation, disclosure, mutation, external effect, or other downstream operation requires authority, applicable Authorization coverage must exist before that authority-requiring effect occurs.
 
 A Cognitive Provider is a replaceable proposal source, not the owner of IRR state. IRR discloses only an explicitly permitted bounded input surface to a provider; the provider returns attributable `CandidateResolution` material; IRR independently validates and admits or rejects those semantics under the same M0.1–M0.6 contracts used without a provider.
 
