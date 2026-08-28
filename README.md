@@ -10,7 +10,7 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 Current milestone: **M0.4 — Late Binding & Observation Boundary**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, and M0.3 Intent → Work Boundary are frozen in `main`. M0.4 freezes how future values may be bound without deferring semantic decisions: symbolic references use explicit bounded binding rules, compatible attributable observations may supply values, and new material choices return to IRR continuation rather than executor discretion.
+M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, and M0.3 Intent → Work Boundary are frozen in `main`. M0.4 freezes how future values may be bound without deferring semantic decisions: symbolic references use explicit bounded Binding Rules, attributable Binding Input may supply values, and new material choices return to IRR Continuation rather than Executor discretion.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -52,24 +52,26 @@ human / companion / worker / system
                                            semantic, finite,
                                            bounded, inspectable
                                                       |
-                                      symbolic data / binding rules
+                                         applicable downstream
+                                      governance / authorization
+                                                      |
+                                                      v
+                                               bounded executor
+                                                      |
+                                                      v
+                                         attributable returned data
                                                       |
                                          +------------+------------+
                                          |                         |
                                          v                         v
-                                  unique bound value        new material choice
+                                fixed Binding Rule          new material choice
                                          |                         |
                                          v                         v
-                               bounded downstream work      IRR Continuation
+                                    Bound Value              IRR Continuation
                                          |
                                          v
-                              governance / authorization
-                                         |
-                                         v
-                                  bounded executor
-                                         |
-                                         v
-                                       effect
+                                 next bounded work
+                         (again subject to applicable authority)
 ```
 
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
@@ -78,7 +80,11 @@ IRR has no ambient semantic context. Material used for resolution must enter thr
 
 When operational work is required, IRR represents **semantic operations**, not platform-specific command sequences. A WorkPlan is finite and inspectable; it may express dependencies, symbolic inputs/outputs, bounded ordering, and explicit continuation points, but it is not a scripting language and does not own arbitrary loops, hidden retries, embedded code, or silent observation-dependent branching.
 
-Late Binding may fill a future value only under an already admitted bounded Binding Rule. Applying that unchanged rule to compatible attributable data is value binding, not a new semantic decision. A tie, missing rule input, incompatible observation, new effect, or other material choice stops mechanical binding and returns to IRR Continuation.
+Late Binding may fill a future value only under an already admitted bounded Binding Rule. Applying that unchanged rule to compatible attributable Binding Input is value binding, not a new semantic decision. A tie, missing rule input, incompatible input, new effect, or other material choice stops mechanical Binding and returns to IRR Continuation.
+
+Binding Input is a semantic role, not another name for Observation. A plan-local WorkStep output may feed a Binding Rule without becoming IRR Context or an Observation. When new data must influence a new semantic decision, it returns to IRR through an attributable Continuation boundary under an explicit classification.
+
+M0.4 does not freeze Binding before or after Governance. An observation-producing WorkStep may require authorization before it runs, and a newly concrete Bound Value may later require Governance review. Binding success itself grants no permission.
 
 Plan-local symbolic dataflow may proceed without a new IRR resolution cycle only while all material semantics remain fixed. Returned data is not automatically an Observation, an Observation is not an Outcome, and a Bound Value is not authorization or permanent proof that the world has not changed.
 
