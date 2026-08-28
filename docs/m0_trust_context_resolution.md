@@ -4,7 +4,7 @@ Status: **normative for M0.2**.
 
 This document freezes how Intent Resolution Runtime (IRR) may know, interpret, and resolve intent. It extends the M0.1 product charter without introducing runtime code, exact schemas, persistence, or executable authority.
 
-M0.2 governs epistemic trust, explicit bounded context, ambiguity, assumptions, information needs, and admission of resolved semantics.
+M0.2 governs epistemic trust, explicit bounded context, ambiguity, assumptions, information needs, temporal grounding, and admission of resolved semantics.
 
 It does **not** grant authority and it does **not** define execution.
 
@@ -16,7 +16,7 @@ resolution != approval
 
 ## 1. Resolution input boundary
 
-The conceptual resolution path is:
+The conceptual path is:
 
 ```text
 IntentRequest
@@ -37,9 +37,9 @@ clarification /            ResolvedIntent
 information need
 ```
 
-IRR MUST resolve only from material explicitly admitted through its Host boundary plus attributable continuation inputs already belonging to the same intent lineage.
+IRR MUST resolve only from material explicitly admitted through its Host boundary plus attributable continuation inputs belonging to the same intent lineage.
 
-IRR MUST NOT silently widen that boundary because additional information would be useful.
+IRR MUST NOT silently widen that boundary merely because additional information would be useful.
 
 ## 2. Epistemic trust is separate from authority
 
@@ -47,15 +47,11 @@ M0.2 uses **trust** only in the epistemic sense: what evidence supports a claim,
 
 Epistemic trust MUST NOT be interpreted as permission, consent, authorization, or execution authority.
 
-Examples:
-
 ```text
 verified origin attribution != permission
 trusted context source      != permission
 high-confidence claim       != authorization
 ```
-
-A Host may provide strong evidence that an IntentRequest originated from a particular human. That evidence can support provenance. It cannot authorize a filesystem mutation, external disclosure, process launch, or any other effect.
 
 Governance remains the authority boundary defined by M0.1.
 
@@ -65,7 +61,7 @@ A **Claim** is semantic content presented as describing some fact, state, identi
 
 An **Attribution** states who or what is presented as the source of a claim, request, observation, or context item.
 
-**Evidence** is attributable material that supports or weakens a claim or attribution.
+**Evidence** is attributable material that supports or weakens a Claim or Attribution.
 
 IRR MUST preserve the distinction between:
 
@@ -76,27 +72,25 @@ evidence for the attribution
 evidence for the claim itself
 ```
 
-Evidence that proves one layer MUST NOT silently prove another layer.
+Evidence that establishes one layer MUST NOT silently establish another.
 
-For example, a cryptographic signature may strongly verify that a particular principal signed a payload. That does not by itself prove that every descriptive statement inside the payload is factually correct, nor does it grant permission for requested effects.
+For example, a cryptographic signature may verify who signed a payload. It does not automatically prove that every descriptive statement inside the payload is factually correct, and it grants no authority for requested effects.
 
-## 4. Evidentiary status
+## 4. Evidentiary status and trust amplification
 
-M0.2 does not freeze a concrete enum, score, or cryptographic mechanism. It freezes the semantics any later representation must preserve.
+M0.2 does not freeze a concrete trust enum, score, cryptographic mechanism, or identity provider. It freezes the semantics any later representation must preserve.
 
-Evidence may conceptually be self-asserted, Host-attested, externally verified, or supported by another attributable mechanism. Later schemas may represent these differently.
+Evidence may conceptually be self-asserted, Host-attested, externally verified, or supported by another attributable mechanism.
 
 Any evidentiary status MUST be:
 
 - attributable to its evidence source;
-- scoped to the claim or attribution it actually supports;
+- scoped to what the evidence actually supports;
 - explicit rather than silently inferred;
-- preserved when material to downstream resolution;
+- preserved when material to resolution;
 - incapable of granting authority by itself.
 
 IRR MUST NOT perform trust amplification.
-
-In particular:
 
 ```text
 verified A        != verified B
@@ -105,7 +99,7 @@ verified identity != verified payload truth
 verified payload  != permission
 ```
 
-Trust MUST NOT propagate transitively merely because two claims, identities, or context items are related.
+Trust MUST NOT propagate transitively merely because two claims, identities, sources, or context items are related.
 
 ## 5. Origin attribution and verification
 
@@ -117,9 +111,11 @@ origin attribution != origin verification
 
 M0.2 makes that distinction operationally normative.
 
-An Origin value supplied to IRR is an attribution. Evidence may strengthen or weaken confidence in that attribution, but IRR MUST NOT silently upgrade an attribution into verified identity.
+An Origin value supplied to IRR is an Attribution. Evidence may strengthen or weaken that attribution, but IRR MUST NOT silently upgrade it into verified identity.
 
-If origin verification is material to a resolution and sufficient evidence is absent, IRR MUST represent that uncertainty or information need rather than fabricate verification.
+Lack of verification does not make an attribution unusable. IRR MAY use an explicitly attributed but unverified Origin when verification is not material to the semantic path, provided the evidentiary status is not strengthened or hidden.
+
+If Origin verification is material and sufficient evidence is absent, IRR MUST preserve the uncertainty or represent the required information need rather than fabricate verification.
 
 Even verified Origin remains provenance, not authority.
 
@@ -136,7 +132,7 @@ bounded
 attributable
 ```
 
-The Host boundary may provide content directly or provide explicitly governed references whose resolution is handled outside IRR. Merely mentioning or referencing a resource does not grant IRR ambient retrieval authority.
+The Host may supply material directly or supply explicit references whose resolution is handled outside IRR.
 
 IRR MUST NOT independently:
 
@@ -150,32 +146,32 @@ IRR MUST NOT independently:
 - follow arbitrary links or references;
 - widen a supplied filesystem, repository, account, or network scope.
 
-If additional material is required, IRR represents an information or observation need and waits for attributable input through the Host boundary.
+If additional material is required, IRR represents a bounded information or observation need and waits for attributable input through the Host boundary.
 
 ## 7. Context references are not retrieval authority
 
-A context reference identifies material; it does not itself authorize retrieval or disclosure.
+A **Context Reference** identifies possible material. It does not itself authorize retrieval or disclosure.
 
 ```text
 reference != retrieval authority
 reference != disclosure authority
 ```
 
-If a Host supplies only a reference whose content is not present, IRR MUST treat the referenced content as unavailable unless an external bounded observation later supplies it.
+If the Host supplies only a reference whose content is not present, IRR MUST treat the referenced content as unavailable unless an external bounded observation later supplies it.
 
-IRR MUST NOT reinterpret a reference as permission to fetch from a filesystem, repository, browser, network service, memory store, or worker.
+IRR MUST NOT reinterpret a reference as permission to fetch from a filesystem, repository, browser, network service, memory store, account, or worker.
 
 Exact reference and context-envelope schemas remain deferred.
 
 ## 8. Context provenance
 
-Material context used for resolution MUST retain enough attributable provenance to distinguish where material semantic claims came from.
+Material context used for resolution MUST retain enough attributable provenance to distinguish sources when those distinctions affect trust, ambiguity, conflict, freshness, or resolution.
 
-M0.2 does not require a particular provenance schema or digest algorithm, but later representations MUST be able to avoid collapsing materially different sources into an unattributed pool of facts.
+M0.2 does not require a particular provenance schema or digest algorithm.
 
 A provider-generated summary, human statement, worker report, Host assertion, and external observation may all be context. They are not automatically equivalent evidence.
 
-IRR MUST NOT erase source distinctions when those distinctions affect ambiguity, trust, conflict, or resolution.
+IRR MUST NOT collapse materially distinct sources into an unattributed pool of facts.
 
 ## 9. Context availability is not provider disclosure
 
@@ -185,7 +181,7 @@ Context admitted to IRR is not automatically authorized for disclosure to a Cogn
 context available to IRR != context authorized for provider disclosure
 ```
 
-This distinction applies whether the Cognitive Provider is local or remote.
+This distinction applies whether a provider is local or remote.
 
 A future provider boundary MUST receive only context explicitly permitted for that boundary. M0.2 does not freeze the provider API, disclosure schema, or policy mechanism; M0.7 freezes the Cognitive Provider boundary in more detail.
 
@@ -197,60 +193,96 @@ Context is resolution input, not canonical memory ownership.
 
 IRR MUST NOT silently persist caller-supplied context as durable canonical memory merely because it was useful during resolution.
 
-Later persistence contracts may retain lineage, references, receipts, or bounded runtime state, but canonical memory ownership remains outside the M0.2 boundary.
+Later persistence contracts may retain bounded runtime state, lineage, references, receipts, or digests, but canonical memory ownership remains outside M0.2.
 
-## 11. Absence, uncertainty, and negation
+## 11. Absence, completeness, uncertainty, and negation
 
-Absence of information is not evidence that the opposite proposition is true.
+In an ordinary incomplete context boundary, absence of information is not evidence that the opposite proposition is true.
 
 ```text
-not present != false
+not present  != false
 not observed != did not happen
 not verified != false
-unknown != denied
+unknown      != denied
 ```
 
-IRR MUST represent relevant unknowns as unknowns.
+However, attributable evidence may explicitly assert that an observation is **complete within a bounded domain**. In that case, absence inside that declared complete scope may support a negative conclusion only within that same scope.
 
-For example, if bounded context contains no recipient named Ivan, IRR cannot conclude that Ivan does not exist. It can only conclude that the supplied context does not resolve the referent.
+Example:
 
-If a material claim cannot be established from admitted context and evidence, IRR MUST preserve the uncertainty or request the information needed to continue.
+```text
+complete listing of D:\Backups at observation T
+contains no foo.zip
+```
 
-## 12. Freshness and temporal claims
+may support:
 
-Time-sensitive claims require attributable temporal context when freshness changes their meaning.
+```text
+foo.zip was absent from that bounded listing at T
+```
 
-IRR MUST NOT silently treat an undated observation as current, or an old context item as current, when that distinction could materially change resolution.
+It does not prove that `foo.zip` never existed elsewhere, was not created later, or is globally absent.
+
+Therefore:
+
+```text
+absence in unspecified/incomplete context != negation
+absence in explicitly complete bounded evidence may support scoped negation
+```
+
+IRR MUST NOT infer completeness merely because a result set looks exhaustive.
+
+## 12. Temporal basis and freshness
+
+Relative or time-sensitive semantics require an attributable **Temporal Basis** when time changes their meaning.
 
 Examples include:
 
-- `latest backup`;
-- `current branch`;
-- `today's report`;
-- `the running process`;
-- `the file I just downloaded`.
+- `today`;
+- `latest`;
+- `current`;
+- `just downloaded`;
+- `running now`;
+- `most recent`.
 
-A timestamp or sequence marker is evidence about time only within its stated provenance and scope. Exact timestamp formats and freshness policies are deferred.
+IRR MUST NOT silently use an ambient machine clock, local timezone, or execution-time clock as semantic truth when the relative time basis is material.
 
-## 13. Conflicting context
+The Host may explicitly supply a resolution time, timezone, sequence marker, observation timestamp, or another bounded temporal reference. Exact timestamp and clock schemas are deferred.
+
+IRR MUST NOT silently treat an undated observation as current, or an old item as current, when freshness could materially change resolution.
+
+A timestamp or sequence marker is evidence about time only within its stated provenance and scope.
+
+This preserves deterministic replay: the same admitted semantic inputs should not change meaning merely because replay happens later on another machine.
+
+## 13. Conflicting context and precedence
 
 Two attributable sources may disagree.
 
-IRR MUST NOT resolve a material conflict by silently choosing the source it prefers unless an explicit, bounded precedence rule supplied through the Host boundary already governs that conflict.
+IRR MUST NOT resolve a material Conflict by silently choosing whichever source it prefers unless an explicit bounded precedence rule admitted through the Host boundary already governs that conflict.
 
-If competing claims could materially change the resolution, IRR MUST:
+If competing claims could materially change resolution, IRR MUST:
 
-- preserve the conflict;
+- preserve the Conflict;
 - apply an explicit admissible precedence rule if one exists; or
-- request clarification / additional attributable information.
+- request clarification or additional attributable information.
 
-There is no universal M0.2 rule that "human beats worker", "newer beats older", "verified beats unverified", or "Host beats context" for all semantic claims.
+There is no universal M0.2 rule that:
 
-Evidence strength, freshness, source role, and explicit caller rules may matter, but they do not create an implicit global precedence order.
+```text
+human beats worker
+newer beats older
+verified beats unverified
+Host beats context
+```
+
+for every semantic claim.
+
+This is deliberate: verified provenance does not necessarily verify payload truth, and recency does not necessarily imply correctness.
 
 ## 14. Intent statements and descriptive world claims
 
-An IntentRequest may contain both desired semantics and descriptive claims about the world.
+An IntentRequest may contain both desired semantics and descriptive Claims about the world.
 
 Example:
 
@@ -258,13 +290,13 @@ Example:
 "Send my latest report to Ivan."
 ```
 
-The request expresses desired work, but it also contains referential claims such as `my latest report` and `Ivan` that may require contextual resolution.
+The request expresses desired work, but `my latest report` and `Ivan` are referential semantics that may still require bounded contextual resolution.
 
-IRR MUST NOT treat the existence, identity, location, or uniqueness of referenced resources as true merely because the desired action mentions them.
+IRR MUST NOT treat the existence, identity, location, uniqueness, or freshness of a referenced resource as established fact merely because the desired action mentions it.
 
-Likewise, a current intent statement may supersede an earlier preference only where the semantics actually express that change. M0.2 defines no universal hidden precedence for all prior context.
+Likewise, a current IntentRequest may supersede an earlier preference only where its semantics actually express that change. M0.2 defines no hidden universal precedence over prior context.
 
-## 15. Material ambiguity
+## 15. Material Ambiguity
 
 A **Material Ambiguity** exists when competing interpretations could materially change any of the following:
 
@@ -308,9 +340,9 @@ An **Assumption** is an explicit premise used to continue resolution without cla
 
 Assumptions MUST be visible and attributable to the resolution that uses them.
 
-An assumption is admissible only when getting it wrong cannot silently choose between materially different meanings under the Material Ambiguity definition.
+An Assumption is admissible only when getting it wrong cannot silently choose between materially different meanings under the Material Ambiguity definition.
 
-An assumption MUST NOT be used to invent or choose:
+An Assumption MUST NOT invent or choose:
 
 - a resource identity;
 - a recipient;
@@ -323,23 +355,23 @@ An assumption MUST NOT be used to invent or choose:
 
 Presentation-only or otherwise non-material choices may be assumptions when explicitly recorded.
 
-Example:
-
 ```text
 assumption:
     presentation ordering = newest first
 ```
 
-A hidden default is not an assumption contract.
+A hidden default is not an Assumption contract.
 
 ```text
 assumption != hidden default
 assumption != established fact
 ```
 
-## 17. Explicit selection rules versus assumptions
+If a caller explicitly directs IRR to use a rule that would otherwise have been an unsafe guess, that direction becomes admitted intent/context semantics rather than a hidden IRR assumption.
 
-A bounded selection rule supplied by the IntentRequest or admitted context is not the same thing as an assumption.
+## 17. Explicit selection rules and Late Binding
+
+A bounded selection rule supplied by the IntentRequest or admitted context is distinct from an Assumption.
 
 For example:
 
@@ -347,15 +379,13 @@ For example:
 "use the newest backup by modification time"
 ```
 
-may define an explicit semantic rule even though the concrete artifact is not known yet.
+may define an explicit semantic rule even though the concrete artifact is not yet known.
 
-The future concrete value may be supplied through observation and late binding. The rule itself must already be unambiguous.
-
-M0.4 freezes exact late-binding and observation mechanics.
+A future observation may provide the value required to apply that rule. M0.4 freezes the exact Late Binding and dataflow mechanics.
 
 If applying the rule later exposes a tie or new material choice not resolved by the rule, IRR MUST return to continuation or clarification.
 
-## 18. Information and observation needs
+## 18. Information and Observation Needs
 
 When admitted context is insufficient, IRR may represent a bounded **Information Need** or **Observation Need** describing what information is required to continue.
 
@@ -363,49 +393,51 @@ An information need is not authority to acquire that information.
 
 ```text
 need for information != permission to observe
-observation request     != execution authority
+observation need      != execution authority
 ```
 
 The Host, Governance, Executor, Worker, or another external system may later decide how or whether the information is obtained.
 
 Returned information becomes usable by IRR only when it re-enters through an attributable continuation boundary.
 
-M0.2 does not freeze an `InformationNeed` or `ObservationRequest` schema.
+M0.2 does not freeze an `InformationNeed`, `ObservationNeed`, or observation-request schema.
 
 ## 19. Observation semantics
 
-An Observation is attributable information supplied back to IRR from an external boundary or prior bounded step.
+An **Observation** is attributable information supplied back to IRR from an external boundary or prior bounded step.
 
 Observation does not become truth merely because a tool, worker, Host, or model produced it.
 
-IRR MUST retain relevant provenance and evidentiary limitations of observations used for continuation.
+IRR MUST retain material provenance, completeness claims, temporal basis, and evidentiary limitations of observations used for continuation.
 
-An observation may:
+An Observation may:
 
 - satisfy an information need;
 - bind a previously explicit selection rule;
+- provide complete bounded evidence;
 - expose a contradiction;
 - expose new Material Ambiguity;
 - leave the original uncertainty unresolved.
 
-If an observation exposes a new unresolved material choice, IRR MUST return to clarification or another explicit resolution path before admitting a successor ResolvedIntent.
+If an Observation exposes a new unresolved material choice, IRR MUST return to clarification or another explicit resolution path before admitting a successor ResolvedIntent.
 
 ## 20. Resolution admission
 
 A `ResolvedIntent` may be admitted only when the semantics required for its next bounded path are sufficiently determined.
 
-At minimum, the resolution MUST preserve these properties:
+At minimum, admission MUST preserve these properties:
 
 1. Material Ambiguity blocking the next bounded path has been addressed.
 2. Material assumptions are not hidden; only admissible explicit assumptions are used.
-3. Material context provenance and trust limitations are not silently erased.
-4. Material conflicts are resolved by an explicit rule or remain unresolved.
+3. Material context provenance and evidentiary limitations are not silently erased.
+4. Material Conflicts are resolved by an explicit rule or remain unresolved.
 5. Missing information is not invented.
-6. Absence is not rewritten as negation.
-7. Trust is not rewritten as authority.
-8. Resolution does not imply approval, authorization, or effect.
+6. Absence is not rewritten as negation without complete bounded evidence supporting that conclusion.
+7. Temporal semantics are grounded when time is material.
+8. Trust is not rewritten as authority.
+9. Resolution does not imply approval, authorization, or effect.
 
-A ResolvedIntent may still contain uncertainty that does not block its next bounded path. That uncertainty MUST remain explicit when it is material to interpretation, user understanding, or downstream planning.
+A ResolvedIntent may still contain uncertainty that does not block its next bounded path. That uncertainty MUST remain explicit when material to interpretation, user understanding, or downstream planning.
 
 ## 21. Non-operational resolution
 
@@ -424,25 +456,25 @@ Exact terminal resolution schemas remain deferred.
 
 ## 22. Cognitive Provider trust boundary
 
-A Cognitive Provider may propose interpretation, claims, assumptions, or candidate semantics.
+A Cognitive Provider may propose interpretation, Claims, Assumptions, or candidate semantics.
 
 Provider output remains candidate material.
 
 IRR MUST NOT treat model confidence, fluent language, provider identity, or provider reputation as proof of factual truth, permission, or verified provenance.
 
-If provider output introduces a claim not supported by admitted context or explicit reasoning assumptions, that claim MUST NOT be silently promoted into established context.
+Provider-introduced semantic material not supported by admitted context may be represented as an explicit candidate inference or Assumption only when allowed by later contracts; it MUST NOT be silently promoted into established context.
 
 Exact provider validation and APIs belong to M0.7 and M3.
 
 ## 23. No hidden semantic repair
 
-IRR MUST NOT silently repair a request by inventing missing referents, recipients, paths, identities, credentials, scopes, resources, or authority.
+IRR MUST NOT silently repair a request by inventing missing referents, recipients, paths, identities, credentials, scopes, resources, temporal facts, or authority.
 
 Useful intent completion does not justify semantic fabrication.
 
-When a missing detail is material, IRR clarifies or represents the bounded information need.
+When a missing detail is material, IRR clarifies or represents a bounded information need.
 
-When a missing detail is non-material, IRR may use an explicit admissible assumption.
+When a missing detail is non-material, IRR may use an explicit admissible Assumption.
 
 ## 24. M0.2 exclusions
 
@@ -456,8 +488,9 @@ M0.2 intentionally does NOT freeze:
 - canonical provenance or digest formats;
 - persistence or runtime state machines;
 - exact clarification or terminal-resolution schemas;
-- `InformationNeed`, `ObservationNeed`, or observation request schemas;
-- late-binding dataflow mechanics;
+- `InformationNeed`, `ObservationNeed`, or observation-request schemas;
+- clock or timestamp wire formats;
+- Late Binding dataflow mechanics;
 - WorkPlan or WorkStep schemas;
 - Capability Catalog schemas;
 - Governance policy or consent rules;
@@ -473,19 +506,22 @@ M0.2 is complete when the repository states unambiguously that:
 
 1. IRR has no ambient semantic context.
 2. Context must be caller-supplied, explicit, bounded, and attributable.
-3. A reference does not grant retrieval or disclosure authority.
+3. A Context Reference does not grant retrieval or disclosure authority.
 4. Context availability does not imply Cognitive Provider disclosure permission.
-5. Claim, attribution, evidence, factual truth, and authority remain distinct.
+5. Claim, Attribution, Evidence, factual truth, and authority remain distinct.
 6. Evidence is scoped and cannot silently amplify trust across unrelated claims.
-7. Origin attribution is not automatically Origin verification.
-8. Verified identity or trusted context never grants permission.
-9. Absence of information is not negation.
-10. Material temporal claims preserve freshness uncertainty.
-11. Material conflicting context cannot be resolved by an implicit global precedence rule.
-12. Material Ambiguity blocks `ResolvedIntent` admission.
-13. Assumptions are explicit and cannot choose materially different meanings.
-14. Missing material information becomes clarification or a bounded information need rather than fabrication.
-15. Observation is attributable data, not automatic truth or authority.
-16. `ResolvedIntent` admission preserves provenance, uncertainty, conflicts, and trust limitations material to the next bounded path.
-17. Non-operational intents do not require a WorkPlan.
-18. No implementation code or premature M1 schema is introduced.
+7. Origin attribution is not automatically Origin Verification.
+8. Unverified attribution may remain usable when verification is not material, without being strengthened.
+9. Verified identity or trusted context never grants permission.
+10. Absence in incomplete context is not negation.
+11. Explicitly complete bounded evidence may support only correspondingly scoped negative conclusions.
+12. Relative temporal semantics require an attributable Temporal Basis when time is material.
+13. IRR does not silently use ambient wall-clock state as semantic truth.
+14. Material conflicting context cannot be resolved by an implicit global precedence rule.
+15. Material Ambiguity blocks `ResolvedIntent` admission.
+16. Assumptions are explicit and cannot choose materially different meanings.
+17. Missing material information becomes clarification or a bounded information need rather than fabrication.
+18. Observation is attributable data, not automatic truth or authority.
+19. `ResolvedIntent` admission preserves provenance, uncertainty, conflicts, temporal basis, completeness, and trust limitations material to the next bounded path.
+20. Non-operational intents do not require a WorkPlan.
+21. No implementation code or premature M1 schema is introduced.
