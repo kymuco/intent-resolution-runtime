@@ -12,7 +12,7 @@ This document defines the terms that later M0 contracts must use consistently. E
 
 ### Intent
 
-A semantic expression of desired outcome, work, inquiry, or change. Intent alone grants no authority.
+A semantic expression of desired result, work, inquiry, or change. Intent alone grants no authority.
 
 ### IntentRequest
 
@@ -58,9 +58,11 @@ Admission means contract-valid, not factually true, safe, approved, or permitted
 
 ### ResolvedIntent
 
-A future IRR representation of admitted intent semantics sufficient for the next bounded step, such as clarification, planning, answer-only completion, no-operational-work completion, or downstream proposal.
+A future IRR representation of admitted intent semantics after material ambiguity that blocks resolution has been addressed.
 
-A ResolvedIntent does not necessarily produce a WorkPlan.
+A ResolvedIntent may support planning, answer-only completion, no-operational-work completion, or a downstream proposal. It does not necessarily produce a WorkPlan.
+
+A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new Material Ambiguity, continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
 The exact schema and terminal states are not frozen in M0.1.
 
@@ -178,6 +180,7 @@ origin != authority
 origin attribution != origin verification
 context != authority
 intent != permission
+clarification != resolved intent
 resolution != approval
 resolved intent != work plan requirement
 candidate validity != factual truth
