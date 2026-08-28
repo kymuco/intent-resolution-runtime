@@ -8,7 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-M0.1 — Product Charter & Vocabulary.
+Current milestone: **M0.2 — Trust, Context & Resolution Semantics**.
+
+M0.1 Product Charter & Vocabulary is frozen in `main`. M0.2 freezes how IRR may know and resolve intent: context is explicit and bounded, evidence remains scoped, material ambiguity blocks resolution, and missing semantics are clarified rather than invented.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -27,6 +29,9 @@ human / companion / worker / system
                 |
                 v
            IntentRequest
+                |
+                v
+      explicit bounded context
                 |
                 v
                IRR
@@ -50,6 +55,8 @@ human / companion / worker / system
 
 Not every intent produces operational work. IRR may resolve an inquiry, request clarification, or determine that no operational work is required without manufacturing a WorkPlan.
 
+IRR has no ambient semantic context. Material used for resolution must enter through an explicit Host boundary and remain attributable. A context reference is not retrieval authority, evidence is not authority, and context available to IRR is not automatically authorized for disclosure to a Cognitive Provider.
+
 When operational work is required, IRR may describe requested scope, effects, dependencies, uncertainty, and required capabilities. It must not claim that a request is safe, approved, authorized, or true merely because it is structurally resolvable.
 
 ## What IRR is not
@@ -61,6 +68,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 ## Normative documents
 
 - [M0 runtime charter](docs/m0_runtime_charter.md)
+- [M0.2 trust, context & resolution semantics](docs/m0_trust_context_resolution.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record

@@ -1,8 +1,8 @@
 # IRR Terminology
 
-Status: **normative vocabulary for M0.1**.
+Status: **normative vocabulary through M0.2**.
 
-This document defines the terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
+This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
 ## Normative words
 
@@ -30,19 +30,13 @@ The actor attributed as having produced the IntentRequest presented to IRR.
 
 Conceptual origin classes are `human`, `companion`, `worker`, and `system`.
 
-Origin is provenance metadata, not authority. The evidence supporting an Origin attribution is a separate trust concern and is frozen later by M0.2.
+Origin is provenance metadata, not authority. Evidence supporting an Origin attribution is governed by M0.2 trust semantics.
 
 IRR MUST NOT silently strengthen an Origin attribution into verified identity, authority, permission, or approval.
 
 ### Host
 
-The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, or continuation observations.
-
-### Context
-
-Caller-supplied material available to resolution through an explicit Host boundary.
-
-Context does not grant authority merely by being present.
+The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, or continuation observations.
 
 ### Cognitive Provider
 
@@ -56,21 +50,27 @@ Provider-produced candidate semantic material offered to IRR for validation and 
 
 Admission means contract-valid, not factually true, safe, approved, or permitted.
 
+### Resolution
+
+The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, and continuation constraints.
+
+Resolution does not imply approval, authorization, WorkPlan creation, or effect.
+
 ### ResolvedIntent
 
-A future IRR representation of admitted intent semantics after material ambiguity that blocks resolution has been addressed.
+A future IRR representation of admitted intent semantics after Material Ambiguity and material Conflict blocking the next bounded path have been addressed.
 
 A ResolvedIntent may support planning, answer-only completion, no-operational-work completion, or a downstream proposal. It does not necessarily produce a WorkPlan.
 
-A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new Material Ambiguity, continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
+A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.1.
+The exact schema and terminal states are not frozen in M0.2.
 
 ### Material Ambiguity
 
-An ambiguity where competing interpretations could materially change a resource, recipient, scope, disclosure, mutation, executable target, cost, or external effect.
+An ambiguity where competing interpretations could materially change a resource, recipient, scope, disclosure, mutation, executable target, cost or external commitment, external effect, or authority-relevant identity/trust interpretation.
 
-Material Ambiguity requires clarification or another explicit resolution path. It must not be hidden by late binding.
+Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding or an Assumption.
 
 ### Clarification
 
@@ -78,13 +78,29 @@ An explicit request for information needed to resolve Material Ambiguity or anot
 
 ### Assumption
 
-An explicit non-hidden premise used during resolution. Later milestones define when assumptions are admissible.
+An explicit premise used to continue resolution without claiming that the premise is established fact.
+
+An Assumption is admissible only when getting it wrong cannot silently choose between materially different meanings. Material identity, recipient, disclosure, mutation, executable, authority, trust, cost, or external-effect choices MUST NOT be filled by Assumption.
+
+### Information Need
+
+A bounded description of information required to continue resolution.
+
+An Information Need is not authority to acquire, observe, retrieve, or disclose that information. Exact schemas are deferred.
+
+### Observation Need
+
+An Information Need whose missing information would be supplied by a future attributable Observation.
+
+An Observation Need is not execution authority.
 
 ### Observation
 
 Attributable information returned from an external boundary or prior bounded step and supplied back to IRR for continuation.
 
-Observation is data, not authority and not automatically truth beyond its stated provenance.
+Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
+
+Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation.
 
 ### Late Binding
 
@@ -94,13 +110,125 @@ Late Binding is not permission to defer a discretionary semantic decision.
 
 ### Continuation
 
-A successor resolution step that consumes attributable prior state plus new clarification, observation, or outcome while preserving parent intent lineage.
+A successor resolution step that consumes attributable prior state plus new clarification, Observation, or Outcome while preserving parent intent lineage.
+
+## Trust and knowledge terms
+
+### Claim
+
+Semantic content presented as describing some fact, state, identity, relation, preference, constraint, or other proposition relevant to resolution.
+
+A Claim is not automatically factual truth.
+
+### Attribution
+
+The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, or other attributable material.
+
+Attribution does not itself prove that the asserted source identity is verified.
+
+### Evidence
+
+Attributable material that supports or weakens a Claim or Attribution.
+
+Evidence MUST be interpreted only within the scope it actually supports. Evidence does not grant authority.
+
+### Evidentiary Status
+
+The explicit characterization of what attributable Evidence establishes, if anything, about a Claim or Attribution.
+
+M0.2 freezes the semantics but not a concrete enum, score, cryptographic mechanism, or trust algorithm.
+
+### Origin Verification
+
+Evidence-backed verification of an Origin attribution under a stated mechanism and scope.
+
+Origin Verification does not grant permission and does not automatically establish truth of every Claim within the IntentRequest.
+
+An unverified Origin attribution may remain semantically usable when verification is not material, provided its evidentiary status is preserved.
+
+### Epistemic Trust
+
+A bounded assessment of what available Evidence justifies believing about a Claim, Attribution, Observation, or source.
+
+Epistemic Trust is separate from Governance authority.
+
+### Trust Amplification
+
+An invalid strengthening of evidentiary status beyond what underlying Evidence supports, including silent propagation from one Claim, identity, source, or item to another.
+
+IRR MUST NOT perform Trust Amplification.
+
+### Conflict
+
+A condition where attributable semantic inputs make incompatible Claims relevant to the same resolution.
+
+A Conflict that can materially change the next bounded path blocks ResolvedIntent admission until an explicit bounded precedence rule, clarification, or further attributable information resolves it. A non-blocking Conflict may remain explicit in a ResolvedIntent.
+
+### Completeness
+
+An attributable assertion that an Observation or Context Item exhaustively covers a stated bounded domain for a stated purpose or time.
+
+Completeness MUST NOT be inferred merely because a result appears exhaustive.
+
+Absence within explicitly complete bounded evidence may support a negative conclusion only within the scope and time that the Completeness assertion covers.
+
+### Freshness
+
+The temporal relevance of a Claim, Context Item, or Observation to the semantics being resolved.
+
+Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
+
+### Temporal Basis
+
+Attributable temporal context used to interpret relative or time-sensitive semantics such as `today`, `latest`, `current`, or `just downloaded`.
+
+A Temporal Basis may later be represented by a resolution time, timezone, timestamp, sequence marker, or another bounded temporal reference. M0.2 freezes the semantics, not the wire format.
+
+IRR MUST NOT silently substitute an ambient machine clock or timezone when the Temporal Basis is material.
+
+## Context terms
+
+### Context
+
+Caller-supplied material admitted to resolution through an explicit Host boundary.
+
+Context does not grant authority merely by being present.
+
+### Context Item
+
+An attributable unit of Context whose semantic content and source distinctions can be preserved when material to trust, ambiguity, Conflict, Freshness, Completeness, or resolution.
+
+Exact representation is deferred.
+
+### Context Boundary
+
+The explicit Host-controlled boundary defining what semantic material is available to IRR for a resolution or Continuation.
+
+IRR MUST NOT silently widen the Context Boundary.
+
+### Ambient Context
+
+Information IRR could potentially discover from a machine, repository, browser, memory store, account, network, device, or other environment but which has not been explicitly admitted through the Context Boundary.
+
+IRR has no authority to acquire Ambient Context merely because it would help resolution.
+
+### Context Reference
+
+An explicit reference identifying possible Context material without necessarily providing the referenced content.
+
+A Context Reference is not retrieval authority or disclosure authority.
+
+### Provider Disclosure
+
+The act of making Context or other semantic material available to a Cognitive Provider.
+
+Context availability to IRR does not imply permission for Provider Disclosure. Exact disclosure policy and APIs are deferred.
 
 ## Work terms
 
 ### WorkPlan
 
-A future bounded semantic representation of operational work derived from a resolved intent when operational work is actually required.
+A future bounded semantic representation of operational work derived from a ResolvedIntent when operational work is actually required.
 
 Not every ResolvedIntent yields a WorkPlan.
 
@@ -170,7 +298,7 @@ A Worker may return a result to IRR while IRR retains the parent intent lifecycl
 
 ### Outcome
 
-An attributable result reported by an Executor or Worker. Exact outcome states, including unknown outcome handling, are deferred to M0.9.
+An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
 
 ## Required distinctions
 
@@ -180,9 +308,23 @@ Later contracts MUST preserve these distinctions:
 origin != principal
 origin != authority
 origin attribution != origin verification
+verified origin != permission
+claim != factual truth
+attribution != verification
+evidence != authority
+epistemic trust != authorization
 context != authority
+context availability != provider disclosure
+context reference != retrieval authority
+absence in incomplete context != negation
+bounded completeness != global completeness
+temporal basis != ambient wall clock
 intent != permission
 clarification != resolved intent
+assumption != hidden default
+assumption != established fact
+information need != observation authority
+cognitive provider output != observation by default
 resolution != approval
 resolved intent != work plan requirement
 handoff != authorization
