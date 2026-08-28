@@ -280,6 +280,8 @@ for every semantic claim.
 
 This is deliberate: verified provenance does not necessarily verify payload truth, and recency does not necessarily imply correctness.
 
+An unresolved material Conflict that can change the next bounded path blocks `ResolvedIntent` admission.
+
 ## 14. Intent statements and descriptive world claims
 
 An IntentRequest may contain both desired semantics and descriptive Claims about the world.
@@ -367,7 +369,7 @@ assumption != hidden default
 assumption != established fact
 ```
 
-If a caller explicitly directs IRR to use a rule that would otherwise have been an unsafe guess, that direction becomes admitted intent/context semantics rather than a hidden IRR assumption.
+If a caller explicitly directs IRR to use a rule that would otherwise have been an unsafe guess, that direction becomes admitted intent/context semantics rather than a hidden IRR assumption. The rule itself must still be explicit and bounded.
 
 ## 17. Explicit selection rules and Late Binding
 
@@ -396,7 +398,7 @@ need for information != permission to observe
 observation need      != execution authority
 ```
 
-The Host, Governance, Executor, Worker, or another external system may later decide how or whether the information is obtained.
+IRR only describes the semantic need. External orchestration may route that need; Governance may authorize any required effect; an Executor or Worker may perform an authorized bounded observation. Those roles MUST NOT be collapsed into IRR merely because the information is needed for resolution.
 
 Returned information becomes usable by IRR only when it re-enters through an attributable continuation boundary.
 
@@ -406,9 +408,11 @@ M0.2 does not freeze an `InformationNeed`, `ObservationNeed`, or observation-req
 
 An **Observation** is attributable information supplied back to IRR from an external boundary or prior bounded step.
 
-Observation does not become truth merely because a tool, worker, Host, or model produced it.
+Observation does not become truth merely because an external system produced it.
 
 IRR MUST retain material provenance, completeness claims, temporal basis, and evidentiary limitations of observations used for continuation.
+
+A Cognitive Provider's ordinary output remains CandidateResolution material under the provider boundary; it is not silently reclassified as an Observation. If provider-produced material later enters as Context or Observation, that classification and provenance must be explicit through the Host boundary.
 
 An Observation may:
 
@@ -430,14 +434,14 @@ At minimum, admission MUST preserve these properties:
 1. Material Ambiguity blocking the next bounded path has been addressed.
 2. Material assumptions are not hidden; only admissible explicit assumptions are used.
 3. Material context provenance and evidentiary limitations are not silently erased.
-4. Material Conflicts are resolved by an explicit rule or remain unresolved.
+4. Any unresolved Conflict that could materially change the next bounded path blocks admission; non-blocking unresolved Conflict remains explicit.
 5. Missing information is not invented.
 6. Absence is not rewritten as negation without complete bounded evidence supporting that conclusion.
 7. Temporal semantics are grounded when time is material.
 8. Trust is not rewritten as authority.
 9. Resolution does not imply approval, authorization, or effect.
 
-A ResolvedIntent may still contain uncertainty that does not block its next bounded path. That uncertainty MUST remain explicit when material to interpretation, user understanding, or downstream planning.
+A ResolvedIntent may still contain uncertainty or Conflict that does not block its next bounded path. Such uncertainty or Conflict MUST remain explicit when material to interpretation, user understanding, or downstream planning.
 
 ## 21. Non-operational resolution
 
@@ -518,10 +522,13 @@ M0.2 is complete when the repository states unambiguously that:
 12. Relative temporal semantics require an attributable Temporal Basis when time is material.
 13. IRR does not silently use ambient wall-clock state as semantic truth.
 14. Material conflicting context cannot be resolved by an implicit global precedence rule.
-15. Material Ambiguity blocks `ResolvedIntent` admission.
-16. Assumptions are explicit and cannot choose materially different meanings.
-17. Missing material information becomes clarification or a bounded information need rather than fabrication.
-18. Observation is attributable data, not automatic truth or authority.
-19. `ResolvedIntent` admission preserves provenance, uncertainty, conflicts, temporal basis, completeness, and trust limitations material to the next bounded path.
-20. Non-operational intents do not require a WorkPlan.
-21. No implementation code or premature M1 schema is introduced.
+15. An unresolved Conflict that can materially change the next bounded path blocks `ResolvedIntent` admission.
+16. Material Ambiguity blocks `ResolvedIntent` admission.
+17. Assumptions are explicit and cannot choose materially different meanings.
+18. Missing material information becomes clarification or a bounded information need rather than fabrication.
+19. An information need does not collapse orchestration, Governance, and observation execution into IRR.
+20. Observation is attributable data, not automatic truth or authority.
+21. Cognitive Provider output is not silently reclassified as Observation.
+22. `ResolvedIntent` admission preserves provenance, uncertainty, conflicts, temporal basis, completeness, and trust limitations material to the next bounded path.
+23. Non-operational intents do not require a WorkPlan.
+24. No implementation code or premature M1 schema is introduced.
