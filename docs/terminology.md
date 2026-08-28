@@ -1,6 +1,6 @@
 # IRR Terminology
 
-Status: **normative vocabulary through M0.5**.
+Status: **normative vocabulary through M0.6**.
 
 This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
@@ -36,13 +36,13 @@ IRR MUST NOT silently strengthen an Origin attribution into verified identity, a
 
 ### Host
 
-The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, or continuation observations.
+The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, continuation observations, or externally produced Governance material.
 
 ### Cognitive Provider
 
 A component that proposes an interpretation or candidate resolution. Examples may include an LLM, deterministic resolver, Organism-derived provider, or hybrid provider.
 
-A Cognitive Provider does not own final IRR state.
+A Cognitive Provider does not own final IRR state and does not grant authority.
 
 ### CandidateResolution
 
@@ -52,7 +52,7 @@ Admission means contract-valid, not factually true, safe, approved, or permitted
 
 ### Resolution
 
-The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, and continuation constraints.
+The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, continuation, work, capability, and authority-boundary constraints.
 
 Resolution does not imply approval, authorization, WorkPlan creation, or effect.
 
@@ -64,13 +64,13 @@ A ResolvedIntent may support planning, answer-only completion, no-operational-wo
 
 A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.5.
+The exact schema and terminal states are not frozen in M0.6.
 
 ### Material Ambiguity
 
 An ambiguity where competing interpretations could materially change a resource, recipient, scope, disclosure, mutation, executable target, cost or external commitment, external effect, or authority-relevant identity/trust interpretation.
 
-Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding or an Assumption.
+Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding, Assumption, or Governance approval.
 
 ### Clarification
 
@@ -160,13 +160,13 @@ A Bound Value retains material semantic lineage and evidentiary limitations. It 
 
 A later association of a Symbolic Reference or successor symbolic slot with a materially different concrete value after an earlier Binding exists.
 
-Rebinding must not silently overwrite prior binding history. Exact lifecycle and identity representation are deferred.
+Rebinding must not silently overwrite prior binding history or inherit value-specific Authorization unless the external authority scope explicitly covers the rebound value/class. Exact lifecycle and identity representation are deferred.
 
 ### Continuation
 
-A successor resolution step that consumes attributable prior state plus new clarification, Observation, Outcome, or another explicitly admitted continuation input while preserving parent intent lineage.
+A successor resolution step that consumes attributable prior state plus new clarification, Observation, Outcome, Governance Constraint, or another explicitly admitted continuation input while preserving parent intent lineage.
 
-Continuation is required when new information introduces a material semantic decision not already determined by admitted semantics. Continuation is not retrieval or observation authority.
+Continuation is required when new information introduces a material semantic decision not already determined by admitted semantics. Continuation is not retrieval, observation, or authority.
 
 ## Trust and knowledge terms
 
@@ -178,7 +178,7 @@ A Claim is not automatically factual truth.
 
 ### Attribution
 
-The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, or other attributable material.
+The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, Governance Decision, Authorization, or other attributable material.
 
 Attribution does not itself prove that the asserted source identity is verified.
 
@@ -230,11 +230,11 @@ Absence within explicitly complete bounded evidence may support a negative concl
 
 ### Freshness
 
-The temporal relevance of a Claim, Context Item, Observation, Binding Input, or Bound Value to the semantics being resolved or executed.
+The temporal relevance of a Claim, Context Item, Observation, Binding Input, Bound Value, Capability Availability statement, or Authorization to the semantics being resolved or executed.
 
 Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
 
-Successful Binding does not prove that the external world still matches the Binding Input indefinitely.
+Successful Binding does not prove that the external world still matches the Binding Input indefinitely. Authorization is also not automatically timeless.
 
 ### Temporal Basis
 
@@ -309,6 +309,8 @@ A WorkPlan is not executable authority, a general-purpose script, or an autonomo
 
 Every operational WorkPlan is attributable to the exact applicable Capability Catalog Snapshot. Each capability-bound WorkStep remains attributable to the admitted Capability contract used to validate its match.
 
+Authorization remains external and separate from the WorkPlan.
+
 ### WorkStep
 
 A bounded semantic unit of requested operational work inside a WorkPlan.
@@ -327,7 +329,7 @@ A finite ordering or data requirement between WorkSteps.
 
 A Work Dependency may express that one step requires another step's result or must occur after another step for semantic validity.
 
-A Work Dependency is not arbitrary program control flow. V1 WorkPlan dependencies form a finite acyclic graph.
+A Work Dependency is not arbitrary program control flow and does not create authority inheritance. V1 WorkPlan dependencies form a finite acyclic graph.
 
 ### Symbolic Reference
 
@@ -344,13 +346,13 @@ structural compatibility != semantic substitutability
 
 An explicit boundary where additional attributable information must return to IRR before a new material semantic decision may be made.
 
-A Continuation Point is not an embedded autonomous planner loop or hidden runtime branch.
+A Continuation Point is not an embedded autonomous planner loop, hidden runtime branch, or authority grant.
 
 ### Successor WorkPlan
 
-A later WorkPlan produced through IRR Continuation when new admitted information changes material operational semantics.
+A later WorkPlan produced through IRR Continuation when new admitted information, including a semantic Governance Constraint, changes material operational semantics.
 
-A Successor WorkPlan preserves lineage to the prior intent/work representation rather than silently mutating the prior plan in place. Exact identity and lineage representation are deferred.
+A Successor WorkPlan preserves lineage to the prior intent/work representation rather than silently mutating the prior plan in place. A materially changed Successor WorkPlan does not silently inherit prior Authorization. Exact identity and lineage representation are deferred.
 
 ### Plan Derivation
 
@@ -362,7 +364,22 @@ A material WorkStep must derive from the parent ResolvedIntent, an explicit admi
 
 The intended meaning of completion for a WorkStep, WorkPlan, or parent intent.
 
-Step completion, plan completion, and intent satisfaction are distinct concepts. Exact completion-condition and Outcome schemas are deferred.
+Step completion, plan completion, constrained-subset completion, and intent satisfaction are distinct concepts. Exact completion-condition and Outcome schemas are deferred.
+
+### WorkProposal
+
+The attributable bounded operational work representation presented to Governance for an authority decision.
+
+A WorkProposal refers to exact proposed work semantics rather than creating a second independent plan. It must preserve enough material scope, effect, resource, recipient, data-flow, uncertainty, capability/provider, completion, and lineage information for Governance to bind its decision to the work actually reviewed.
+
+A human-readable summary may present a WorkProposal but is not a substitute for authority-binding semantic identity when material semantics are omitted.
+
+```text
+WorkProposal != WorkPlan mutation
+WorkProposal != Authorization
+```
+
+Exact WorkProposal fields, IDs, digests, and canonicalization are deferred.
 
 ### Capability
 
@@ -424,11 +441,13 @@ Catalog Membership means capability-known-for-planning. It does not establish cu
 
 The bounded determination that a Capability Descriptor can represent a planned Semantic Operation under the required semantic input, output/completion, effect, scope, and provider/executor constraints where material.
 
-Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, or provider preference.
+Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, provider preference, or Governance approval.
 
 Descriptor presence alone does not establish a Capability Match. If material Descriptor semantics required to establish compatibility are absent or insufficient, IRR cannot upgrade that uncertainty into a positive match.
 
 Capability Match preserves material Completion Semantics: a weaker capability result contract cannot silently satisfy a stronger admitted WorkStep completion meaning.
+
+Authorization cannot override an incompatible Capability Match.
 
 ### Input Contract
 
@@ -476,7 +495,7 @@ The conceptual condition where a required Semantic Operation has no compatible C
 
 `missing_capability` does not claim global impossibility or Governance denial and does not authorize fallback, Catalog widening, arbitrary command execution, browser automation, Worker substitution, or silent omission of required work.
 
-A same-named but semantically incompatible Descriptor does not satisfy the requirement.
+A same-named but semantically incompatible Descriptor does not satisfy the requirement. Authorization cannot create a missing Capability contract.
 
 ### Capability Drift
 
@@ -484,13 +503,13 @@ A material membership or descriptor-semantic change between the capability surfa
 
 Capability Drift may include changed input/output contracts, effect metadata, scope requirements, or provider/executor identity when material.
 
-Capability Drift must not silently reinterpret an existing WorkPlan. An unrelated Catalog change need not change WorkPlan meaning merely because overall snapshot identity differs, while historical snapshot attribution remains exact.
+Capability Drift must not silently reinterpret an existing WorkPlan or inherit prior Authorization when the authority decision depended on materially changed semantics. An unrelated Catalog change need not change WorkPlan meaning merely because overall snapshot identity differs, while historical snapshot attribution remains exact.
 
 ### Availability Drift
 
 A change in whether a semantically known Capability is currently available without necessarily changing its Capability Descriptor semantics.
 
-Availability Drift may affect executability without changing WorkPlan meaning and remains distinct from semantic or membership Capability Drift.
+Availability Drift may affect executability without changing WorkPlan meaning. It does not automatically revoke Authorization unless explicit authority conditions make that runtime state material.
 
 ### Capability Revalidation
 
@@ -504,19 +523,61 @@ A future attributable transfer of bounded proposed work from IRR to an external 
 
 A receiving boundary may later represent governance review, capability execution, or delegated work, but the Handoff itself grants no authority and does not prove that required Governance conditions are satisfied.
 
+A Handoff may later carry or reference Authorization evidence, but carrying that evidence does not make the Handoff its source or permit authority widening.
+
 Exact handoff types and routing are deferred.
 
 ## Authority and execution terms
 
 ### Governance
 
-The external authority boundary that decides whether proposed work may proceed, must be constrained, requires review, or must be denied.
+The external authority boundary that decides whether bounded proposed work may proceed, must be constrained, requires review, or must be denied.
+
+Governance may use external policy, human review, consent state, identity/role information, delegated authority, organizational rules, or other mechanisms. IRR does not own those mechanisms.
+
+### Governance Decision
+
+An attributable external authority decision concerning a bounded WorkProposal.
+
+M0.6 freezes four conceptual decision classes: authorize, deny, constrain, and require_review. Exact enum/wire representation is deferred.
+
+A Governance Decision is not an Effect or Outcome.
 
 ### Authorization
 
-An external Governance decision permitting some bounded work under stated conditions.
+An attributable external Governance decision permitting explicitly bounded work under stated conditions.
 
-Authorization is not proof that an effect occurred.
+Authorization remains separate from WorkPlan, WorkProposal, Capability Descriptor, Effect, and Outcome. It does not prove safety, factual truth, capability existence, availability, execution, or successful completion.
+
+Authorization scope may cover an exact proposal, an explicitly identified bounded subset, or another bounded authority class established by a later Governance contract. IRR never invents or amplifies that scope.
+
+A materially changed Successor WorkPlan, rebound resource, provider boundary, recipient, disclosure, scope, or effect does not silently inherit prior Authorization unless the external authority scope explicitly covers the changed semantics.
+
+### Authorization Condition
+
+A Governance-imposed condition limiting Authorization applicability without materially changing the admitted semantic meaning of the WorkProposal.
+
+Examples may include time/session validity, one-use limits, or requiring an already-admitted provider. If satisfying a condition materially changes work semantics, the decision is instead a semantic Governance Constraint.
+
+### Governance Constraint
+
+An attributable Governance decision requiring narrower or otherwise changed operational semantics before work may proceed.
+
+A semantic Governance Constraint does not mutate the prior WorkPlan in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
+
+The Governance Constraint itself is not a Successor WorkPlan and does not bypass ambiguity, capability, binding, or other IRR validation.
+
+### Denial
+
+An explicit attributable Governance decision that reviewed work may not proceed under the authority context covered by that decision.
+
+Denial is distinct from absence of Authorization, semantic invalidity, `missing_capability`, global impossibility, and factual danger. It does not erase historical intent/work lineage and must not be bypassed by hidden work substitution.
+
+### require_review
+
+A Governance decision or state indicating that additional external review is required before Authorization may exist.
+
+`require_review` is not Authorization and does not imply eventual approval.
 
 ### Permission
 
@@ -526,11 +587,15 @@ A generic authority concept. IRR does not grant Permission.
 
 A change or externally observable operation produced by an Executor or Worker outside the IRR core.
 
+Effect does not prove prior Authorization. A later approval does not retroactively rewrite an earlier effect as historically authorized.
+
 ### Executor
 
 A downstream component that performs bounded Capabilities under the applicable authority conditions.
 
 An Executor may later perform mechanical Binding when an explicit contract permits it, but mechanical Binding does not grant semantic discretion beyond explicitly admitted Binding Rule and Selection Policy semantics.
+
+An Executor must not treat IRR output itself as permission and must preserve the distinction between Authorization coverage and actual Effect/Outcome evidence.
 
 IRR is not an Executor.
 
@@ -540,13 +605,13 @@ A downstream component that performs delegated bounded work with its own subordi
 
 A Worker may return a result to IRR while IRR retains the parent intent lifecycle.
 
-Worker delegation is distinct from ordinary WorkStep execution; exact delegated-work handoff semantics are deferred to M0.8.
+Worker delegation is distinct from ordinary WorkStep execution; Worker judgment does not self-authorize widened parent work. Exact delegated-work handoff semantics are deferred to M0.8.
 
 ### Outcome
 
 An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
 
-Outcome semantics remain distinct from Observation semantics even when one downstream event supplies both.
+Outcome semantics remain distinct from Observation, Governance Decision, and Authorization semantics even when one downstream event or system supplies more than one record.
 
 ## Required distinctions
 
@@ -557,6 +622,9 @@ origin != principal
 origin != authority
 origin attribution != origin verification
 verified origin != permission
+human intent != Authorization by default
+companion intent != delegated authority by default
+approval-like text != Authorization by itself
 claim != factual truth
 attribution != verification
 evidence != authority
@@ -568,12 +636,16 @@ absence in incomplete context != negation
 bounded completeness != global completeness
 temporal basis != ambient wall clock
 intent != permission
+intent != authorization
 clarification != resolved intent
 clarification != intent completion
 assumption != hidden default
 assumption != established fact
 information need != observation authority
+need for authority evidence != authority to acquire authority evidence
 cognitive provider output != observation by default
+provider recommendation != Governance Decision
+provider confidence != Authorization
 returned data != observation by default
 Binding Input != Observation by default
 Binding Input != Context by default
@@ -582,6 +654,7 @@ Binding Input != authority
 Binding Input availability != disclosure authority
 observation != outcome
 resolution != approval
+resolution != authorization
 resolved intent != work plan requirement
 successor resolution != authorization
 semantic operation != implementation command
@@ -591,12 +664,18 @@ capability != implementation command
 capability != autonomous goal loop
 platform neutrality != effect-changing substitution
 work plan != scripting language
+work plan != authorization
+WorkProposal != WorkPlan mutation
+WorkProposal != Authorization
+human-readable summary != authority-binding semantic identity
 bounded work plan != opaque autonomous work step
 work dependency != arbitrary control flow
+work dependency != authority inheritance
 presentation order != execution dependency
 presentation order != binding precedence
 symbolic reference != observed value
 symbolic reference != authority
+symbolic work != automatically ungovernable
 late binding != unadmitted semantic discretion
 unknown value != unknown decision rule
 binding rule != hidden heuristic
@@ -610,13 +689,16 @@ Selection Policy != Governance policy
 Selection Policy != authorization
 binding != semantic plan mutation
 binding != authorization
+Binding success != Authorization expansion
 bound value != timeless fact
 bound value != permission
+semantic validity != authority coverage
 same shape != same meaning
 structural compatibility != semantic substitutability
 zero matches != permission to guess
 stale binding != permission to reselect silently
 rebind != overwrite history
+Authorization for bound value A != Authorization for rebound value B by default
 binding failure != fallback authority
 material new information != mechanical binding input
 continuation != retrieval authority
@@ -628,9 +710,12 @@ valid plan != currently executable plan
 valid plan != authorized plan
 valid plan != successful effect
 step completion != plan completion
+constrained work completion != original intent satisfaction by default
 plan completion != intent satisfaction by default
+Authorization of subset != Authorization of whole plan
 failure != automatic retry
 unknown result != automatic retry
+original Authorization != automatic retry Authorization
 missing implementation != permission to invent a different operation
 empty bounded result != permission to widen scope
 capability catalog != ambient capability discovery
@@ -658,6 +743,10 @@ availability != timeless fact
 availability claim != Observation by default
 available != authorized
 authorized != available
+Authorization != Capability existence
+Authorization != Capability Availability
+Authorization != invocation readiness
+Authorization + missing_capability != executable WorkStep
 missing_capability != global impossibility
 missing capability != fallback authority
 diagnostic capability analysis != admitted full-objective WorkPlan
@@ -674,6 +763,9 @@ capability-supported scope != requested scope
 capability drift != silent plan reinterpretation
 revalidation != authorization
 revalidation != capability substitution
+Authorization over capability semantics v1 != Authorization over materially changed capability semantics v2
+availability drift != automatic authority revocation
+provider substitution != authority inheritance
 executor substitution != automatic semantic equivalence
 capability descriptor != authorization record
 risk/effect label != Governance decision
@@ -682,16 +774,66 @@ later capability addition != retroactive capability existence
 binding != capability admission
 capability admission != bound-resource authorization
 worker availability != capability fallback
+worker judgment != parent Authorization
 missing capability != execution failure
 unavailable capability != unknown outcome
 worker delegation != ordinary work step execution
 inspectable != approved
-handoff != authorization
+WorkProposal != Authorization
+Governance Decision != execution result
+Authorization != ambient general permission
+Authorization for A != Authorization for related B
+Authorization Condition != semantic WorkPlan mutation
+Governance Constraint != in-place WorkPlan rewrite
+Governance Constraint != Successor WorkPlan
+Denial != semantic invalidity
+Denial != missing_capability
+Denial != global impossibility
+Denial != delete proposal history
+Denial != permission to policy-shop
+no Authorization != Denial
+not proven authorized -> no effectful execution
+require_review != Authorization
+require_review != eventual approval
+IRR authority boundary != policy engine implementation
+risk label != IRR permission decision
+Capability Match != Authorization
+Authorization != Capability Match
+Authorization != ambiguity resolution
+Authorization != Capability Match override
+Governance Constraint != capability synthesis
+Handoff != Authorization
+Handoff carrying Authorization != Handoff-created Authorization
+IRR output != executor permission
+Authorization != Effect
+Authorization != Outcome
+Authorization != successful completion
+Effect != proof of Authorization
+Authorization != effect evidence
+effect evidence != retroactive Authorization
+later approval != retroactive historical Authorization
+Outcome != Governance Decision
+authorized observation effect != authority over observed resources
+read authority != disclosure authority
+new disclosure != inherited Authorization
+recipient A authorization != recipient B authorization
+Authorization A != Authorization B
+one approval != all required approvals
+unknown authority state != Denial
+unknown authority state != Authorization
+Authorization != timeless permission
+revoked now != unauthorized historically by definition
+Authorization for WorkPlan v1 != Authorization for materially changed WorkPlan v2
+representation change != semantic work change by default
+semantic mutation != authorized work
+proposal presentation != uncertainty erasure
+Authorization != factual truth
+Authorization != safety guarantee
+Denial != factual danger verdict
 candidate validity != factual truth
 candidate validity != safety
 candidate validity != permission
 authorization != effect evidence
-authorized observation effect != authority over observed resources
 ```
 
 ## External-neighbor names
