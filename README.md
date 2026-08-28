@@ -134,7 +134,9 @@ Capability effect and scope metadata are descriptive, not authority. A Descripto
 
 A WorkProposal is the bounded operational work surface presented to Governance. It remains attributable to the exact reviewed work semantics; a convenient human-readable summary cannot silently replace material scope, effect, recipient, disclosure, provider, uncertainty, or lineage that the authority decision actually depends on.
 
-Governance is external to IRR. Conceptually it may authorize, deny, constrain, or require additional review. A WorkPlan or WorkProposal does not become permission merely because it is valid or inspectable, and IRR never writes authority semantics such as `approved=true`, `safe=true`, or `permission_granted=true` into its own plan state.
+Governance is external to IRR. Conceptually it may authorize, deny, constrain, or require additional review. These are conceptual decision components, not a requirement that every Governance response contain exactly one mutually exclusive state: one response may, for example, authorize an already represented read-only subset while constraining the mutation remainder. A Governance Constraint is not Authorization by default and cannot be interpreted by an Executor as permission to rewrite the proposal and continue.
+
+A WorkPlan or WorkProposal does not become permission merely because it is valid or inspectable, and IRR never writes authority semantics such as `approved=true`, `safe=true`, or `permission_granted=true` into its own plan state.
 
 Authorization is a separate attributable authority decision over explicitly bounded work. Authorization for one resource, recipient, effect, provider, prerequisite, or WorkStep subset does not transitively authorize related work. Human-originated intent — including conversational text such as “yes” or “do it” — is not Authorization by default; an external Governance mechanism must establish what proposal the act refers to and what authority it carries.
 
