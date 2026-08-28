@@ -159,14 +159,14 @@ A Catalog supplied by a Host does not become trustworthy, complete, safe, or per
 
 M0.2 trust semantics continue to apply.
 
-### 5.1 Catalog availability does not imply Provider Disclosure
+### 5.1 Catalog presence does not imply Provider Disclosure
 
 The Capability Catalog is a dedicated structured input to IRR. Its presence inside the IRR boundary does not automatically authorize disclosure of Catalog contents to a Cognitive Provider.
 
 Capability descriptors may expose local provider identities, effect surfaces, scope models, account boundaries, or other material that a Host does not intend to disclose externally.
 
 ```text
-catalog availability to IRR != Provider Disclosure authority
+catalog presence inside IRR != Provider Disclosure authority
 ```
 
 If a Cognitive Provider requires capability information to propose candidate semantics, the Host/provider boundary must supply only the material permitted for that disclosure. M0.7 freezes the exact Cognitive Provider contract.
@@ -319,7 +319,7 @@ A Capability output contract does not establish that any returned value is true 
 
 ## 13. Capability Match
 
-A `Capability Match` is the bounded determination that a catalog-defined Capability can represent a planned Semantic Operation under the required input, output, effect, and scope semantics.
+A `Capability Match` is the bounded determination that a catalog-defined Capability can represent a planned Semantic Operation under the required input, output/completion, effect, scope, and provider/executor semantics where material.
 
 Matching MUST preserve semantic meaning.
 
@@ -349,6 +349,14 @@ If material Descriptor semantics needed to establish compatibility are absent, u
 insufficient material descriptor semantics != compatible capability
 ```
 
+Capability Match also preserves material M0.3 Completion Semantics. A capability result contract that establishes only acceptance, scheduling, or another weaker result MUST NOT silently satisfy a WorkStep whose admitted completion meaning requires a stronger downstream result.
+
+```text
+weaker capability result semantics != stronger WorkStep completion
+```
+
+M0.5 does not freeze terminal Outcome states; it freezes only that a Capability Match cannot erase a material completion-semantic difference.
+
 Exact matching algorithms are deferred.
 
 ## 14. Multiple compatible capabilities
@@ -363,7 +371,7 @@ IRR MUST NOT silently choose between them when the choice can materially change:
 - provider/executor boundary;
 - cost or external commitment;
 - trust-relevant handling;
-- output semantics;
+- output or completion semantics;
 - any other Material Ambiguity dimension frozen by M0.2.
 
 If several descriptors are semantically interchangeable under already admitted semantics, a bounded selection rule may choose among them.
@@ -1171,7 +1179,7 @@ M0.5 is complete when the repository states unambiguously that:
 3. A Capability is a bounded operation contract, not an implementation command or autonomous goal loop.
 4. Every operational WorkPlan is attributable to the exact applicable Catalog Snapshot and admitted Capability contracts used to validate its WorkSteps.
 5. Catalog attribution does not grant authority.
-6. Catalog availability inside IRR does not authorize disclosure of the full Catalog to a Cognitive Provider.
+6. Catalog presence inside IRR does not authorize disclosure of the full Catalog to a Cognitive Provider.
 7. Catalog scope is not silently treated as a global inventory of everything technically possible.
 8. Absence from the applicable Catalog does not prove global impossibility or Governance denial.
 9. Capability Descriptor semantics conceptually preserve identity, purpose, input/output contracts, material effects, scope requirements, and provider/executor identity when material.
@@ -1179,50 +1187,51 @@ M0.5 is complete when the repository states unambiguously that:
 11. Capability input compatibility is semantic rather than primitive-type compatibility.
 12. Symbolic capability inputs remain subject to contract validation when their concrete values later bind.
 13. Capability outputs remain attributable and are not automatically Observation, Outcome, or truth.
-14. Capability matching preserves semantic meaning and cannot rely on name similarity or implementation coercion.
+14. Capability matching preserves semantic meaning across material input, output/completion, effect, scope, and provider/executor semantics and cannot rely on name similarity or implementation coercion.
 15. Descriptor presence does not establish compatibility, and insufficient material Descriptor semantics do not become a positive match.
-16. Multiple materially different capability matches do not permit hidden provider preference.
-17. Catalog order does not imply capability precedence.
-18. Provider/executor identity changes are material when they change effect, disclosure, scope, trust boundary, account boundary, or output provenance.
-19. Material Effect Metadata is descriptive and inspectable but does not authorize work.
-20. Descriptor effect envelope remains distinct from the requested effect semantics of a particular WorkStep.
-21. Capability Match fails when unavoidable capability effects exceed or contradict represented WorkStep semantics.
-22. Effect metadata is not a safety verdict or risk approval.
-23. Downstream implementations cannot exceed the material Descriptor effect surface silently.
-24. Scope Requirements describe bounded semantic scope but do not authorize that scope, and maximum supported scope is not requested scope.
-25. Catalog Membership means capability-known-for-planning, not current availability, authorization, or successful effect.
-26. Capability Availability is distinct from Catalog Membership.
-27. Known-but-unavailable capability is not `missing_capability`.
-28. Capability Availability describes provider/runtime surface availability rather than whether one otherwise semantically compatible invocation's runtime resource/input state is ready.
-29. Semantic capability incompatibility is a match/revalidation failure, not invocation unreadiness.
-30. Availability is attributable and time-bounded, not a timeless fact or automatic Observation classification.
-31. Availability does not grant authorization, and authorization does not establish availability.
-32. A capability-bound WorkPlan may remain semantically valid while a known capability is unavailable.
-33. `missing_capability` means no compatible Capability exists in the exact applicable Catalog Snapshot, not global impossibility.
-34. Required missing or incompatible capabilities fail closed and cannot appear as pretend executable WorkSteps.
-35. Missing capability does not authorize shell, browser, service, Worker, or arbitrary-code fallback.
-36. Missing capability does not permit silently dropping required operations and claiming the original intent is satisfied.
-37. Diagnostic partial capability analysis is not an admitted full-objective WorkPlan and does not authorize partial execution.
-38. A successor resolution may explicitly represent a smaller objective but does not authorize its operational work.
-39. IRR cannot synthesize new capabilities from lower-level mechanisms unless those lower-level capabilities are themselves explicitly supplied and genuinely match admitted work semantics.
-40. Generic command execution is not a universal adapter for unrelated Semantic Operations.
-41. Cognitive Provider proposals do not create Catalog Membership.
-42. Capability prerequisites remain explicit, capability-bound, and derivable rather than hidden side tasks.
-43. Capability Drift includes material membership or descriptor-semantic changes after planning.
-44. Unrelated Catalog changes need not alter WorkPlan meaning merely because snapshot identity changes, while historical snapshot attribution remains exact.
-45. Availability Drift remains distinguishable from semantic/membership drift.
-46. Capability Drift cannot silently reinterpret an existing WorkPlan.
-47. Revalidation does not grant authority and does not permit hidden capability substitution.
-48. Changed material effect metadata is capability drift even if the human-readable capability ID is unchanged.
-49. Material scope changes remain visible as semantic drift.
-50. Executor substitution is not automatically semantically equivalent.
-51. Capability Descriptor metadata is not an authorization record, and ephemeral Availability is not automatically stable Descriptor semantics.
-52. Descriptive risk/effect labels do not decide permission.
-53. New Catalog Snapshots do not rewrite historical planning attribution.
-54. Later Catalog extension does not retroactively erase an earlier `missing_capability` condition.
-55. M0.5 capability admission and M0.6 Governance authorization remain distinct stages.
-56. Binding does not create capability admission, and capability admission does not authorize a later Bound Value.
-57. Worker availability does not become capability fallback.
-58. Missing capability, capability unavailability, invocation unreadiness, execution failure, and unknown outcome remain distinguishishable.
-59. M0.6+, M0.7+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
-60. No runtime code or `src/` tree is introduced.
+16. A weaker capability result contract does not silently satisfy stronger admitted WorkStep Completion Semantics.
+17. Multiple materially different capability matches do not permit hidden provider preference.
+18. Catalog order does not imply capability precedence.
+19. Provider/executor identity changes are material when they change effect, disclosure, scope, trust boundary, account boundary, output provenance, or completion semantics.
+20. Material Effect Metadata is descriptive and inspectable but does not authorize work.
+21. Descriptor effect envelope remains distinct from the requested effect semantics of a particular WorkStep.
+22. Capability Match fails when unavoidable capability effects exceed or contradict represented WorkStep semantics.
+23. Effect metadata is not a safety verdict or risk approval.
+24. Downstream implementations cannot exceed the material Descriptor effect surface silently.
+25. Scope Requirements describe bounded semantic scope but do not authorize that scope, and maximum supported scope is not requested scope.
+26. Catalog Membership means capability-known-for-planning, not current availability, authorization, or successful effect.
+27. Capability Availability is distinct from Catalog Membership.
+28. Known-but-unavailable capability is not `missing_capability`.
+29. Capability Availability describes provider/runtime surface availability rather than whether one otherwise semantically compatible invocation's runtime resource/input state is ready.
+30. Semantic capability incompatibility is a match/revalidation failure, not invocation unreadiness.
+31. Availability is attributable and time-bounded, not a timeless fact or automatic Observation classification.
+32. Availability does not grant authorization, and authorization does not establish availability.
+33. A capability-bound WorkPlan may remain semantically valid while a known capability is unavailable.
+34. `missing_capability` means no compatible Capability exists in the exact applicable Catalog Snapshot, not global impossibility.
+35. Required missing or incompatible capabilities fail closed and cannot appear as pretend executable WorkSteps.
+36. Missing capability does not authorize shell, browser, service, Worker, or arbitrary-code fallback.
+37. Missing capability does not permit silently dropping required operations and claiming the original intent is satisfied.
+38. Diagnostic partial capability analysis is not an admitted full-objective WorkPlan and does not authorize partial execution.
+39. A successor resolution may explicitly represent a smaller objective but does not authorize its operational work.
+40. IRR cannot synthesize new capabilities from lower-level mechanisms unless those lower-level capabilities are themselves explicitly supplied and genuinely match admitted work semantics.
+41. Generic command execution is not a universal adapter for unrelated Semantic Operations.
+42. Cognitive Provider proposals do not create Catalog Membership.
+43. Capability prerequisites remain explicit, capability-bound, and derivable rather than hidden side tasks.
+44. Capability Drift includes material membership or descriptor-semantic changes after planning.
+45. Unrelated Catalog changes need not alter WorkPlan meaning merely because snapshot identity changes, while historical snapshot attribution remains exact.
+46. Availability Drift remains distinguishable from semantic/membership drift.
+47. Capability Drift cannot silently reinterpret an existing WorkPlan.
+48. Revalidation does not grant authority and does not permit hidden capability substitution.
+49. Changed material effect metadata is capability drift even if the human-readable capability ID is unchanged.
+50. Material scope changes remain visible as semantic drift.
+51. Executor substitution is not automatically semantically equivalent.
+52. Capability Descriptor metadata is not an authorization record, and ephemeral Availability is not automatically stable Descriptor semantics.
+53. Descriptive risk/effect labels do not decide permission.
+54. New Catalog Snapshots do not rewrite historical planning attribution.
+55. Later Catalog extension does not retroactively erase an earlier `missing_capability` condition.
+56. M0.5 capability admission and M0.6 Governance authorization remain distinct stages.
+57. Binding does not create capability admission, and capability admission does not authorize a later Bound Value.
+58. Worker availability does not become capability fallback.
+59. Missing capability, capability unavailability, invocation unreadiness, execution failure, and unknown outcome remain distinguishable.
+60. M0.6+, M0.7+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
+61. No runtime code or `src/` tree is introduced.
