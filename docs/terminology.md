@@ -484,14 +484,15 @@ The parent resource universe is not delegated scope by default.
 
 The maximum capability surface admitted for a delegated subtask.
 
-A Worker Capability Ceiling is a restriction, not proof of Catalog Membership, Capability Match, Availability, invocation readiness, Authorization, or success.
+A Worker Capability Ceiling is a restriction, not proof of Catalog Membership, Capability Match, Availability, invocation readiness, Authorization, success, semantic interchangeability, or a Worker-local selection policy.
 
 ```text
 allowed capability != capability existence
 allowed capability != Authorization
+allowed capability set != worker selection policy
 ```
 
-The Worker cannot ambiently widen the ceiling or invent fallback mechanisms merely because they would help complete the objective.
+The Worker cannot ambiently widen the ceiling or invent fallback mechanisms merely because they would help complete the objective. Listing multiple allowed capabilities does not authorize Worker-local choice when the choice materially changes provider/service, disclosure, effect, cost/commitment, authority, completion meaning, or another admitted semantic dimension.
 
 ### Forbidden Effect
 
@@ -512,6 +513,12 @@ A useful but semantically different output does not silently satisfy a required 
 ### Delegated Completion Contract
 
 The bounded semantics describing what must be established for the Worker subtask to count as complete.
+
+A Worker completion assertion, transport success, or progress state does not by itself establish satisfaction of the contract; returned deliverables/result semantics must actually satisfy the admitted completion meaning.
+
+```text
+worker completion claim != Delegated Completion Contract satisfied
+```
 
 Subtask completion does not by itself establish parent intent satisfaction.
 
@@ -782,7 +789,11 @@ A WorkerResult may contain deliverables, findings, Claims/Evidence references, p
 
 WorkerResult is not parent intent completion, factual truth, Observation, Outcome, Governance Decision, Authorization, or canonical memory by default.
 
-Material WorkerResult data that affects the parent path re-enters through an explicit attributable continuation/admission boundary.
+Material WorkerResult data that affects the parent path re-enters through explicit semantic classification and IRR Continuation. WorkerResult does not silently enter the M0.7 Candidate Admission seam merely because it proposes successor semantics.
+
+```text
+WorkerResult re-entry != Candidate Admission by default
+```
 
 ### Worker Progress
 
@@ -800,7 +811,11 @@ Worker Escalation is not permission to satisfy the need, scope expansion, or Aut
 
 ### Outcome
 
-An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
+An attributable downstream operational or lifecycle result record explicitly classified as an Outcome under the applicable execution/recovery contract and reported by an Executor or Worker.
+
+A WorkerResult is a broader delegated-result envelope that may contain or reference one or more Outcome records but is not automatically itself an Outcome.
+
+Exact Outcome states, including unknown-outcome handling, are deferred to M0.9.
 
 Outcome semantics remain distinct from Observation, CandidateResolution, WorkerResult, Governance Decision, and Authorization semantics even when one downstream event or system supplies more than one record.
 
@@ -906,6 +921,7 @@ worker capability ceiling != capability discovery authority
 allowed capability != capability existence
 allowed capability != current Availability
 allowed capability != Authorization
+allowed capability set != worker selection policy
 not forbidden != authorized
 worker context availability != disclosure authority
 local Worker != all-context entitlement
@@ -925,10 +941,13 @@ WorkerResult != Governance Decision
 worker recommendation != Authorization
 WorkerResult != Observation by default
 WorkerResult != Outcome by default
+WorkerResult re-entry != Candidate Admission by default
+worker proposal != CandidateResolution by default
 worker progress != WorkerResult completion
 worker progress != parent completion
 worker escalation != authority grant
 worker escalation != scope expansion
+worker completion claim != Delegated Completion Contract satisfied
 worker says done != parent done
 useful output != required deliverable by default
 deliverable complete != every claim true
