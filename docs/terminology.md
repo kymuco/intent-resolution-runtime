@@ -130,9 +130,11 @@ Capability Drift must not silently reinterpret an existing WorkPlan.
 
 ### Handoff
 
-A future attributable transfer of bounded proposed work from IRR to another boundary, such as Governance, an Executor, or a Worker.
+A future attributable transfer of bounded proposed work from IRR to an external downstream boundary.
 
-Exact handoff types are deferred.
+A receiving boundary may later represent governance review, capability execution, or delegated work, but the Handoff itself grants no authority and does not prove that required Governance conditions are satisfied.
+
+Exact handoff types and routing are deferred.
 
 ## Authority and execution terms
 
@@ -142,7 +144,7 @@ The external authority boundary that decides whether proposed work may proceed, 
 
 ### Authorization
 
-An external Governance outcome permitting some bounded work under stated conditions.
+An external Governance decision permitting some bounded work under stated conditions.
 
 Authorization is not proof that an effect occurred.
 
@@ -183,6 +185,7 @@ intent != permission
 clarification != resolved intent
 resolution != approval
 resolved intent != work plan requirement
+handoff != authorization
 candidate validity != factual truth
 candidate validity != safety
 candidate validity != permission
