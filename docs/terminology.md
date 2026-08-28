@@ -252,6 +252,8 @@ A bounded semantic unit of requested operational work inside a WorkPlan.
 
 A WorkStep must remain attributable to its parent ResolvedIntent/WorkPlan semantics, an admitted constraint, or a necessary explicit prerequisite. Exact structure is deferred.
 
+An ordinary WorkStep's semantic contract must itself be inspectably bounded. A broad or opaque step must not hide an open-ended observe/decide/act loop merely to make the containing WorkPlan look finite; long-form delegated cognition belongs to the separate Worker boundary.
+
 A valid WorkStep is not an authorized WorkStep.
 
 ### Work Dependency
@@ -377,6 +379,7 @@ bounded completeness != global completeness
 temporal basis != ambient wall clock
 intent != permission
 clarification != resolved intent
+clarification != intent completion
 assumption != hidden default
 assumption != established fact
 information need != observation authority
@@ -385,6 +388,7 @@ resolution != approval
 resolved intent != work plan requirement
 semantic operation != implementation command
 work plan != scripting language
+bounded work plan != opaque autonomous work step
 work dependency != arbitrary control flow
 presentation order != execution dependency
 symbolic reference != observed value
