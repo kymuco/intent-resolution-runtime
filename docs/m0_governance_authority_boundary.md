@@ -49,6 +49,8 @@ Executor
  +------> attributable Outcome / returned data
 ```
 
+The diagram shows conceptual decision paths, not a mutually exclusive wire enum. One Governance response may carry more than one decision component over explicitly distinct portions of proposed work, for example Authorization for an already represented read-only subset plus a Governance Constraint over a mutation remainder.
+
 The central invariants are:
 
 ```text
@@ -60,6 +62,7 @@ Governance decision != effect
 Authorization != effect evidence
 absence of Authorization != Denial
 require_review != Authorization
+Governance Constraint != Authorization by default
 Governance Constraint != silent WorkPlan mutation
 ```
 
@@ -171,7 +174,23 @@ constrain
 require_review
 ```
 
-These names are conceptual semantics, not a frozen enum or wire format.
+These names are conceptual semantics, not a frozen enum or wire format, and they are not required to be mutually exclusive components of one Governance response.
+
+For example, one Governance response may explicitly:
+
+```text
+authorize:
+    already represented read-only inspection subset
+
+constrain:
+    mutation/extraction remainder
+```
+
+The Authorization component covers only the stated subset. The Governance Constraint component does not itself authorize the constrained successor work.
+
+```text
+Governance Constraint != Authorization by default
+```
 
 A Governance Decision is not itself an Effect or Outcome.
 
@@ -353,6 +372,12 @@ If satisfying the condition would materially change resource, recipient, effect,
 
 A `Governance Constraint` is an attributable Governance decision requiring narrower or otherwise changed operational semantics before work may proceed.
 
+A Governance Constraint alone does not grant permission for the constrained successor semantics. A Governance response MAY separately contain an Authorization component for an already represented subset, but the two authority roles remain distinct.
+
+```text
+Governance Constraint != Authorization by default
+```
+
 Example:
 
 ```text
@@ -401,6 +426,8 @@ Governance Constraint != Successor WorkPlan
 ```
 
 IRR still validates semantics, ambiguity, capabilities, Binding rules, and other applicable contracts before admitting successor work.
+
+Any authority required for executable successor work remains external. The Constraint itself is not reused as implicit Authorization for the successor plan.
 
 ## 18. Constraining work is not hidden reinterpretation of intent
 
@@ -497,8 +524,10 @@ no Authorization != Denial
 However, absence of sufficient Authorization remains fail-closed for downstream execution requiring authority.
 
 ```text
-not proven authorized -> no effectful execution
+not proven authorized -> no authority-requiring execution
 ```
+
+This does not freeze one universal Host policy that every non-operational or internal computation requires Governance; it freezes only that work requiring authority cannot proceed on an unproven permission assumption.
 
 Exact pending/unknown authority state enums are deferred.
 
@@ -1246,7 +1275,7 @@ M0.6 is complete when the repository states unambiguously that:
 3. WorkProposal is distinct from WorkPlan and Authorization while remaining attributable to exact reviewed work semantics.
 4. A lossy human-readable summary cannot silently replace the authority-binding semantic identity of proposed work.
 5. Non-operational resolution does not require IRR to manufacture a WorkProposal.
-6. Governance decisions conceptually distinguish authorize, deny, constrain, and require_review without freezing a wire enum.
+6. Governance decisions conceptually distinguish authorize, deny, constrain, and require_review without freezing a wire enum; decision components are not required to be mutually exclusive, and Governance Constraint is not Authorization by default.
 7. Authorization is an attributable external decision permitting bounded work under stated conditions.
 8. Authorization remains separate from WorkPlan/Capability Descriptor state and is not represented as IRR-owned `approved=true` semantics.
 9. Authorization scope is bounded and does not amplify transitively across related work.
@@ -1260,7 +1289,7 @@ M0.6 is complete when the repository states unambiguously that:
 17. A condition that materially changes work meaning is a Governance Constraint rather than an authority-only condition.
 18. Governance Constraint does not mutate a WorkPlan in place.
 19. Semantic Governance Constraints return through IRR Continuation/successor semantics with lineage.
-20. Governance Constraint itself is not a Successor WorkPlan and does not bypass IRR validation.
+20. Governance Constraint itself is neither Authorization nor a Successor WorkPlan and does not bypass IRR validation.
 21. Constrained subset completion does not automatically satisfy the original full intent.
 22. Governance may authorize an explicitly represented bounded subset without thereby authorizing the full WorkPlan.
 23. Treating a subset as the new objective requires explicit successor semantics.
