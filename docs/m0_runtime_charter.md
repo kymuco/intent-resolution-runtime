@@ -118,6 +118,7 @@ context != authority
 origin != authority
 origin attribution != origin verification
 resolution != approval
+handoff != authorization
 candidate validity != factual truth
 candidate validity != safety
 candidate validity != permission
@@ -125,6 +126,8 @@ authorization != effect evidence
 ```
 
 IRR MUST NOT manufacture conclusions whose semantics imply that IRR granted permission, approved an effect, proved an origin attribution, or proved that an effect occurred.
+
+A handoff is a transfer of proposed work, not evidence that Governance approved that work. Downstream authority conditions remain external to IRR.
 
 Conceptually:
 
@@ -250,9 +253,10 @@ M0.1 is complete when the repository states unambiguously that:
 5. Principal and Origin are distinct concepts.
 6. Origin is attributable provenance; its evidentiary status is not silently strengthened and it does not grant authority.
 7. Context and resolution do not grant authority.
-8. Cognitive-provider output is candidate material, not truth or permission.
-9. Governance and execution are external boundaries.
-10. Material ambiguity cannot be disguised as late binding.
-11. Capability meaning cannot drift silently after resolution.
-12. HDE, Character_OS, Organism, Codexia, and Runplane remain replaceable external neighbors rather than IRR-core dependencies.
-13. No implementation code or premature runtime schema is introduced.
+8. A handoff does not imply authorization.
+9. Cognitive-provider output is candidate material, not truth or permission.
+10. Governance and execution are external boundaries.
+11. Material ambiguity cannot be disguised as late binding.
+12. Capability meaning cannot drift silently after resolution.
+13. HDE, Character_OS, Organism, Codexia, and Runplane remain replaceable external neighbors rather than IRR-core dependencies.
+14. No implementation code or premature runtime schema is introduced.
