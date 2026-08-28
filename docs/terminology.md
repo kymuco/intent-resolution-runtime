@@ -1,6 +1,6 @@
 # IRR Terminology
 
-Status: **normative vocabulary through M0.2**.
+Status: **normative vocabulary through M0.3**.
 
 This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
@@ -64,7 +64,7 @@ A ResolvedIntent may support planning, answer-only completion, no-operational-wo
 
 A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.2.
+The exact schema and terminal states are not frozen in M0.3.
 
 ### Material Ambiguity
 
@@ -226,23 +226,84 @@ Context availability to IRR does not imply permission for Provider Disclosure. E
 
 ## Work terms
 
+### Semantic Operation
+
+A platform-neutral description of requested operational meaning, such as `filesystem.search`, `archive.extract`, or `process.launch`.
+
+A Semantic Operation describes what work is requested, not the command, API call, script, library, or adapter used to implement it.
+
+Platform neutrality does not permit an implementation to introduce material effects absent from the represented work semantics.
+
+```text
+semantic operation != implementation command
+platform neutrality != effect-changing substitution
+```
+
 ### WorkPlan
 
-A future bounded semantic representation of operational work derived from a ResolvedIntent when operational work is actually required.
+A finite, bounded semantic representation of operational work derived from a ResolvedIntent when operational work is actually required.
 
 Not every ResolvedIntent yields a WorkPlan.
 
-A WorkPlan is not executable authority and is not a general-purpose script.
+A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outputs, bounded ordering, and explicit Continuation Points.
+
+A WorkPlan is not executable authority, a general-purpose script, or an autonomous planner loop.
 
 ### WorkStep
 
-A future bounded unit inside a WorkPlan. Exact structure is deferred.
+A bounded semantic unit of requested operational work inside a WorkPlan.
+
+A WorkStep must remain attributable to its parent ResolvedIntent/WorkPlan semantics, an admitted constraint, or a necessary explicit prerequisite. Exact structure is deferred.
+
+An ordinary WorkStep's semantic contract must itself be inspectably bounded. A broad or opaque step must not hide an open-ended observe/decide/act loop merely to make the containing WorkPlan look finite; long-form delegated cognition belongs to the separate Worker boundary.
+
+A valid WorkStep is not an authorized WorkStep.
+
+### Work Dependency
+
+A finite ordering or data requirement between WorkSteps.
+
+A Work Dependency may express that one step requires another step's result or must occur after another step for semantic validity.
+
+A Work Dependency is not arbitrary program control flow. V1 WorkPlan dependencies form a finite acyclic graph.
+
+### Symbolic Reference
+
+A reference from planned work to a value that is expected to be supplied by another planned result or future attributable input but is not yet known at planning time.
+
+A Symbolic Reference does not assert that the referenced value has already been observed or established as true.
+
+### Continuation Point
+
+An explicit boundary where additional attributable information must return to IRR before a new material semantic decision may be made.
+
+A Continuation Point is not an embedded autonomous planner loop or hidden runtime branch.
+
+### Successor WorkPlan
+
+A later WorkPlan produced through IRR Continuation when new admitted information changes material operational semantics.
+
+A Successor WorkPlan preserves lineage to the prior intent/work representation rather than silently mutating the prior plan in place. Exact identity and lineage representation are deferred.
+
+### Plan Derivation
+
+The attributable semantic relationship explaining why a material WorkStep exists in a WorkPlan.
+
+A material WorkStep must derive from the parent ResolvedIntent, an explicit admitted constraint, or a necessary bounded prerequisite. Plan Derivation does not permit unrelated convenience work.
+
+### Completion Semantics
+
+The intended meaning of completion for a WorkStep, WorkPlan, or parent intent.
+
+Step completion, plan completion, and intent satisfaction are distinct concepts. Exact completion-condition and Outcome schemas are deferred.
 
 ### Capability
 
 A named operation class that an external execution environment can potentially provide, such as `filesystem.search` or `archive.extract`.
 
 A Capability describes what may be requested; it does not itself grant permission to perform it.
+
+M0.5 freezes the exact relationship between Semantic Operations, capabilities, catalog membership, availability, and the Capability Catalog.
 
 ### Capability Catalog
 
@@ -296,6 +357,8 @@ A downstream component that performs delegated bounded work with its own subordi
 
 A Worker may return a result to IRR while IRR retains the parent intent lifecycle.
 
+Worker delegation is distinct from ordinary WorkStep execution; exact delegated-work handoff semantics are deferred to M0.8.
+
 ### Outcome
 
 An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
@@ -321,12 +384,34 @@ bounded completeness != global completeness
 temporal basis != ambient wall clock
 intent != permission
 clarification != resolved intent
+clarification != intent completion
 assumption != hidden default
 assumption != established fact
 information need != observation authority
 cognitive provider output != observation by default
 resolution != approval
 resolved intent != work plan requirement
+semantic operation != implementation command
+platform neutrality != effect-changing substitution
+work plan != scripting language
+bounded work plan != opaque autonomous work step
+work dependency != arbitrary control flow
+presentation order != execution dependency
+symbolic reference != observed value
+continuation point != autonomous planner loop
+necessary prerequisite != hidden side task
+executable-looking text != executable authority
+executable-looking text != work plan control flow
+valid plan != currently executable plan
+valid plan != authorized plan
+valid plan != successful effect
+step completion != plan completion
+plan completion != intent satisfaction by default
+failure != automatic retry
+unknown result != automatic retry
+missing implementation != permission to invent a different operation
+worker delegation != ordinary work step execution
+inspectable != approved
 handoff != authorization
 candidate validity != factual truth
 candidate validity != safety
