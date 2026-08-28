@@ -54,9 +54,10 @@ human / companion / worker / system
                                                       +------------------+
                                                                      |
                                                                      v
-                                                        capability-bound WorkStep[]
+                                                                 WorkStep[]
                                                          semantic, finite,
-                                                         bounded, inspectable
+                                                         bounded, inspectable,
+                                                     capability-matched where required
                                                                      |
                                                         applicable downstream
                                                      governance / authorization
@@ -91,7 +92,9 @@ Late Binding may fill a future value only under an already admitted bounded Bind
 
 Binding Input is a semantic role, not another name for Observation. A plan-local WorkStep output may feed a Binding Rule without becoming IRR Context or an Observation. When new data must influence a new semantic decision, it returns to IRR through an attributable Continuation boundary under an explicit classification. Returned data that requires no further semantic use may simply contribute to completion; M0.4 does not require every returned value to become Binding Input or Continuation input.
 
-A WorkStep requiring operational capability may be admitted only when a compatible Capability exists in the exact applicable Capability Catalog Snapshot. The WorkPlan remains attributable to that snapshot and to the admitted capability contracts that justified its WorkSteps. A same-named Descriptor, or one missing material input/effect/scope semantics needed to establish compatibility, is not automatically a valid Capability Match.
+A WorkStep requiring operational capability may be admitted only when a compatible Capability exists in the exact applicable Capability Catalog Snapshot. The WorkPlan remains attributable to that snapshot and, where a WorkStep is capability-bound, to the admitted capability contract that justified the match. A same-named Descriptor, or one missing material input/effect/scope/result semantics needed to establish compatibility, is not automatically a valid Capability Match.
+
+Capability Match must also preserve material Completion Semantics. A capability result that proves only acceptance, scheduling, or another weaker state cannot silently satisfy a WorkStep whose admitted completion meaning requires a stronger downstream result.
 
 If no compatible Capability is admitted in that snapshot, IRR reports the conceptual `missing_capability` condition rather than inventing shell commands, browser automation, Worker fallback, another service, or arbitrary executable code.
 
@@ -110,7 +113,7 @@ available capability != authorized capability
 catalog membership != successful effect
 ```
 
-A known Capability may be temporarily unavailable while the capability-bound WorkPlan remains semantically valid. A Capability may also remain available even when one particular bound resource or invocation input is stale or invalid. Conversely, an executable mechanism that exists on the machine does not become an admitted Capability unless it is explicitly represented in the applicable Catalog.
+A known Capability may be temporarily unavailable while the capability-bound WorkPlan remains semantically valid. A Capability may also remain available even when one otherwise semantically compatible bound resource or invocation input is stale, missing, unreachable, or temporarily unusable. Semantic input/scope incompatibility is instead a Capability Match or revalidation failure, not a transient readiness state. Conversely, an executable mechanism that exists on the machine does not become an admitted Capability unless it is explicitly represented in the applicable Catalog.
 
 Capability effect and scope metadata are descriptive, not authority. A Descriptor may define a broader bounded effect envelope than one particular invocation requests; the concrete WorkStep must still expose its actual requested effects and scope. Unavoidable capability effects that exceed the represented WorkStep semantics invalidate the match rather than becoming hidden side effects.
 
