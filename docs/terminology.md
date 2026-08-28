@@ -30,13 +30,13 @@ The actor attributed as having produced the IntentRequest presented to IRR.
 
 Conceptual origin classes are `human`, `companion`, `worker`, and `system`.
 
-Origin is provenance metadata, not authority. The evidence supporting an Origin attribution is governed by the M0.2 trust semantics.
+Origin is provenance metadata, not authority. Evidence supporting an Origin attribution is governed by M0.2 trust semantics.
 
 IRR MUST NOT silently strengthen an Origin attribution into verified identity, authority, permission, or approval.
 
 ### Host
 
-The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, or continuation observations.
+The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, or continuation observations.
 
 ### Cognitive Provider
 
@@ -92,7 +92,7 @@ An Observation Need is not execution authority.
 
 Attributable information returned from an external boundary or prior bounded step and supplied back to IRR for continuation.
 
-Observation is data, not authority and not automatically truth beyond its stated provenance and evidence.
+Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
 
 ### Late Binding
 
@@ -136,6 +136,8 @@ Evidence-backed verification of an Origin attribution under a stated mechanism a
 
 Origin Verification does not grant permission and does not automatically establish truth of every Claim within the IntentRequest.
 
+An unverified Origin attribution may remain semantically usable when verification is not material, provided its evidentiary status is preserved.
+
 ### Epistemic Trust
 
 A bounded assessment of what available Evidence justifies believing about a Claim, Attribution, Observation, or source.
@@ -144,7 +146,7 @@ Epistemic Trust is separate from Governance authority.
 
 ### Trust Amplification
 
-An invalid strengthening of evidentiary status beyond what the underlying Evidence supports, including silent propagation from one Claim, identity, source, or item to another.
+An invalid strengthening of evidentiary status beyond what underlying Evidence supports, including silent propagation from one Claim, identity, source, or item to another.
 
 IRR MUST NOT perform Trust Amplification.
 
@@ -154,11 +156,27 @@ A condition where attributable semantic inputs make materially incompatible Clai
 
 A material Conflict must be preserved until an explicit bounded precedence rule, clarification, or further attributable information resolves it.
 
+### Completeness
+
+An attributable assertion that an Observation or Context Item exhaustively covers a stated bounded domain for a stated purpose or time.
+
+Completeness MUST NOT be inferred merely because a result appears exhaustive.
+
+Absence within explicitly complete bounded evidence may support a negative conclusion only within the scope and time that the Completeness assertion covers.
+
 ### Freshness
 
 The temporal relevance of a Claim, Context Item, or Observation to the semantics being resolved.
 
 Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
+
+### Temporal Basis
+
+Attributable temporal context used to interpret relative or time-sensitive semantics such as `today`, `latest`, `current`, or `just downloaded`.
+
+A Temporal Basis may later be represented by a resolution time, timezone, timestamp, sequence marker, or another bounded temporal reference. M0.2 freezes the semantics, not the wire format.
+
+IRR MUST NOT silently substitute an ambient machine clock or timezone when the Temporal Basis is material.
 
 ## Context terms
 
@@ -170,13 +188,13 @@ Context does not grant authority merely by being present.
 
 ### Context Item
 
-An attributable unit of Context whose semantic content and source distinctions can be preserved when material to trust, ambiguity, Conflict, or resolution.
+An attributable unit of Context whose semantic content and source distinctions can be preserved when material to trust, ambiguity, Conflict, Freshness, Completeness, or resolution.
 
 Exact representation is deferred.
 
 ### Context Boundary
 
-The explicit Host-controlled boundary defining what semantic material is available to IRR for a resolution or continuation.
+The explicit Host-controlled boundary defining what semantic material is available to IRR for a resolution or Continuation.
 
 IRR MUST NOT silently widen the Context Boundary.
 
@@ -290,7 +308,9 @@ epistemic trust != authorization
 context != authority
 context availability != provider disclosure
 context reference != retrieval authority
-absence != negation
+absence in incomplete context != negation
+bounded completeness != global completeness
+temporal basis != ambient wall clock
 intent != permission
 clarification != resolved intent
 assumption != hidden default
