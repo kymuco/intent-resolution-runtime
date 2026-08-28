@@ -8,9 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.7 — Cognitive Provider Boundary**.
+Current milestone: **M0.8 — Worker Delegation Boundary**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, and M0.6 Governance & Authority Boundary are frozen in `main`. M0.7 freezes the stable cognitive seam through which replaceable LLM, deterministic, hybrid, or future Organism-derived providers may propose `CandidateResolution` semantics without owning final IRR state, factual truth, capability admission, authority, or effects.
+M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, M0.6 Governance & Authority Boundary, and M0.7 Cognitive Provider Boundary are frozen in `main`. M0.8 freezes the explicit boundary for long-form delegated work so a Worker may own a bounded subordinate lifecycle without owning or silently widening the parent intent, authority, capability, disclosure, or completion semantics.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -78,27 +78,25 @@ human / companion / worker / system
                                                      |                        |          authority yet
                                                      |                        v
                                                      |               Successor semantics
-                                                     v
-                                                   Handoff
                                                      |
-                                                     v
-                                              bounded Executor
-                                              /              \
-                                             v                v
-                                          Effect      attributable Outcome /
-                                                       optional returned data
-                                                              |
-                                          +-------------------+-------------------+
-                                          |                   |                   |
-                                          v                   v                   v
-                                  no further semantic   fixed Binding Rule   new material choice
-                                         use /                  |                   |
-                                      completion                v                   v
-                                                           Bound Value        IRR Continuation
-                                                                |
-                                                                v
-                                                        next bounded work
-                                              (again subject to applicable authority)
+                                        +------------+------------------+
+                                        |                               |
+                                        v                               v
+                                CapabilityHandoff              DelegatedWorkHandoff
+                                bounded operation              bounded long-form subtask
+                                        |                               |
+                                        v                               v
+                                    Executor                          Worker
+                                  /         \                    subordinate lifecycle
+                                 v           v                         |
+                              Effect      Outcome                      v
+                                                         WorkerResult / escalation need
+                                                                     |
+                                                                     v
+                                                               IRR Continuation
+                                                                     |
+                                                        parent continues / completes
+                                                        only if actually satisfied
 ```
 
 A Cognitive Provider is a replaceable proposal source, not the owner of IRR state. IRR discloses only an explicitly permitted bounded input surface to a provider; the provider returns attributable `CandidateResolution` material; IRR independently validates and admits or rejects those semantics under the same M0.1–M0.6 contracts used without a provider.
@@ -121,9 +119,28 @@ A provider may propose semantic interpretation, clarification, candidate inferen
 
 Provider output is not canonical memory and cannot self-expand future privileges. Candidate rejection also does not reject the parent intent by definition: another provider, deterministic path, clarification, or later attributable information may still resolve it. IRR may resolve simple paths without invoking any Cognitive Provider at all, so IRR is not an LLM wrapper.
 
+A Worker is different from both a Cognitive Provider and an Executor. A Worker receives explicit `DelegatedWork` through a `DelegatedWorkHandoff` and may own a subordinate lifecycle for complex bounded work such as research, coding, or artifact production. IRR still owns the parent intent lifecycle and the decision about what a returned `WorkerResult` means for parent continuation or completion.
+
+```text
+Cognitive Provider != Worker
+CapabilityHandoff != DelegatedWorkHandoff
+DelegatedWork != ordinary WorkStep
+DelegatedWorkHandoff != Authorization
+worker subplan != parent WorkPlan mutation
+WorkerResult != parent intent completion
+```
+
+A DelegatedWork envelope explicitly bounds the objective, scope, context surface, allowed capability ceiling, forbidden effects, expected deliverables, completion semantics, lineage, and applicable authority requirements. Worker-local planning or iteration is allowed only inside those already admitted bounds. A newly required recipient, repository/account, disclosure, mutation class, provider/service, capability class, cost/commitment, authority scope, or external effect is material widening and returns to IRR rather than becoming hidden Worker discretion.
+
+Worker context is explicit. Context available to IRR is not automatically Worker-disclosable, and a local Worker does not gain blanket local access merely by being local. A remote Worker may introduce network or external-disclosure effects. The allowed capability surface is only a ceiling: it does not prove capability existence, availability, invocation readiness, Authorization, or success, and a Worker cannot invent shell/browser/another-worker fallback when a required capability is absent.
+
+Worker authority is also explicit and non-transitive. Delegation itself does not create Authorization; a necessary subordinate step does not inherit authority just because it helps the delegated objective; and `not forbidden` is not the same as authorized. A Worker cannot recursively delegate another Worker by default, cannot self-expand future privileges through its own output, and cannot relabel worker-originated continuation as human Origin.
+
+A `WorkerResult` is attributable Worker-produced result material. It may contain deliverables, findings, artifact references, uncertainty, blocked needs, covered scope, and subordinate outcome references, but it is not automatically factual truth, Observation, Outcome, Governance Decision, Authorization, or parent completion. Material WorkerResult data re-enters through an explicit attributable continuation boundary; IRR decides whether the parent continues, produces successor semantics, or is actually satisfied.
+
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
 
-IRR has no ambient semantic context. Material used for resolution must enter through an explicit Host boundary and remain attributable. A context reference is not retrieval authority, evidence is not authority, and context available to IRR is not automatically authorized for disclosure to a Cognitive Provider.
+IRR has no ambient semantic context. Material used for resolution must enter through an explicit Host boundary and remain attributable. A context reference is not retrieval authority, evidence is not authority, and context available to IRR is not automatically authorized for disclosure to a Cognitive Provider or Worker.
 
 When operational work is required, IRR represents **semantic operations**, not platform-specific command sequences. A WorkPlan is finite and inspectable; it may express dependencies, symbolic inputs/outputs, bounded ordering, and explicit continuation points, but it is not a scripting language and does not own arbitrary loops, hidden retries, embedded code, or silent observation-dependent branching.
 
@@ -141,7 +158,7 @@ If no compatible Capability is admitted in that snapshot, IRR reports the concep
 
 A generic `shell.execute`, process-execution, or browser capability is not a universal adapter for unrelated Semantic Operations. Such a capability can match only when the admitted work genuinely requests that bounded operation; IRR does not silently lower `archive.extract`, `telegram.send_file`, or another semantic operation into generic command execution.
 
-The Catalog itself is structured IRR input, not automatically Provider-disclosable context. If a Cognitive Provider needs capability information, only the explicitly permitted Catalog material crosses that boundary.
+The Catalog itself is structured IRR input, not automatically Provider- or Worker-disclosable context. If a Cognitive Provider or Worker needs capability information, only the explicitly permitted Catalog material crosses that boundary.
 
 Capability Catalog Membership, current Capability Availability, invocation readiness, and Governance Authorization are distinct:
 
@@ -158,13 +175,13 @@ Capability effect and scope metadata are descriptive, not authority. A Descripto
 
 A WorkProposal is the bounded operational work surface presented to Governance. It remains attributable to the exact reviewed work semantics; a convenient human-readable summary cannot silently replace material scope, effect, recipient, disclosure, provider, uncertainty, or lineage that the authority decision actually depends on.
 
-Governance is external to IRR. Conceptually it may authorize, deny, constrain, or require additional review. These are conceptual decision components, not a requirement that every Governance response contain exactly one mutually exclusive state: one response may, for example, authorize an already represented read-only subset while constraining the mutation remainder. A Governance Constraint is not Authorization by default and cannot be interpreted by an Executor as permission to rewrite the proposal and continue.
+Governance is external to IRR. Conceptually it may authorize, deny, constrain, or require additional review. These are conceptual decision components, not a requirement that every Governance response contain exactly one mutually exclusive state: one response may, for example, authorize an already represented read-only subset while constraining the mutation remainder. A Governance Constraint is not Authorization by default and cannot be interpreted by an Executor or Worker as permission to rewrite the proposal and continue.
 
-A WorkPlan or WorkProposal does not become permission merely because it is valid or inspectable, and IRR never writes authority semantics such as `approved=true`, `safe=true`, or `permission_granted=true` into its own plan state.
+A WorkPlan, WorkProposal, or DelegatedWork does not become permission merely because it is valid or inspectable, and IRR never writes authority semantics such as `approved=true`, `safe=true`, or `permission_granted=true` into its own plan/delegation state.
 
-Authorization is a separate attributable authority decision over explicitly bounded work. Authorization for one resource, recipient, effect, provider, prerequisite, or WorkStep subset does not transitively authorize related work. Human-originated intent — including conversational text such as “yes” or “do it” — is not Authorization by default; an external Governance mechanism must establish what proposal the act refers to and what authority it carries.
+Authorization is a separate attributable authority decision over explicitly bounded work. Authorization for one resource, recipient, effect, provider, prerequisite, WorkStep subset, or Worker subtask does not transitively authorize related work. Human-originated intent — including conversational text such as “yes” or “do it” — is not Authorization by default; an external Governance mechanism must establish what proposal the act refers to and what authority it carries.
 
-An Authorization Condition may limit authority applicability without changing work semantics, for example a time/session or one-use condition. A Governance Constraint that materially changes resource, recipient, scope, effect, disclosure, provider semantics, or completion meaning does **not** edit the old WorkPlan in place. It returns through IRR Continuation and produces explicit successor semantics with lineage.
+An Authorization Condition may limit authority applicability without changing work semantics, for example a time/session or one-use condition. A Governance Constraint that materially changes resource, recipient, scope, effect, disclosure, provider semantics, or completion meaning does **not** edit the old WorkPlan or DelegatedWork in place. It returns through IRR Continuation and produces explicit successor semantics with lineage.
 
 Governance may authorize an already represented bounded subset of a WorkProposal without authorizing the whole plan. But if that subset becomes the new objective — for example “inspect only, do not extract” — the objective change must be explicit through successor resolution; completing the subset does not silently satisfy the original full intent.
 
@@ -172,7 +189,7 @@ Absence of sufficient Authorization remains fail-closed for authority-requiring 
 
 M0.6 does not force one universal ordering between Binding and Governance. Governance may authorize bounded symbolic work when its scope explicitly covers the symbolic rule/class; a later Bound Value must still remain within that authority. A concrete binding can therefore remain semantically valid yet require Governance re-review without requiring a successor WorkPlan when no semantic meaning changed.
 
-Capability Drift, rebinding, provider substitution, new recipients, new disclosure, or other material changes do not silently inherit prior Authorization. Pure availability drift is different: an executor going offline does not by itself rewrite what Governance authorized.
+Capability Drift, rebinding, provider or Worker substitution, new recipients, new disclosure, or other material changes do not silently inherit prior Authorization. Pure availability drift is different: an executor or Worker going offline does not by itself rewrite what Governance authorized.
 
 Authorization does not prove execution, Outcome, completion, or Effect. Conversely, an observed Effect does not prove that prior Authorization existed, and later approval cannot rewrite history to make an earlier unauthorized effect retroactively authorized.
 
@@ -187,11 +204,11 @@ Authorized observation/read also does not grant authority over discovered resour
 
 Plan-local symbolic dataflow may proceed without a new IRR resolution cycle only while all material semantics remain fixed. Returned data is not automatically an Observation, an Observation is not an Outcome, and a Bound Value is not authorization or permanent proof that the world has not changed.
 
-An ordinary WorkStep must itself have bounded, inspectable semantics. IRR cannot hide an open-ended autonomous agent loop inside one apparently finite step. Long-form delegated cognition belongs to a separate Worker handoff boundary and is deliberately not depicted as ordinary WorkStep execution here.
+An ordinary WorkStep must itself have bounded, inspectable semantics. IRR cannot hide an open-ended autonomous agent loop inside one apparently finite step. Long-form delegated cognition belongs to the separate Worker handoff boundary and is deliberately represented as DelegatedWork rather than ordinary WorkStep execution.
 
 Platform neutrality also does not permit effect-changing substitution: an implementation cannot silently introduce a material effect such as external disclosure merely because it is one way to perform an operation.
 
-A semantically valid WorkPlan is still only proposed work. It does not imply current executability, authorization, execution, or successful effect.
+A semantically valid WorkPlan or DelegatedWork representation is still only proposed work. It does not imply current executability, authorization, execution, Worker acceptance, or successful effect.
 
 ## What IRR is not
 
@@ -208,6 +225,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.5 capability boundary](docs/m0_capability_boundary.md)
 - [M0.6 governance & authority boundary](docs/m0_governance_authority_boundary.md)
 - [M0.7 cognitive provider boundary](docs/m0_cognitive_provider_boundary.md)
+- [M0.8 worker delegation boundary](docs/m0_worker_delegation_boundary.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
