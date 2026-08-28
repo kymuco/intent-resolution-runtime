@@ -42,7 +42,7 @@ The embedding system that invokes IRR and supplies bounded inputs such as contex
 
 A replaceable component that proposes interpretation or candidate resolution semantics to IRR. Examples may include an LLM, deterministic resolver, Organism-derived provider, or hybrid provider.
 
-A Cognitive Provider does not own final IRR state, establish factual truth by itself, grant authority, create Capability Catalog membership, perform IRR admission, or become a Worker merely because it performs internal reasoning.
+A Cognitive Provider does not own final IRR state, establish factual truth by itself, grant authority, create Capability Catalog membership, perform candidate admission, or become a Worker merely because it performs internal reasoning.
 
 Provider-specific prompting, hidden state, model architecture, tool syntax, or organism internals are not part of the stable IRR semantic seam.
 
@@ -51,6 +51,8 @@ Provider-specific prompting, hidden state, model architecture, tool syntax, or o
 The explicitly bounded attributable material disclosed to one Cognitive Provider invocation.
 
 A Provider Input Envelope may contain selected projections of the IntentRequest, Context, Claims/Evidence, Temporal Basis, prior lineage, or Capability Catalog semantics when explicitly permitted for that provider boundary.
+
+Material projection/redaction/summarization must not erase provenance, uncertainty, completeness/freshness limits, or evidentiary limitations when those distinctions could change candidate interpretation.
 
 The Provider Input Envelope is not the whole IRR state by default and does not authorize the provider to widen its input through ambient retrieval or hidden tool use.
 
@@ -76,7 +78,9 @@ CandidateResolution is not ResolvedIntent, WorkPlan, Context, Observation, Autho
 
 ### Candidate Inference
 
-A provider-proposed semantic inference derived from disclosed material whose evidentiary status remains distinct from an established Claim, Context Item, or Observation when that distinction is material.
+A provider-proposed semantic inference influenced by disclosed material, provider-internal/parametric prior knowledge, or both.
+
+Its support remains attributable: Host-admitted Context/Evidence is distinct from provider prior. Provider/model prior is not Host Context or independently admitted Evidence merely because it influenced the candidate.
 
 A Candidate Inference does not silently satisfy material factual choices beyond what admitted Evidence supports.
 
@@ -96,13 +100,13 @@ Provider Provenance supports inspection and reproducibility analysis. It does no
 
 Exact provenance fields, digests, seeds, prompt hashes, and cryptographic representation are deferred.
 
-### Provider Admission
+### Candidate Admission
 
 The IRR-controlled validation boundary through which CandidateResolution material may become admitted IRR semantics.
 
-Provider Admission preserves all applicable M0.1–M0.6 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, and external Governance separation.
+Candidate Admission preserves all applicable M0.1–M0.6 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, and external Governance separation.
 
-Provider Admission may perform semantics-preserving normalization but MUST NOT hide material semantic repair.
+Candidate Admission may perform semantics-preserving normalization but MUST NOT hide material semantic repair.
 
 ```text
 provider proposes != IRR admits
@@ -370,7 +374,7 @@ Every operational WorkPlan is attributable to the exact applicable Capability Ca
 
 Authorization remains external and separate from the WorkPlan.
 
-A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR admission validates the applicable M0.1–M0.6 semantics.
+A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR candidate admission validates the applicable M0.1–M0.6 semantics.
 
 ### WorkStep
 
@@ -626,7 +630,7 @@ An attributable Governance decision requiring narrower or otherwise changed oper
 
 A semantic Governance Constraint does not mutate the prior WorkPlan in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
 
-The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, provider admission, or other IRR validation.
+The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, candidate admission, or other IRR validation.
 
 ### Denial
 
@@ -693,7 +697,9 @@ epistemic trust != authorization
 context != authority
 context availability != provider disclosure
 IRR state != Provider Input Envelope by default
-Provider Disclosure != Candidate admission
+Provider Disclosure != Candidate Admission
+provider projection != uncertainty erasure
+provider summary != stronger Evidence
 local provider != all-context entitlement
 provider invocation != permission to disclose
 provider needs data != provider may acquire data
@@ -709,6 +715,8 @@ CandidateResolution != Effect
 provider inference != user statement
 provider inference != verified world fact
 semantic interpretation != fabricated referent
+model prior != admitted Evidence
+provider prior != Host Context
 provider assumption != permission to guess
 provider preference != ambiguity resolution
 provider confidence != tie-break authority
@@ -734,6 +742,7 @@ same Provider Input != same CandidateResolution by default
 re-query != replay
 private reasoning != IRR Evidence
 private reasoning != Authorization
+internal search != ambient retrieval authority
 provider rationale != evidence provenance
 provider disagreement != admitted Context Conflict by default
 provider fallback != disclosure expansion authority
