@@ -56,21 +56,23 @@ human / companion / worker / system
                                            governance / authorization
                                                       |
                                                       v
-                                           executor or delegated worker
+                                               bounded executor
                                                       |
                                                       v
                                                     effect
 ```
 
-Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when work is required, produce a WorkPlan.
+Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
 
 IRR has no ambient semantic context. Material used for resolution must enter through an explicit Host boundary and remain attributable. A context reference is not retrieval authority, evidence is not authority, and context available to IRR is not automatically authorized for disclosure to a Cognitive Provider.
 
 When operational work is required, IRR represents **semantic operations**, not platform-specific command sequences. A WorkPlan is finite and inspectable; it may express dependencies, symbolic inputs/outputs, bounded ordering, and explicit continuation points, but it is not a scripting language and does not own arbitrary loops, hidden retries, embedded code, or silent observation-dependent branching.
 
-An ordinary WorkStep must itself have bounded, inspectable semantics. IRR cannot hide an open-ended autonomous agent loop inside one apparently finite step; long-form delegated cognition belongs to a separate Worker boundary.
+An ordinary WorkStep must itself have bounded, inspectable semantics. IRR cannot hide an open-ended autonomous agent loop inside one apparently finite step. Long-form delegated cognition belongs to a separate Worker handoff boundary and is deliberately not depicted as ordinary WorkStep execution here.
 
-A valid WorkPlan is still only proposed work. It does not imply capability availability, authorization, execution, or successful effect.
+Platform neutrality also does not permit effect-changing substitution: an implementation cannot silently introduce a material effect such as external disclosure merely because it is one way to perform an operation.
+
+A semantically valid WorkPlan is still only proposed work. It does not imply current executability, authorization, execution, or successful effect. Whether a required semantic operation may be planned when no matching capability exists is intentionally deferred to the M0.5 Capability boundary.
 
 ## What IRR is not
 
