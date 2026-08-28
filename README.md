@@ -91,9 +91,13 @@ Late Binding may fill a future value only under an already admitted bounded Bind
 
 Binding Input is a semantic role, not another name for Observation. A plan-local WorkStep output may feed a Binding Rule without becoming IRR Context or an Observation. When new data must influence a new semantic decision, it returns to IRR through an attributable Continuation boundary under an explicit classification. Returned data that requires no further semantic use may simply contribute to completion; M0.4 does not require every returned value to become Binding Input or Continuation input.
 
-A WorkStep requiring operational capability may be admitted only when a compatible Capability exists in the exact applicable Capability Catalog Snapshot. If no compatible Capability is admitted in that snapshot, IRR reports the conceptual `missing_capability` condition rather than inventing shell commands, browser automation, Worker fallback, another service, or arbitrary executable code.
+A WorkStep requiring operational capability may be admitted only when a compatible Capability exists in the exact applicable Capability Catalog Snapshot. The WorkPlan remains attributable to that snapshot and to the admitted capability contracts that justified its WorkSteps.
 
-`missing_capability` means **missing from the exact applicable planning surface**, not “impossible everywhere.” IRR does not widen or ambiently rediscover the Catalog just because a required operation is absent.
+If no compatible Capability is admitted in that snapshot, IRR reports the conceptual `missing_capability` condition rather than inventing shell commands, browser automation, Worker fallback, another service, or arbitrary executable code.
+
+`missing_capability` means **missing from the exact applicable planning surface**, not “impossible everywhere” and not “Governance denied this.” IRR does not widen or ambiently rediscover the Catalog just because a required operation is absent.
+
+A generic `shell.execute`, process-execution, or browser capability is not a universal adapter for unrelated Semantic Operations. Such a capability can match only when the admitted work genuinely requests that bounded operation; IRR does not silently lower `archive.extract`, `telegram.send_file`, or another semantic operation into generic command execution.
 
 Capability Catalog Membership, current Capability Availability, and Governance Authorization are distinct:
 
@@ -105,7 +109,9 @@ catalog membership != successful effect
 
 A known Capability may be temporarily unavailable while the capability-bound WorkPlan remains semantically valid. Conversely, an executable mechanism that exists on the machine does not become an admitted Capability unless it is explicitly represented in the applicable Catalog.
 
-Capability effect and scope metadata are descriptive, not authority. IRR may represent that a capability can mutate local state, launch a process, use a network, or disclose data externally, but it does not decide that those effects are safe or permitted. M0.6 owns Governance semantics.
+Capability effect and scope metadata are descriptive, not authority. A Descriptor may define a broader bounded effect envelope than one particular invocation requests; the concrete WorkStep must still expose its actual requested effects and scope. Unavoidable capability effects that exceed the represented WorkStep semantics invalidate the match rather than becoming hidden side effects.
+
+IRR may represent that a capability can mutate local state, launch a process, use a network, or disclose data externally, but it does not decide that those effects are safe or permitted. M0.6 owns Governance semantics.
 
 Capability identity is more than a human-readable name. The same `capability_id` does not prove identical input/output contracts, effect surface, scope requirements, provider boundary, or semantics forever. Material Capability Drift must not silently reinterpret an already-resolved WorkPlan.
 
