@@ -224,7 +224,7 @@ M0.1 intentionally does NOT freeze:
 - Python classes, enums, or serialization schemas;
 - runtime state machines;
 - exact `IntentRequest`, `ResolvedIntent`, `WorkPlan`, or handoff fields;
-- exact answer-only, clarification, no-operational-work, or terminal outcome schemas;
+- exact answer-only, clarification, no-operational-work, or terminal resolution schemas;
 - persistence or storage formats;
 - digest or identity algorithms;
 - context-envelope schemas;
