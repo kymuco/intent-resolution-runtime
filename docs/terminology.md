@@ -307,7 +307,7 @@ A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outpu
 
 A WorkPlan is not executable authority, a general-purpose script, or an autonomous planner loop.
 
-Every operational WorkPlan is attributable to the exact applicable Capability Catalog Snapshot and admitted Capability contracts used to validate its WorkSteps.
+Every operational WorkPlan is attributable to the exact applicable Capability Catalog Snapshot. Each capability-bound WorkStep remains attributable to the admitted Capability contract used to validate its match.
 
 ### WorkStep
 
@@ -410,7 +410,7 @@ Catalog presence inside IRR does not authorize disclosure of the full Catalog to
 
 The exact attributable version of the Capability Catalog used for a resolution or planning decision.
 
-Every operational WorkPlan remains attributable to the exact applicable Catalog Snapshot and admitted Capability contracts used to validate its WorkSteps.
+Every operational WorkPlan remains attributable to the exact applicable Catalog Snapshot; each capability-bound WorkStep remains attributable to its admitted matching Capability contract.
 
 Exact snapshot identity, digest, serialization, matched-descriptor references, and persistence are deferred.
 
@@ -422,11 +422,13 @@ Catalog Membership means capability-known-for-planning. It does not establish cu
 
 ### Capability Match
 
-The bounded determination that a Capability Descriptor can represent a planned Semantic Operation under the required semantic input, output, effect, scope, and provider/executor constraints.
+The bounded determination that a Capability Descriptor can represent a planned Semantic Operation under the required semantic input, output/completion, effect, scope, and provider/executor constraints where material.
 
 Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, or provider preference.
 
 Descriptor presence alone does not establish a Capability Match. If material Descriptor semantics required to establish compatibility are absent or insufficient, IRR cannot upgrade that uncertainty into a positive match.
+
+Capability Match preserves material Completion Semantics: a weaker capability result contract cannot silently satisfy a stronger admitted WorkStep completion meaning.
 
 ### Input Contract
 
@@ -460,9 +462,11 @@ Scope Requirements are descriptive constraints, not authorized scope. A capabili
 
 The attributable, time-bounded condition describing whether a catalog-known Capability can currently be offered by the applicable downstream provider/runtime surface under stated operational conditions.
 
-Availability is distinct from Catalog Membership, Authorization, and the readiness of one particular invocation's concrete input/resource state.
+Availability is distinct from Catalog Membership, Authorization, and the readiness of one otherwise semantically compatible invocation's concrete input/resource state.
 
 A known but unavailable Capability is not `missing_capability`.
+
+Semantic input/scope incompatibility is a Capability Match or revalidation failure, not invocation unreadiness.
 
 An availability statement is not automatically an M0.4 Observation; classification depends on how the attributable state enters IRR.
 
@@ -579,6 +583,7 @@ Binding Input availability != disclosure authority
 observation != outcome
 resolution != approval
 resolved intent != work plan requirement
+successor resolution != authorization
 semantic operation != implementation command
 semantic operation != capability
 same textual label != same semantic object
@@ -631,7 +636,7 @@ empty bounded result != permission to widen scope
 capability catalog != ambient capability discovery
 catalog scope != global environment capability
 catalog attribution != authorization
-catalog availability to IRR != Provider Disclosure authority
+catalog presence inside IRR != Provider Disclosure authority
 catalog omission != Governance denial
 catalog membership != Governance approval
 same capability_id != same capability semantics
@@ -640,6 +645,7 @@ name similarity != capability compatibility
 implementation possibility != capability admission
 descriptor present != compatible capability
 insufficient material descriptor semantics != compatible capability
+weaker capability result semantics != stronger WorkStep completion
 multiple matches != permission for hidden provider preference
 catalog order != capability precedence
 catalog membership != current availability
@@ -647,6 +653,7 @@ catalog membership != authorization
 catalog membership != successful effect
 known capability + unavailable != missing capability
 Capability Availability != invocation readiness
+semantic capability incompatibility != invocation unreadiness
 availability != timeless fact
 availability claim != Observation by default
 available != authorized
