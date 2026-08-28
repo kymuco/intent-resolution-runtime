@@ -1,6 +1,6 @@
 # IRR Terminology
 
-Status: **normative vocabulary through M0.3**.
+Status: **normative vocabulary through M0.4**.
 
 This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
@@ -64,7 +64,7 @@ A ResolvedIntent may support planning, answer-only completion, no-operational-wo
 
 A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.3.
+The exact schema and terminal states are not frozen in M0.4.
 
 ### Material Ambiguity
 
@@ -96,21 +96,52 @@ An Observation Need is not execution authority.
 
 ### Observation
 
-Attributable information returned from an external boundary or prior bounded step and supplied back to IRR for continuation.
+Attributable information returned from an external boundary or prior bounded step and supplied back to IRR for continuation or an explicitly defined binding path.
 
 Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
 
-Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation.
+Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Returned data is not automatically an Observation merely because it came from execution.
 
 ### Late Binding
 
-Deferred resolution of a value when the semantic selection rule is already explicit and bounded and a future Observation supplies the value needed to apply that rule.
+Deferred concretization of a value when the semantic Binding Rule is already explicit and bounded before the value is observed.
 
-Late Binding is not permission to defer a discretionary semantic decision.
+Late Binding defers a value, not a discretionary semantic decision.
+
+```text
+late binding != deferred discretion
+unknown value != unknown decision rule
+```
+
+### Binding Rule
+
+An explicit bounded semantic rule that determines how compatible attributable future data may satisfy a Symbolic Reference.
+
+A Binding Rule must not be a hidden heuristic, ambient ordering preference, or invitation for an Executor to improvise.
+
+### Binding
+
+The act of associating a concrete Bound Value with a Symbolic Reference by applying an unchanged admitted Binding Rule to compatible attributable input.
+
+Binding is value instantiation, not semantic WorkPlan self-mutation, authorization, or permission.
+
+### Bound Value
+
+A concrete value associated with a Symbolic Reference after admissible Binding.
+
+A Bound Value retains material semantic lineage and evidentiary limitations. It is not automatically a timeless fact, authorization, or permission grant.
+
+### Rebinding
+
+A later association of a Symbolic Reference or successor symbolic slot with a materially different concrete value after an earlier binding exists.
+
+Rebinding must not silently overwrite prior binding history. Exact lifecycle and identity representation are deferred.
 
 ### Continuation
 
 A successor resolution step that consumes attributable prior state plus new clarification, Observation, or Outcome while preserving parent intent lineage.
+
+Continuation is required when new information introduces a material semantic decision not already determined by admitted semantics. Continuation is not retrieval or observation authority.
 
 ## Trust and knowledge terms
 
@@ -174,9 +205,11 @@ Absence within explicitly complete bounded evidence may support a negative concl
 
 ### Freshness
 
-The temporal relevance of a Claim, Context Item, or Observation to the semantics being resolved.
+The temporal relevance of a Claim, Context Item, Observation, or Bound Value to the semantics being resolved or executed.
 
 Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
+
+Successful Binding does not prove that the external world still matches the Observation indefinitely.
 
 ### Temporal Basis
 
@@ -245,7 +278,7 @@ A finite, bounded semantic representation of operational work derived from a Res
 
 Not every ResolvedIntent yields a WorkPlan.
 
-A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outputs, bounded ordering, and explicit Continuation Points.
+A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outputs, bounded ordering, Binding Rules, and explicit Continuation Points.
 
 A WorkPlan is not executable authority, a general-purpose script, or an autonomous planner loop.
 
@@ -269,9 +302,14 @@ A Work Dependency is not arbitrary program control flow. V1 WorkPlan dependencie
 
 ### Symbolic Reference
 
-A reference from planned work to a value that is expected to be supplied by another planned result or future attributable input but is not yet known at planning time.
+A semantically attributable reference from planned work to a value expected from another planned result or future attributable input but not yet known at planning time.
 
-A Symbolic Reference does not assert that the referenced value has already been observed or established as true.
+A Symbolic Reference does not assert that the referenced value has already been observed or established as true. Primitive type similarity does not allow one symbolic slot to satisfy another unrelated slot.
+
+```text
+symbolic reference != observed value
+structural compatibility != semantic substitutability
+```
 
 ### Continuation Point
 
@@ -349,6 +387,8 @@ A change or externally observable operation produced by an Executor or Worker ou
 
 A downstream component that performs bounded Capabilities under the applicable authority conditions.
 
+An Executor may later perform mechanical Binding when an explicit contract permits it, but deterministic Binding does not grant semantic discretion or authority.
+
 IRR is not an Executor.
 
 ### Worker
@@ -362,6 +402,8 @@ Worker delegation is distinct from ordinary WorkStep execution; exact delegated-
 ### Outcome
 
 An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
+
+Outcome semantics remain distinct from Observation semantics even when one downstream event supplies both.
 
 ## Required distinctions
 
@@ -389,6 +431,8 @@ assumption != hidden default
 assumption != established fact
 information need != observation authority
 cognitive provider output != observation by default
+returned data != observation by default
+observation != outcome
 resolution != approval
 resolved intent != work plan requirement
 semantic operation != implementation command
@@ -397,7 +441,25 @@ work plan != scripting language
 bounded work plan != opaque autonomous work step
 work dependency != arbitrary control flow
 presentation order != execution dependency
+presentation order != binding precedence
 symbolic reference != observed value
+symbolic reference != authority
+late binding != deferred discretion
+unknown value != unknown decision rule
+binding rule != hidden heuristic
+binding rule != executor discretion
+binding != semantic plan mutation
+binding != authorization
+bound value != timeless fact
+bound value != permission
+same shape != same meaning
+structural compatibility != semantic substitutability
+zero matches != permission to guess
+stale binding != permission to reselect silently
+rebind != overwrite history
+binding failure != fallback authority
+material new information != mechanical binding input
+continuation != retrieval authority
 continuation point != autonomous planner loop
 necessary prerequisite != hidden side task
 executable-looking text != executable authority
@@ -410,6 +472,7 @@ plan completion != intent satisfaction by default
 failure != automatic retry
 unknown result != automatic retry
 missing implementation != permission to invent a different operation
+empty bounded result != permission to widen scope
 worker delegation != ordinary work step execution
 inspectable != approved
 handoff != authorization
@@ -417,6 +480,7 @@ candidate validity != factual truth
 candidate validity != safety
 candidate validity != permission
 authorization != effect evidence
+authorized observation effect != authority over observed resources
 ```
 
 ## External-neighbor names
