@@ -43,17 +43,20 @@ IRR MUST create a `WorkPlan` only when the admitted semantics actually require o
 
 IRR MUST NOT manufacture work merely to normalize every intent into the same shape.
 
-Examples that may complete without a `WorkPlan` include:
+Paths that do not require a `WorkPlan` include:
 
 - answer-only inquiries;
 - explanation-only requests;
 - determinations that no operational work is required;
 - clarification or continuation paths that have not yet admitted a successor `ResolvedIntent`.
 
+A clarification or pre-resolution continuation path does not produce a WorkPlan, but it also does not by itself complete the parent intent lifecycle.
+
 Therefore:
 
 ```text
 ResolvedIntent != WorkPlan requirement
+clarification != intent completion
 ```
 
 ## 2. Semantic operations, not implementation commands
@@ -138,9 +141,26 @@ Exact schemas are deferred to M1.
 
 A `WorkPlan` MUST be structurally bounded at the time it is admitted.
 
-Boundedness means the plan has a finite, inspectable set of planned work units and does not hide an unbounded autonomous process behind a step or control construct owned by IRR.
+Boundedness means the plan has a finite, inspectable set of planned work units and does not hide an unbounded autonomous process behind a step or control construct.
 
-A downstream capability may itself perform a bounded operation according to its own contract, but IRR MUST NOT encode an unbounded semantic loop such as:
+Boundedness MUST NOT be laundered through a single opaque WorkStep. An ordinary WorkStep's semantic contract must itself be bounded enough to inspect as a requested operation.
+
+For example, an ordinary WorkStep MUST NOT mean:
+
+```text
+keep observing the environment,
+deciding what to do,
+and acting until the goal is achieved
+```
+
+while presenting that open-ended agent loop as one finite step.
+
+```text
+finite wrapper != bounded semantics
+bounded WorkPlan != opaque autonomous WorkStep
+```
+
+A downstream capability may perform a bounded operation according to its own explicit contract, but IRR MUST NOT encode an unbounded semantic loop such as:
 
 ```text
 while not done:
@@ -149,7 +169,9 @@ while not done:
     execute action
 ```
 
-inside a `WorkPlan`.
+inside an ordinary `WorkPlan`.
+
+If long-form delegated cognition or an open-ended subordinate lifecycle is required, it belongs to the distinct Worker delegation boundary frozen later by M0.8, not to an ordinary WorkStep disguised as a capability.
 
 If new semantic decisions become necessary after new information arrives, the plan returns to an IRR continuation boundary rather than extending itself indefinitely.
 
@@ -169,6 +191,8 @@ M0.3 does not freeze exact fields, but later representations MUST preserve enoug
 - what ordering or dependency constraints apply;
 - what material effect or observation role the step has when that distinction matters;
 - how the step derives from the parent `ResolvedIntent` and `WorkPlan`.
+
+An ordinary WorkStep MUST be inspectably bounded in its semantic purpose. Naming a broad or opaque operation MUST NOT bypass the WorkPlan boundedness invariant.
 
 A `WorkStep` MUST NOT gain authority merely because it is well formed.
 
@@ -548,26 +572,28 @@ M0.3 freezes semantic constraints, not implementation types.
 M0.3 is complete when the repository states unambiguously that:
 
 1. A `WorkPlan` is produced only when a `ResolvedIntent` requires operational work.
-2. Work is represented as semantic operations rather than platform-specific implementation commands.
-3. IRR core work semantics are platform-neutral.
-4. A `WorkPlan` is not a scripting language or general-purpose execution program.
-5. A v1 `WorkPlan` is finite and bounded.
-6. `WorkStep` dependencies express bounded ordering/data dependencies rather than arbitrary control flow.
-7. The v1 dependency graph is finite and acyclic.
-8. Presentation order does not silently become execution dependency.
-9. Symbolic references do not pretend future values are already observed.
-10. New material semantic decisions return to IRR continuation rather than hidden plan branching.
-11. Material plan changes produce successor semantics rather than silent in-place self-mutation.
-12. Every material WorkStep is derivable from the parent resolved intent, an admitted constraint, or a necessary explicit prerequisite.
-13. Material effects cannot be hidden inside misleading step semantics.
-14. Executable-looking user/context text is data unless an explicit downstream contract gives it bounded meaning; it is never hidden IRR control flow.
-15. Plan validity does not imply executability, authorization, or effect.
-16. Naming a semantic operation does not grant the corresponding capability.
-17. Step completion, plan completion, and intent satisfaction remain distinct.
-18. Observation-oriented and effectful work remain semantically distinguishable.
-19. Failure or unknown result does not imply automatic retry.
-20. Missing implementation does not permit arbitrary fallback operations.
-21. Work semantics remain inspectable before downstream Governance.
-22. Worker delegation is not an escape hatch from bounded operation semantics.
-23. M0.4+, M0.5+, M0.6+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
-24. No runtime code or `src/` tree is introduced.
+2. Clarification or pre-resolution continuation does not require a WorkPlan and does not by itself complete the parent intent lifecycle.
+3. Work is represented as semantic operations rather than platform-specific implementation commands.
+4. IRR core work semantics are platform-neutral.
+5. A `WorkPlan` is not a scripting language or general-purpose execution program.
+6. A v1 `WorkPlan` is finite and bounded.
+7. Ordinary WorkStep semantics are themselves inspectably bounded; a finite wrapper cannot launder an opaque autonomous loop into a bounded plan.
+8. `WorkStep` dependencies express bounded ordering/data dependencies rather than arbitrary control flow.
+9. The v1 dependency graph is finite and acyclic.
+10. Presentation order does not silently become execution dependency.
+11. Symbolic references do not pretend future values are already observed.
+12. New material semantic decisions return to IRR continuation rather than hidden plan branching.
+13. Material plan changes produce successor semantics rather than silent in-place self-mutation.
+14. Every material WorkStep is derivable from the parent resolved intent, an admitted constraint, or a necessary explicit prerequisite.
+15. Material effects cannot be hidden inside misleading step semantics.
+16. Executable-looking user/context text is data unless an explicit downstream contract gives it bounded meaning; it is never hidden IRR control flow.
+17. Plan validity does not imply executability, authorization, or effect.
+18. Naming a semantic operation does not grant the corresponding capability.
+19. Step completion, plan completion, and intent satisfaction remain distinct.
+20. Observation-oriented and effectful work remain semantically distinguishable.
+21. Failure or unknown result does not imply automatic retry.
+22. Missing implementation does not permit arbitrary fallback operations.
+23. Work semantics remain inspectable before downstream Governance.
+24. Worker delegation is not an escape hatch from bounded operation semantics.
+25. M0.4+, M0.5+, M0.6+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
+26. No runtime code or `src/` tree is introduced.
