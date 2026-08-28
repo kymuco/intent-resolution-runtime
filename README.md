@@ -8,9 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.5 — Capability Boundary**.
+Current milestone: **M0.6 — Governance & Authority Boundary**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, and M0.4 Late Binding & Observation Boundary are frozen in `main`. M0.5 freezes how WorkSteps are admitted only against an explicit attributable Capability Catalog snapshot, how missing capabilities fail closed, and how capability membership, availability, effects, scope, authorization, and drift remain distinct.
+M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, and M0.5 Capability Boundary are frozen in `main`. M0.6 freezes how bounded WorkProposals cross an external Governance boundary, how Authorization remains separate from work semantics and effects, and how Governance constraints create explicit successor semantics instead of silently mutating plans.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -59,27 +59,42 @@ human / companion / worker / system
                                                          bounded, inspectable,
                                                      capability-matched where required
                                                                      |
-                                                        applicable downstream
-                                                     governance / authorization
+                                                                     v
+                                                                WorkProposal
+                                                          exact proposed semantics
                                                                      |
                                                                      v
-                                                              bounded executor
-                                                            /                 \
-                                                           v                   v
-                                                        effect      optional attributable
-                                                                      returned data
-                                                                           |
-                                                     +---------------------+---------------------+
-                                                     |                     |                     |
-                                                     v                     v                     v
-                                             no further semantic     fixed Binding Rule    new material choice
-                                                    use /                    |                     |
-                                                 completion                  v                     v
-                                                                       Bound Value          IRR Continuation
-                                                                            |
-                                                                            v
-                                                                    next bounded work
-                                                        (again subject to applicable authority)
+                                                                  Governance
+                                                      /-----------+-----------+-----------\
+                                                     v            v           v            v
+                                                Authorization   Denial    Constraint   require_review
+                                                     |                        |            |
+                                                     |                        v            v
+                                                     |                 IRR Continuation   no execution
+                                                     |                        |          authority yet
+                                                     |                        v
+                                                     |               Successor semantics
+                                                     v
+                                                   Handoff
+                                                     |
+                                                     v
+                                              bounded Executor
+                                              /              \
+                                             v                v
+                                          Effect      attributable Outcome /
+                                                       optional returned data
+                                                              |
+                                          +-------------------+-------------------+
+                                          |                   |                   |
+                                          v                   v                   v
+                                  no further semantic   fixed Binding Rule   new material choice
+                                         use /                  |                   |
+                                      completion                v                   v
+                                                           Bound Value        IRR Continuation
+                                                                |
+                                                                v
+                                                        next bounded work
+                                              (again subject to applicable authority)
 ```
 
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
@@ -117,11 +132,32 @@ A known Capability may be temporarily unavailable while the capability-bound Wor
 
 Capability effect and scope metadata are descriptive, not authority. A Descriptor may define a broader bounded effect envelope than one particular invocation requests; the concrete WorkStep must still expose its actual requested effects and scope. Unavoidable capability effects that exceed the represented WorkStep semantics invalidate the match rather than becoming hidden side effects.
 
-IRR may represent that a capability can mutate local state, launch a process, use a network, or disclose data externally, but it does not decide that those effects are safe or permitted. M0.6 owns Governance semantics.
+A WorkProposal is the bounded operational work surface presented to Governance. It remains attributable to the exact reviewed work semantics; a convenient human-readable summary cannot silently replace material scope, effect, recipient, disclosure, provider, uncertainty, or lineage that the authority decision actually depends on.
 
-Capability identity is more than a human-readable name. The same `capability_id` does not prove identical input/output contracts, effect surface, scope requirements, provider boundary, or semantics forever. Material Capability Drift must not silently reinterpret an already-resolved WorkPlan.
+Governance is external to IRR. Conceptually it may authorize, deny, constrain, or require additional review. A WorkPlan or WorkProposal does not become permission merely because it is valid or inspectable, and IRR never writes authority semantics such as `approved=true`, `safe=true`, or `permission_granted=true` into its own plan state.
 
-M0.4 does not freeze Binding before or after Governance. An observation-producing WorkStep may require authorization before it runs, and a newly concrete Bound Value may later require Governance review. Binding success itself grants no permission.
+Authorization is a separate attributable authority decision over explicitly bounded work. Authorization for one resource, recipient, effect, provider, prerequisite, or WorkStep subset does not transitively authorize related work. Human-originated intent — including conversational text such as “yes” or “do it” — is not Authorization by default; an external Governance mechanism must establish what proposal the act refers to and what authority it carries.
+
+An Authorization Condition may limit authority applicability without changing work semantics, for example a time/session or one-use condition. A Governance Constraint that materially changes resource, recipient, scope, effect, disclosure, provider semantics, or completion meaning does **not** edit the old WorkPlan in place. It returns through IRR Continuation and produces explicit successor semantics with lineage.
+
+Governance may authorize an already represented bounded subset of a WorkProposal without authorizing the whole plan. But if that subset becomes the new objective — for example “inspect only, do not extract” — the objective change must be explicit through successor resolution; completing the subset does not silently satisfy the original full intent.
+
+Absence of sufficient Authorization remains fail-closed for authority-requiring execution, but it is not the same semantic state as an explicit Denial. `require_review` is also not Authorization and does not predict eventual approval.
+
+M0.6 does not force one universal ordering between Binding and Governance. Governance may authorize bounded symbolic work when its scope explicitly covers the symbolic rule/class; a later Bound Value must still remain within that authority. A concrete binding can therefore remain semantically valid yet require Governance re-review without requiring a successor WorkPlan when no semantic meaning changed.
+
+Capability Drift, rebinding, provider substitution, new recipients, new disclosure, or other material changes do not silently inherit prior Authorization. Pure availability drift is different: an executor going offline does not by itself rewrite what Governance authorized.
+
+Authorization does not prove execution, Outcome, completion, or Effect. Conversely, an observed Effect does not prove that prior Authorization existed, and later approval cannot rewrite history to make an earlier unauthorized effect retroactively authorized.
+
+```text
+Authorization != Effect
+Authorization != Outcome
+Authorization != effect evidence
+Effect != proof of Authorization
+```
+
+Authorized observation/read also does not grant authority over discovered resources, and read authority does not automatically become disclosure authority.
 
 Plan-local symbolic dataflow may proceed without a new IRR resolution cycle only while all material semantics remain fixed. Returned data is not automatically an Observation, an Observation is not an Outcome, and a Bound Value is not authorization or permanent proof that the world has not changed.
 
@@ -144,6 +180,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.3 intent → work boundary](docs/m0_intent_work_boundary.md)
 - [M0.4 late binding & observation boundary](docs/m0_late_binding_observation_boundary.md)
 - [M0.5 capability boundary](docs/m0_capability_boundary.md)
+- [M0.6 governance & authority boundary](docs/m0_governance_authority_boundary.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
