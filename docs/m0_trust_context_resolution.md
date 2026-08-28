@@ -157,7 +157,9 @@ reference != retrieval authority
 reference != disclosure authority
 ```
 
-If the Host supplies only a reference whose content is not present, IRR MUST treat the referenced content as unavailable unless an external bounded observation later supplies it.
+If the Host supplies only a reference whose content is not present, IRR MUST treat the referenced content as unavailable. A system outside IRR may later resolve that reference under its own applicable authority and re-admit the resulting material through the Host boundary as attributable Context or, when semantically appropriate, as an Observation.
+
+Reference resolution does not by itself determine semantic classification: retrieved material is not automatically an Observation merely because it was fetched after a reference was supplied.
 
 IRR MUST NOT reinterpret a reference as permission to fetch from a filesystem, repository, browser, network service, memory store, account, or worker.
 
@@ -512,7 +514,7 @@ M0.2 is complete when the repository states unambiguously that:
 
 1. IRR has no ambient semantic context.
 2. Context must be caller-supplied, explicit, bounded, and attributable.
-3. A Context Reference does not grant retrieval or disclosure authority.
+3. A Context Reference does not grant retrieval or disclosure authority, and externally resolved reference content may re-enter as attributable Context without being forced into Observation semantics.
 4. Context availability does not imply Cognitive Provider disclosure permission.
 5. Claim, Attribution, Evidence, factual truth, and authority remain distinct.
 6. Evidence is scoped and cannot silently amplify trust across unrelated claims.
