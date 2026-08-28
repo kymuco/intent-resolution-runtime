@@ -404,6 +404,8 @@ The Catalog is the capability planning surface IRR may use. It is not necessaril
 
 IRR does not ambiently discover or widen the Catalog. Catalog omission does not by itself mean Governance denial.
 
+Catalog presence inside IRR does not authorize disclosure of the full Catalog to a Cognitive Provider.
+
 ### Catalog Snapshot
 
 The exact attributable version of the Capability Catalog used for a resolution or planning decision.
@@ -424,7 +426,7 @@ The bounded determination that a Capability Descriptor can represent a planned S
 
 Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, or provider preference.
 
-Descriptor presence alone does not establish a Capability Match.
+Descriptor presence alone does not establish a Capability Match. If material Descriptor semantics required to establish compatibility are absent or insufficient, IRR cannot upgrade that uncertainty into a positive match.
 
 ### Input Contract
 
@@ -456,9 +458,9 @@ Scope Requirements are descriptive constraints, not authorized scope. A capabili
 
 ### Capability Availability
 
-The attributable, time-bounded condition describing whether a catalog-known Capability can currently be offered by the applicable downstream environment under stated runtime conditions.
+The attributable, time-bounded condition describing whether a catalog-known Capability can currently be offered by the applicable downstream provider/runtime surface under stated operational conditions.
 
-Availability is distinct from Catalog Membership and Authorization.
+Availability is distinct from Catalog Membership, Authorization, and the readiness of one particular invocation's concrete input/resource state.
 
 A known but unavailable Capability is not `missing_capability`.
 
@@ -629,6 +631,7 @@ empty bounded result != permission to widen scope
 capability catalog != ambient capability discovery
 catalog scope != global environment capability
 catalog attribution != authorization
+catalog availability to IRR != Provider Disclosure authority
 catalog omission != Governance denial
 catalog membership != Governance approval
 same capability_id != same capability semantics
@@ -636,18 +639,21 @@ same primitive shape != compatible capability input
 name similarity != capability compatibility
 implementation possibility != capability admission
 descriptor present != compatible capability
+insufficient material descriptor semantics != compatible capability
 multiple matches != permission for hidden provider preference
 catalog order != capability precedence
 catalog membership != current availability
 catalog membership != authorization
 catalog membership != successful effect
 known capability + unavailable != missing capability
+Capability Availability != invocation readiness
 availability != timeless fact
 availability claim != Observation by default
 available != authorized
 authorized != available
 missing_capability != global impossibility
 missing capability != fallback authority
+diagnostic capability analysis != admitted full-objective WorkPlan
 partial capability coverage != full intent satisfaction
 generic command execution != universal capability adapter
 provider proposal != capability existence
