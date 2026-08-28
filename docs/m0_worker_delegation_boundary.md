@@ -62,11 +62,14 @@ DelegatedWorkHandoff != Authorization
 worker subplan != parent WorkPlan mutation
 worker judgment != parent Authorization
 worker capability ceiling != capability discovery authority
+allowed capability set != worker selection policy
 worker context availability != disclosure authority
 WorkerResult != parent intent completion
 WorkerResult != factual truth by default
 WorkerResult != Authorization
 WorkerResult != Governance Decision
+WorkerResult != Outcome by default
+worker completion claim != Delegated Completion Contract satisfied
 worker progress != completion
 worker failure != parent intent failure by definition
 worker escalation != authority grant
@@ -249,7 +252,7 @@ If additional information is materially required beyond the delegated envelope, 
 worker needs data != worker may acquire arbitrary data
 ```
 
-## 10. Allowed capability surface is a ceiling, not a promise
+## 10. Allowed capability surface is a ceiling, not a promise or selection policy
 
 DelegatedWork may identify an allowed capability surface or capability ceiling.
 
@@ -267,7 +270,10 @@ It does not prove that every listed capability:
 allowed capability != capability existence
 allowed capability != availability
 allowed capability != Authorization
+allowed capability set != worker selection policy
 ```
+
+Listing multiple capabilities does not declare them semantically interchangeable and does not authorize Worker-local selection when the choice would materially change provider/service, disclosure, effect, cost/commitment, authority, completion meaning, or another admitted semantic dimension. Such a material choice returns to IRR.
 
 M0.5 remains normative.
 
@@ -317,6 +323,8 @@ delegated semantic scope != Authorization scope
 ```
 
 Before authority-requiring effects occur, downstream execution must still establish applicable Authorization coverage.
+
+M0.8 does not freeze one universal ordering between DelegatedWork creation, Worker handoff, Governance review, and subordinate effect authorization. An external system may authorize a bounded delegated class, review concrete subordinate effects, or require another explicit pattern. The invariant is that no authority-requiring effect may exceed applicable Authorization coverage.
 
 ## 14. Worker cannot amplify authority
 
@@ -449,6 +457,8 @@ Worker delegation != recursive-delegation authority
 
 Future contracts may explicitly permit bounded nested delegation, but M0.8 does not assume it.
 
+Internal helper agents, model components, subprocesses, or other Worker implementation details are not automatically nested IRR Worker delegations. They become a nested Worker boundary only when the system semantically delegates a distinct subtask with its own Worker identity/lifecycle beyond the opaque implementation boundary.
+
 If nested delegation is later supported, each nested delegation must preserve lineage, scope, capability ceilings, disclosure constraints, and authority limits rather than inheriting them ambiently.
 
 ## 22. Worker may not relabel Origin or Principal
@@ -509,6 +519,8 @@ worker confidence != evidence amplification
 
 IRR or another downstream consumer must preserve provenance and evidentiary limitations when worker findings matter to parent resolution.
 
+If a Worker acquires information from an external source, material provenance must preserve both the original source and the Worker intermediary when those distinctions matter. Worker-mediated research must not be rewritten as a direct IRR Observation of the original source or as if Worker identity itself were the original factual source.
+
 ## 26. WorkerResult is not Governance material by default
 
 A Worker may recommend proceeding, stopping, changing scope, or requesting approval.
@@ -534,17 +546,17 @@ WorkerResult != Observation by default
 
 One returned payload may support multiple explicit records later, but their semantic roles must not be collapsed.
 
-## 28. WorkerResult is distinct from Outcome
+## 28. WorkerResult is broader than an Outcome record
 
 M0.9 owns exact Outcome/failure states.
 
-A WorkerResult may reference or contain subordinate Outcome information, but:
+A WorkerResult may reference or contain subordinate Outcome information, but WorkerResult is a broader delegated-result envelope and is not automatically itself the `Outcome` semantic record.
 
 ```text
 WorkerResult != Outcome by default
 ```
 
-The distinction matters because a WorkerResult can include analysis/deliverables even when one subordinate effect is failed, interrupted, or unknown.
+An Outcome is an explicitly classified downstream operational/lifecycle result record under the later execution/recovery contract. The distinction matters because a WorkerResult can include analysis, deliverables, claims, omissions, or escalation needs even when one subordinate effect has a failed, interrupted, or unknown Outcome.
 
 ## 29. Progress is not completion
 
@@ -591,7 +603,7 @@ Worker owns subtask lifecycle
 IRR owns parent intent lifecycle
 ```
 
-## 32. Worker cannot close the parent intent by assertion
+## 32. Worker completion claim is not completion evidence by itself
 
 A Worker may return:
 
@@ -599,11 +611,12 @@ A Worker may return:
 "done"
 ```
 
-but that text only asserts Worker subtask status.
+but that text is only a Worker assertion about subtask status.
 
-IRR MUST NOT treat a worker-local completion assertion as proof that the parent objective is satisfied unless the parent completion semantics actually establish that conclusion.
+The receiving IRR/Host boundary must evaluate whether returned deliverables and result semantics actually satisfy the Delegated Completion Contract. A worker-local completion assertion alone does not establish delegated completion and, a fortiori, does not establish the parent objective.
 
 ```text
+worker completion claim != Delegated Completion Contract satisfied
 worker says done != parent done
 ```
 
@@ -644,7 +657,7 @@ is stronger than:
 "return any note about the experiments"
 ```
 
-Worker confidence or transport success cannot strengthen a weaker deliverable into a stronger completion meaning.
+Worker confidence, transport success, or a Worker completion assertion cannot strengthen a weaker deliverable into a stronger completion meaning.
 
 ## 35. Deliverable acceptance and factual correctness are different
 
@@ -747,27 +760,29 @@ worker-generated code != execution authority
 worker patch != applied mutation
 ```
 
-## 43. Worker may return candidate successor semantics, not mint them
+## 43. Worker may return proposed successor semantics, not mint them
 
 A Worker may recommend a changed parent plan or new objective.
 
-That recommendation is input to IRR Continuation, not a Successor WorkPlan created by Worker authority.
+That recommendation is attributable WorkerResult material for IRR Continuation, not a Successor WorkPlan created by Worker authority and not a CandidateResolution merely because it proposes semantics.
 
 ```text
 worker proposal != successor ResolvedIntent
 worker proposal != successor WorkPlan
+worker proposal != CandidateResolution by default
 ```
 
-IRR re-applies applicable trust, ambiguity, capability, provider-admission, and Governance semantics.
+IRR re-applies the applicable M0.1–M0.7 trust, ambiguity, work, capability, provider, and Governance boundaries. M0.7 Candidate Admission applies only if a Cognitive Provider is actually invoked and returns CandidateResolution material; WorkerResult does not silently enter that provider-specific seam.
 
 ## 44. Worker result re-entry is explicit and attributable
 
-Material WorkerResult information that affects the parent path must re-enter through an explicit attributable continuation boundary.
+Material WorkerResult information that affects the parent path must re-enter through an explicit attributable classification and IRR Continuation boundary.
 
-It does not become ambient parent Context merely because the Worker returned it.
+It does not become ambient parent Context, CandidateResolution, Observation, Evidence, or Outcome merely because the Worker returned it. The Host/IRR boundary classifies the material role explicitly while preserving Worker and source provenance.
 
 ```text
 WorkerResult availability != ambient Context admission
+WorkerResult re-entry != Candidate Admission by default
 ```
 
 ## 45. Worker result cannot silently rewrite prior parent history
@@ -902,7 +917,7 @@ planning systems
 
 but those internals do not alter the externally frozen delegation semantics.
 
-If internal mechanisms create new external information acquisition, disclosure, mutation, or other effects, those effects must still fit the delegation/authority envelope rather than becoming exempt because they are "internal" to Worker implementation.
+Internal helper agents are not automatically nested IRR Workers. If internal mechanisms create new external information acquisition, disclosure, mutation, or other effects, those effects must still fit the delegation/authority envelope rather than becoming exempt because they are "internal" to Worker implementation.
 
 ## 55. Codexia is an example, not a dependency
 
@@ -945,13 +960,14 @@ M0.8 may bound the capability surface available to a Worker but does not create 
 
 ```text
 worker allowed capability != Capability Match
+allowed capability set != worker selection policy
 ```
 
 ## 59. Relationship to M0.6 Governance
 
 M0.6 owns Authorization, Denial, Governance Constraint, require_review, and authority coverage.
 
-M0.8 carries or references applicable authority semantics without minting them.
+M0.8 carries or references applicable authority semantics without minting them and does not impose one universal authority-check ordering for every Worker implementation.
 
 ```text
 DelegatedWorkHandoff != Authorization
@@ -969,13 +985,14 @@ A Worker may internally use cognitive systems, but Worker output remains WorkerR
 ```text
 Cognitive Provider != Worker
 CandidateResolution != WorkerResult
+WorkerResult re-entry != Candidate Admission by default
 ```
 
 ## 61. Relationship to M0.9 Failure & Recovery
 
 M0.9 owns exact failure, retry, fallback, interrupted, and unknown-outcome principles.
 
-M0.8 freezes only that Worker failure/progress/result states do not by themselves imply parent failure/completion or automatic retry.
+M0.8 freezes only that Worker failure/progress/result states do not by themselves imply parent failure/completion or automatic retry, and that WorkerResult is broader than any explicit Outcome record later produced under M0.9 semantics.
 
 ## 62. Research-worker scenario
 
@@ -1066,11 +1083,12 @@ Delegated objective:
 "produce three experiment candidates"
 ```
 
-Worker returns three candidates successfully.
+Worker returns three candidates and also asserts `done`.
 
-The delegated subtask may be complete, but the parent intent may still require IRR to compare candidates, request clarification, obtain Governance review, or construct successor work.
+The receiving boundary first evaluates whether the three candidates actually satisfy the delegated completion contract. Even if the delegated subtask is complete, the parent intent may still require IRR to compare candidates, request clarification, obtain Governance review, or construct successor work.
 
 ```text
+worker completion claim != Delegated Completion Contract satisfied
 subtask complete != parent complete
 ```
 
@@ -1085,10 +1103,10 @@ M0.8 is complete when the repository states unambiguously that:
 5. Delegated scope is explicit and is not the whole parent resource universe by default.
 6. Worker context disclosure is explicit and distinct from IRR Context availability.
 7. Worker has no ambient context entitlement.
-8. Allowed capability surface is a ceiling, not proof of capability existence, availability, readiness, or Authorization.
+8. Allowed capability surface is a ceiling, not proof of capability existence, availability, readiness, Authorization, semantic interchangeability, or a hidden Worker selection policy.
 9. Worker cannot invent capability fallback or ambiently discover additional capabilities.
 10. DelegatedWorkHandoff does not create Authorization.
-11. Delegated semantic scope is distinct from Authorization scope.
+11. Delegated semantic scope is distinct from Authorization scope and M0.8 does not impose a universal Governance timing order.
 12. Worker cannot amplify parent authority or infer permission from necessity.
 13. Forbidden effects can further restrict delegation but `not forbidden` does not mean authorized.
 14. Worker may own a subordinate lifecycle inside the delegation envelope.
@@ -1096,15 +1114,15 @@ M0.8 is complete when the repository states unambiguously that:
 16. Worker-local discretion cannot materially widen objective, scope, disclosure, effect, capability, cost, or authority semantics.
 17. Material widening returns to IRR through an attributable continuation/escalation path.
 18. New prerequisites do not automatically enter delegated scope or authority.
-19. Recursive Worker delegation is not allowed by default.
+19. Recursive IRR Worker delegation is not allowed by default, while internal helper agents do not become nested IRR Workers merely by existing inside a Worker implementation.
 20. Worker preserves Origin/Principal provenance and cannot relabel worker initiative as human Origin.
 21. WorkerResult is attributable Worker-produced result material.
 22. WorkerResult is not parent intent completion by itself.
-23. WorkerResult is not factual truth, Governance Decision, Authorization, Observation, or Outcome by default.
+23. WorkerResult is not factual truth, Governance Decision, Authorization, Observation, or Outcome by default; it is broader than any explicit Outcome record it may carry/reference.
 24. Worker progress is distinct from WorkerResult completion and parent completion.
 25. Worker escalation/need is not authority or scope expansion.
 26. IRR retains ownership of the parent intent lifecycle and continuation/completion decision.
-27. Worker cannot close the parent intent merely by asserting `done`.
+27. Worker completion assertions do not by themselves satisfy either the Delegated Completion Contract or the parent intent.
 28. Expected deliverables and completion semantics are explicit when material.
 29. Structurally complete deliverable does not prove every factual Claim true.
 30. Worker identity/reputation does not amplify trust automatically.
@@ -1114,22 +1132,23 @@ M0.8 is complete when the repository states unambiguously that:
 34. Delegated mutation remains represented effectful work subject to applicable capability/authority boundaries.
 35. Research-like objectives do not implicitly authorize external disclosure.
 36. Worker-generated code/patch/tool syntax is not execution or mutation authority.
-37. Worker may propose successor semantics but cannot mint successor parent ResolvedIntent/WorkPlan.
-38. Material WorkerResult re-entry is explicit and attributable.
-39. WorkerResult cannot rewrite historical parent intent/work/authorization/effect state.
-40. Cancellation/interruption does not erase prior effects or artifacts.
-41. Worker retry/fallback/unknown-outcome algorithms remain M0.9 territory.
-42. Worker failure does not prove parent intent invalidity, Denial, or global impossibility.
-43. Fallback Worker cannot silently widen scope/disclosure/authority.
-44. Multiple Workers have no implicit precedence or majority-is-truth rule.
-45. Worker disagreement is not admitted Context Conflict by default.
-46. Worker self-asserted privilege does not become privilege.
-47. Worker internal memory is not canonical parent memory by default.
-48. Worker internals may be complex while external delegation semantics remain bounded and inspectable.
-49. Codexia is an example Worker, not an IRR core dependency.
-50. M0.2/M0.3/M0.5/M0.6/M0.7 ownership remains preserved.
-51. M0.9 failure/recovery, M1 schemas/runtime, and concrete M7 Codexia integration remain deferred.
-52. No runtime code or `src/` tree is introduced.
+37. Worker may propose successor semantics but cannot mint successor parent ResolvedIntent/WorkPlan or silently enter M0.7 Candidate Admission.
+38. Material WorkerResult re-entry is explicit, attributable, and classified rather than ambient.
+39. Worker-mediated external information preserves original-source and Worker-intermediary provenance when material.
+40. WorkerResult cannot rewrite historical parent intent/work/authorization/effect state.
+41. Cancellation/interruption does not erase prior effects or artifacts.
+42. Worker retry/fallback/unknown-outcome algorithms remain M0.9 territory.
+43. Worker failure does not prove parent intent invalidity, Denial, or global impossibility.
+44. Fallback Worker cannot silently widen scope/disclosure/authority.
+45. Multiple Workers have no implicit precedence or majority-is-truth rule.
+46. Worker disagreement is not admitted Context Conflict by default.
+47. Worker self-asserted privilege does not become privilege.
+48. Worker internal memory is not canonical parent memory by default.
+49. Worker internals may be complex while external delegation semantics remain bounded and inspectable.
+50. Codexia is an example Worker, not an IRR core dependency.
+51. M0.2/M0.3/M0.5/M0.6/M0.7 ownership remains preserved.
+52. M0.9 failure/recovery, M1 schemas/runtime, and concrete M7 Codexia integration remain deferred.
+53. No runtime code or `src/` tree is introduced.
 
 ## 68. M0.8 exclusions
 
