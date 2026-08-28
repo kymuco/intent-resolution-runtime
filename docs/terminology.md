@@ -1,6 +1,6 @@
 # IRR Terminology
 
-Status: **normative vocabulary through M0.6**.
+Status: **normative vocabulary through M0.7**.
 
 This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
@@ -36,23 +36,88 @@ IRR MUST NOT silently strengthen an Origin attribution into verified identity, a
 
 ### Host
 
-The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, continuation observations, or externally produced Governance material.
+The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, continuation observations, externally produced Governance material, or explicitly permitted Cognitive Provider material.
 
 ### Cognitive Provider
 
-A component that proposes an interpretation or candidate resolution. Examples may include an LLM, deterministic resolver, Organism-derived provider, or hybrid provider.
+A replaceable component that proposes interpretation or candidate resolution semantics to IRR. Examples may include an LLM, deterministic resolver, Organism-derived provider, or hybrid provider.
 
-A Cognitive Provider does not own final IRR state and does not grant authority.
+A Cognitive Provider does not own final IRR state, establish factual truth by itself, grant authority, create Capability Catalog membership, perform candidate admission, or become a Worker merely because it performs internal reasoning.
+
+Provider-specific prompting, hidden state, model architecture, tool syntax, or organism internals are not part of the stable IRR semantic seam.
+
+### Provider Input Envelope
+
+The explicitly bounded attributable material disclosed to one Cognitive Provider invocation.
+
+A Provider Input Envelope may contain selected projections of the IntentRequest, Context, Claims/Evidence, Temporal Basis, prior lineage, or Capability Catalog semantics when explicitly permitted for that provider boundary.
+
+Material projection/redaction/summarization must not erase provenance, uncertainty, completeness/freshness limits, or evidentiary limitations when those distinctions could change candidate interpretation.
+
+The Provider Input Envelope is not the whole IRR state by default and does not authorize the provider to widen its input through ambient retrieval or hidden tool use.
+
+Exact fields and transport are deferred.
+
+### Provider Disclosure
+
+The act of making Context or other semantic material available to a Cognitive Provider.
+
+Context, Capability Catalog material, Authorization material, prior Observations, account data, or other IRR state being available inside IRR does not imply permission for Provider Disclosure.
+
+Provider Disclosure remains explicit for local and remote providers. Remote provider transport may itself create network/external-disclosure effects governed outside IRR.
+
+Exact disclosure policy and APIs are deferred.
 
 ### CandidateResolution
 
-Provider-produced candidate semantic material offered to IRR for validation and possible admission.
+Provider-produced attributable candidate semantic material offered to IRR for validation and possible admission.
 
-Admission means contract-valid, not factually true, safe, approved, or permitted.
+A CandidateResolution may propose interpretation, candidate Claims/Inferences, Assumptions, ambiguity/conflict analysis, Clarification, Information/Observation Needs, non-operational semantics, or bounded operational semantics.
+
+CandidateResolution is not ResolvedIntent, WorkPlan, Context, Observation, Authorization, Outcome, Effect, or canonical memory by default.
+
+### Candidate Inference
+
+A provider-proposed semantic inference influenced by disclosed material, provider-internal/parametric prior knowledge, or both.
+
+Its support remains attributable: Host-admitted Context/Evidence is distinct from provider prior. Provider/model prior is not Host Context or independently admitted Evidence merely because it influenced the candidate.
+
+A Candidate Inference does not silently satisfy material factual choices beyond what admitted Evidence supports.
+
+### Provider Confidence
+
+Provider-produced confidence, probability, ranking, score, or uncertainty metadata associated with candidate material.
+
+Provider Confidence is descriptive metadata. It is not Evidence, factual truth, ambiguity-resolution authority, Capability Match, safety, Governance Authorization, or successful effect by default.
+
+A numeric Provider Confidence value is not assumed calibrated merely because it is numeric.
+
+### Provider Provenance
+
+Attributable information identifying material facts about the provider invocation or candidate origin, such as provider/adapter identity, provider/model version when material, input-envelope identity, candidate identity, configuration identity, or temporal basis.
+
+Provider Provenance supports inspection and reproducibility analysis. It does not grant authority or prove candidate truth.
+
+Exact provenance fields, digests, seeds, prompt hashes, and cryptographic representation are deferred.
+
+### Candidate Admission
+
+The IRR-controlled validation boundary through which CandidateResolution material may become admitted IRR semantics.
+
+Candidate Admission preserves all applicable M0.1–M0.6 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, and external Governance separation.
+
+Candidate Admission may perform semantics-preserving normalization but MUST NOT hide material semantic repair.
+
+```text
+provider proposes != IRR admits
+normalization != semantic repair
+```
+
+Exact admission-result schemas are deferred.
 
 ### Resolution
 
-The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, continuation, work, capability, and authority-boundary constraints.
+The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, continuation, work, capability, authority-boundary, and provider-admission constraints.
 
 Resolution does not imply approval, authorization, WorkPlan creation, or effect.
 
@@ -64,13 +129,13 @@ A ResolvedIntent may support planning, answer-only completion, no-operational-wo
 
 A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.6.
+The exact schema and terminal states are not frozen in M0.7.
 
 ### Material Ambiguity
 
 An ambiguity where competing interpretations could materially change a resource, recipient, scope, disclosure, mutation, executable target, cost or external commitment, external effect, or authority-relevant identity/trust interpretation.
 
-Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding, Assumption, or Governance approval.
+Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding, Assumption, Governance approval, Provider Confidence, or provider preference.
 
 ### Clarification
 
@@ -100,7 +165,7 @@ Attributable information explicitly supplied back to IRR from an external bounda
 
 Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
 
-Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Returned data and plan-local WorkStep output are not automatically Observations merely because they contain information.
+Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Provider-side tool/retrieval results, returned data, and plan-local WorkStep output are not automatically Observations merely because they contain information.
 
 ### Late Binding
 
@@ -178,7 +243,7 @@ A Claim is not automatically factual truth.
 
 ### Attribution
 
-The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, Governance Decision, Authorization, or other attributable material.
+The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, Governance Decision, Authorization, CandidateResolution, or other attributable material.
 
 Attribution does not itself prove that the asserted source identity is verified.
 
@@ -210,7 +275,7 @@ Epistemic Trust is separate from Governance authority.
 
 ### Trust Amplification
 
-An invalid strengthening of evidentiary status beyond what underlying Evidence supports, including silent propagation from one Claim, identity, source, or item to another.
+An invalid strengthening of evidentiary status beyond what underlying Evidence supports, including silent propagation from one Claim, identity, source, item, provider identity, or provider reputation to another Claim or payload.
 
 IRR MUST NOT perform Trust Amplification.
 
@@ -219,6 +284,8 @@ IRR MUST NOT perform Trust Amplification.
 A condition where attributable semantic inputs make incompatible Claims relevant to the same resolution.
 
 A Conflict that can materially change the next bounded path blocks ResolvedIntent admission until an explicit bounded precedence rule, clarification, or further attributable information resolves it. A non-blocking Conflict may remain explicit in a ResolvedIntent.
+
+Provider disagreement is candidate disagreement rather than admitted Context Conflict by default; Conflict semantics apply only when material has actually entered the relevant admitted semantic role.
 
 ### Completeness
 
@@ -230,11 +297,11 @@ Absence within explicitly complete bounded evidence may support a negative concl
 
 ### Freshness
 
-The temporal relevance of a Claim, Context Item, Observation, Binding Input, Bound Value, Capability Availability statement, or Authorization to the semantics being resolved or executed.
+The temporal relevance of a Claim, Context Item, Observation, Binding Input, Bound Value, Capability Availability statement, Authorization, or provider-produced candidate material to the semantics being resolved or executed.
 
 Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
 
-Successful Binding does not prove that the external world still matches the Binding Input indefinitely. Authorization is also not automatically timeless.
+Successful Binding does not prove that the external world still matches the Binding Input indefinitely. Authorization is also not automatically timeless. Provider output does not become current merely because it was generated recently if its underlying evidence is stale or unspecified.
 
 ### Temporal Basis
 
@@ -270,17 +337,13 @@ Information IRR could potentially discover from a machine, repository, browser, 
 
 IRR has no authority to acquire Ambient Context merely because it would help resolution.
 
+A Cognitive Provider does not gain Ambient Context authority merely because additional information would improve its candidate.
+
 ### Context Reference
 
 An explicit reference identifying possible Context material without necessarily providing the referenced content.
 
 A Context Reference is not retrieval authority or disclosure authority.
-
-### Provider Disclosure
-
-The act of making Context or other semantic material available to a Cognitive Provider.
-
-Context availability to IRR does not imply permission for Provider Disclosure. Exact disclosure policy and APIs are deferred.
 
 ## Work terms
 
@@ -310,6 +373,8 @@ A WorkPlan is not executable authority, a general-purpose script, or an autonomo
 Every operational WorkPlan is attributable to the exact applicable Capability Catalog Snapshot. Each capability-bound WorkStep remains attributable to the admitted Capability contract used to validate its match.
 
 Authorization remains external and separate from the WorkPlan.
+
+A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR candidate admission validates the applicable M0.1–M0.6 semantics.
 
 ### WorkStep
 
@@ -346,7 +411,7 @@ structural compatibility != semantic substitutability
 
 An explicit boundary where additional attributable information must return to IRR before a new material semantic decision may be made.
 
-A Continuation Point is not an embedded autonomous planner loop, hidden runtime branch, or authority grant.
+A Continuation Point is not an embedded autonomous planner loop, hidden runtime branch, provider self-continuation loop, or authority grant.
 
 ### Successor WorkPlan
 
@@ -441,13 +506,13 @@ Catalog Membership means capability-known-for-planning. It does not establish cu
 
 The bounded determination that a Capability Descriptor can represent a planned Semantic Operation under the required semantic input, output/completion, effect, scope, and provider/executor constraints where material.
 
-Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, provider preference, or Governance approval.
+Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, provider preference, provider assertion, or Governance approval.
 
 Descriptor presence alone does not establish a Capability Match. If material Descriptor semantics required to establish compatibility are absent or insufficient, IRR cannot upgrade that uncertainty into a positive match.
 
 Capability Match preserves material Completion Semantics: a weaker capability result contract cannot silently satisfy a stronger admitted WorkStep completion meaning.
 
-Authorization cannot override an incompatible Capability Match.
+Authorization and provider recommendation cannot override an incompatible Capability Match.
 
 ### Input Contract
 
@@ -465,7 +530,7 @@ Capability outputs may later serve as Binding Input, Observation, Outcome eviden
 
 Descriptive metadata representing the material externally observable effect surface or bounded effect envelope of a Capability contract.
 
-Effect Metadata is inspectable semantic information, not Authorization, safety approval, or a Governance decision.
+Effect Metadata is inspectable semantic information, not Authorization, safety approval, a Governance decision, or provider permission.
 
 The Descriptor effect envelope remains distinct from the concrete requested effect semantics of a particular WorkStep. A match is invalid when unavoidable capability effects exceed or contradict the represented WorkStep semantics.
 
@@ -493,9 +558,9 @@ An availability statement is not automatically an M0.4 Observation; classificati
 
 The conceptual condition where a required Semantic Operation has no compatible Capability admitted in the exact applicable Catalog Snapshot.
 
-`missing_capability` does not claim global impossibility or Governance denial and does not authorize fallback, Catalog widening, arbitrary command execution, browser automation, Worker substitution, or silent omission of required work.
+`missing_capability` does not claim global impossibility or Governance denial and does not authorize fallback, Catalog widening, arbitrary command execution, browser automation, Cognitive Provider invention, Worker substitution, or silent omission of required work.
 
-A same-named but semantically incompatible Descriptor does not satisfy the requirement. Authorization cannot create a missing Capability contract.
+A same-named but semantically incompatible Descriptor does not satisfy the requirement. Authorization or provider assertion cannot create a missing Capability contract.
 
 ### Capability Drift
 
@@ -547,7 +612,7 @@ A Governance Decision is not an Effect or Outcome.
 
 An attributable external Governance decision permitting explicitly bounded work under stated conditions.
 
-Authorization remains separate from WorkPlan, WorkProposal, Capability Descriptor, Effect, and Outcome. It does not prove safety, factual truth, capability existence, availability, execution, or successful completion.
+Authorization remains separate from WorkPlan, WorkProposal, Capability Descriptor, CandidateResolution, Effect, and Outcome. It does not prove safety, factual truth, capability existence, availability, execution, or successful completion.
 
 Authorization scope may cover an exact proposal, an explicitly identified bounded subset, or another bounded authority class established by a later Governance contract. IRR never invents or amplifies that scope.
 
@@ -565,13 +630,13 @@ An attributable Governance decision requiring narrower or otherwise changed oper
 
 A semantic Governance Constraint does not mutate the prior WorkPlan in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
 
-The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, or other IRR validation.
+The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, candidate admission, or other IRR validation.
 
 ### Denial
 
 An explicit attributable Governance decision that reviewed work may not proceed under the authority context covered by that decision.
 
-Denial is distinct from absence of Authorization, semantic invalidity, `missing_capability`, global impossibility, and factual danger. It does not erase historical intent/work lineage and must not be bypassed by hidden work substitution.
+Denial is distinct from absence of Authorization, semantic invalidity, `missing_capability`, provider failure, global impossibility, and factual danger. It does not erase historical intent/work lineage and must not be bypassed by hidden work substitution.
 
 ### require_review
 
@@ -595,9 +660,9 @@ A downstream component that performs bounded Capabilities under the applicable a
 
 An Executor may later perform mechanical Binding when an explicit contract permits it, but mechanical Binding does not grant semantic discretion beyond explicitly admitted Binding Rule and Selection Policy semantics.
 
-An Executor must not treat IRR output itself as permission and must preserve the distinction between Authorization coverage and actual Effect/Outcome evidence.
+An Executor must not treat IRR output or provider output itself as permission and must preserve the distinction between Authorization coverage and actual Effect/Outcome evidence.
 
-IRR is not an Executor.
+IRR is not an Executor. A Cognitive Provider is also not an Executor merely because its transport calls an external model service.
 
 ### Worker
 
@@ -605,13 +670,13 @@ A downstream component that performs delegated bounded work with its own subordi
 
 A Worker may return a result to IRR while IRR retains the parent intent lifecycle.
 
-Worker delegation is distinct from ordinary WorkStep execution; Worker judgment does not self-authorize widened parent work. Exact delegated-work handoff semantics are deferred to M0.8.
+Worker delegation is distinct from ordinary WorkStep execution and Cognitive Provider candidate generation; Worker judgment does not self-authorize widened parent work. Exact delegated-work handoff semantics are deferred to M0.8.
 
 ### Outcome
 
 An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
 
-Outcome semantics remain distinct from Observation, Governance Decision, and Authorization semantics even when one downstream event or system supplies more than one record.
+Outcome semantics remain distinct from Observation, CandidateResolution, Governance Decision, and Authorization semantics even when one downstream event or system supplies more than one record.
 
 ## Required distinctions
 
@@ -631,6 +696,77 @@ evidence != authority
 epistemic trust != authorization
 context != authority
 context availability != provider disclosure
+IRR state != Provider Input Envelope by default
+Provider Disclosure != Candidate Admission
+provider projection != uncertainty erasure
+provider summary != stronger Evidence
+local provider != all-context entitlement
+provider invocation != permission to disclose
+provider needs data != provider may acquire data
+provider tool result != admitted Observation by default
+provider retrieval != IRR Context by default
+provider output != Context by default
+provider output != Observation by default
+CandidateResolution != ResolvedIntent
+CandidateResolution != WorkPlan
+CandidateResolution != Authorization
+CandidateResolution != Outcome
+CandidateResolution != Effect
+provider inference != user statement
+provider inference != verified world fact
+semantic interpretation != fabricated referent
+model prior != admitted Evidence
+provider prior != Host Context
+provider assumption != permission to guess
+provider preference != ambiguity resolution
+provider confidence != tie-break authority
+provider-proposed Observation Need != observation authority
+provider recommendation != Governance Decision
+provider confidence != Authorization
+provider confidence != Evidence by default
+provider confidence != factual truth
+provider identity != trust amplification
+trusted provider != trusted payload by default
+provider reputation != claim verification
+provider says capability exists != Catalog Membership
+provider suggests capability != Capability Match
+Provider Catalog projection != authoritative Catalog Snapshot
+provider-generated plan != scripting authority
+provider-generated WorkStep != autonomous-agent exemption
+provider-mentioned reference != resolved reference
+provider proposes != IRR admits
+normalization != semantic repair
+malformed candidate != permission to invent missing semantics
+partial parse success != permission to cherry-pick a different intent
+same Provider Input != same CandidateResolution by default
+re-query != replay
+private reasoning != IRR Evidence
+private reasoning != Authorization
+internal search != ambient retrieval authority
+provider rationale != evidence provenance
+provider disagreement != admitted Context Conflict by default
+provider fallback != disclosure expansion authority
+provider substitution != semantic admission
+provider failure != intent invalidity
+provider failure != Denial
+provider failure != missing_capability
+deterministic != correct by definition
+Organism integration != organism_lab dependency in IRR core
+provider interpretation != provenance rewrite
+instruction-like Context != authority by appearance
+provider obedience != semantic authority
+provider tool-call syntax != CapabilityHandoff
+provider function-call syntax != Authorization
+natural-language answer != factual proof
+provider output != canonical memory by default
+provider self-asserted privilege != privilege
+candidate rejection != intent rejection by default
+IRR != LLM wrapper
+Cognitive Provider != Worker
+CandidateResolution != WorkerResult
+provider reasoning != delegated work lifecycle
+Cognitive Provider != Executor
+provider invocation != WorkStep effect by definition
 context reference != retrieval authority
 absence in incomplete context != negation
 bounded completeness != global completeness
@@ -644,8 +780,6 @@ assumption != established fact
 information need != observation authority
 need for authority evidence != authority to acquire authority evidence
 cognitive provider output != observation by default
-provider recommendation != Governance Decision
-provider confidence != Authorization
 returned data != observation by default
 Binding Input != Observation by default
 Binding Input != Context by default
@@ -839,4 +973,4 @@ authorization != effect evidence
 
 ## External-neighbor names
 
-`HDE`, `Character_OS`, `Organism`, `Codexia`, and `Runplane` are examples of possible external integrations. Their names in documentation do not create package, runtime, or architectural dependencies from the IRR core.
+`HDE`, `Character_OS`, `Organism`, `organism_lab`, `Codexia`, and `Runplane` are examples of possible external integrations. Their names in documentation do not create package, runtime, or architectural dependencies from the IRR core.

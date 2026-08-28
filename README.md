@@ -8,9 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.6 — Governance & Authority Boundary**.
+Current milestone: **M0.7 — Cognitive Provider Boundary**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, and M0.5 Capability Boundary are frozen in `main`. M0.6 freezes how bounded WorkProposals cross an external Governance boundary, how Authorization remains separate from work semantics and effects, and how Governance constraints create explicit successor semantics instead of silently mutating plans.
+M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, and M0.6 Governance & Authority Boundary are frozen in `main`. M0.7 freezes the stable cognitive seam through which replaceable LLM, deterministic, hybrid, or future Organism-derived providers may propose `CandidateResolution` semantics without owning final IRR state, factual truth, capability admission, authority, or effects.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -34,8 +34,12 @@ human / companion / worker / system
       explicit bounded context
                 |
                 v
-               IRR
-     interpret / clarify / resolve
+               IRR <---------------- CandidateResolution
+     interpret / clarify / resolve                 ^
+                |                                  |
+                |                         Cognitive Provider
+                |                      LLM / deterministic /
+                |                       hybrid / Organism-derived
                 |
         +-------+------------------+
         |                          |
@@ -96,6 +100,26 @@ human / companion / worker / system
                                                         next bounded work
                                               (again subject to applicable authority)
 ```
+
+A Cognitive Provider is a replaceable proposal source, not the owner of IRR state. IRR discloses only an explicitly permitted bounded input surface to a provider; the provider returns attributable `CandidateResolution` material; IRR independently validates and admits or rejects those semantics under the same M0.1–M0.6 contracts used without a provider.
+
+```text
+provider proposes != IRR admits
+CandidateResolution != ResolvedIntent
+provider output != Context by default
+provider output != Observation by default
+provider recommendation != Governance Decision
+```
+
+Provider confidence, fluent rationale, model identity, local placement, deterministic behavior, or an Organism-derived internal representation do not establish factual truth, Capability Match, Authorization, or final IRR state. IRR admission must depend on inspectable candidate semantics and attributable admitted inputs, not private chain-of-thought.
+
+Context or Capability Catalog material available inside IRR is not automatically provider-disclosable. A provider receives only the explicitly permitted projection for that provider boundary. Remote provider transport may itself create network/external-disclosure effects, while a local provider still does not gain blanket entitlement to all Context, memory, account data, Catalog entries, or authority material.
+
+The Cognitive Provider boundary does not grant ambient retrieval or tool authority. If a provider needs files, repository state, browser data, current world state, or other new information, it may propose a bounded Information Need or Observation Need; hidden model-side tools/retrieval cannot be used to launder new facts into IRR Context or Observation. A tool-using/provider-agent implementation that acquires external information must return that information through an explicit attributable Host/acquisition boundary before IRR can use it as evidence.
+
+A provider may propose semantic interpretation, clarification, candidate inferences, bounded work semantics, or capability usage based on disclosed material. IRR still validates material references, ambiguity, assumptions, WorkPlan boundedness, capability requirements, exact Catalog membership, and Governance separation. Provider-generated shell/code/tool-call syntax remains candidate data rather than execution authority.
+
+Provider output is not canonical memory and cannot self-expand future privileges. Candidate rejection also does not reject the parent intent by definition: another provider, deterministic path, clarification, or later attributable information may still resolve it. IRR may resolve simple paths without invoking any Cognitive Provider at all, so IRR is not an LLM wrapper.
 
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
 
@@ -183,6 +207,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.4 late binding & observation boundary](docs/m0_late_binding_observation_boundary.md)
 - [M0.5 capability boundary](docs/m0_capability_boundary.md)
 - [M0.6 governance & authority boundary](docs/m0_governance_authority_boundary.md)
+- [M0.7 cognitive provider boundary](docs/m0_cognitive_provider_boundary.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
