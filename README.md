@@ -57,21 +57,22 @@ human / companion / worker / system
                                                       |
                                                       v
                                                bounded executor
-                                                      |
-                                                      v
-                                         attributable returned data
-                                                      |
-                                         +------------+------------+
-                                         |                         |
-                                         v                         v
-                                fixed Binding Rule          new material choice
-                                         |                         |
-                                         v                         v
-                                    Bound Value              IRR Continuation
-                                         |
-                                         v
-                                 next bounded work
-                         (again subject to applicable authority)
+                                             /                 \
+                                            v                   v
+                                         effect      optional attributable
+                                                       returned data
+                                                            |
+                                               +------------+------------+
+                                               |                         |
+                                               v                         v
+                                      fixed Binding Rule          new material choice
+                                               |                         |
+                                               v                         v
+                                          Bound Value              IRR Continuation
+                                               |
+                                               v
+                                       next bounded work
+                           (again subject to applicable authority)
 ```
 
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
