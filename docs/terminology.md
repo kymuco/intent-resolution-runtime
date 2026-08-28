@@ -1,6 +1,6 @@
 # IRR Terminology
 
-Status: **normative vocabulary through M0.7**.
+Status: **normative vocabulary through M0.8**.
 
 This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
@@ -36,7 +36,7 @@ IRR MUST NOT silently strengthen an Origin attribution into verified identity, a
 
 ### Host
 
-The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, continuation observations, externally produced Governance material, or explicitly permitted Cognitive Provider material.
+The embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, temporal basis, continuation observations, externally produced Governance material, explicitly permitted Cognitive Provider material, or attributable Worker results.
 
 ### Cognitive Provider
 
@@ -104,7 +104,7 @@ Exact provenance fields, digests, seeds, prompt hashes, and cryptographic repres
 
 The IRR-controlled validation boundary through which CandidateResolution material may become admitted IRR semantics.
 
-Candidate Admission preserves all applicable M0.1–M0.6 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, and external Governance separation.
+Candidate Admission preserves all applicable M0.1–M0.7 contracts, including provenance, ambiguity, assumptions, bounded work semantics, Capability Match, external Governance separation, and the distinction between Cognitive Provider and Worker roles.
 
 Candidate Admission may perform semantics-preserving normalization but MUST NOT hide material semantic repair.
 
@@ -117,9 +117,9 @@ Exact admission-result schemas are deferred.
 
 ### Resolution
 
-The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, continuation, work, capability, authority-boundary, and provider-admission constraints.
+The IRR process or bounded semantic result of interpreting an IntentRequest under admitted context, trust, ambiguity, continuation, work, capability, authority-boundary, provider-admission, and worker-delegation constraints.
 
-Resolution does not imply approval, authorization, WorkPlan creation, or effect.
+Resolution does not imply approval, authorization, WorkPlan creation, Worker delegation, or effect.
 
 ### ResolvedIntent
 
@@ -127,15 +127,15 @@ A future IRR representation of admitted intent semantics after Material Ambiguit
 
 A ResolvedIntent may support planning, answer-only completion, no-operational-work completion, or a downstream proposal. It does not necessarily produce a WorkPlan.
 
-A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
+A Clarification request is not itself a ResolvedIntent. If a later Observation or attributable Worker result introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.7.
+The exact schema and terminal states are not frozen in M0.8.
 
 ### Material Ambiguity
 
 An ambiguity where competing interpretations could materially change a resource, recipient, scope, disclosure, mutation, executable target, cost or external commitment, external effect, or authority-relevant identity/trust interpretation.
 
-Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding, Assumption, Governance approval, Provider Confidence, or provider preference.
+Material Ambiguity blocks admission of a ResolvedIntent until resolved by clarification or an explicit bounded rule. It must not be hidden by Late Binding, Assumption, Governance approval, Provider Confidence, provider preference, or Worker judgment.
 
 ### Clarification
 
@@ -165,7 +165,7 @@ Attributable information explicitly supplied back to IRR from an external bounda
 
 Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
 
-Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Provider-side tool/retrieval results, returned data, and plan-local WorkStep output are not automatically Observations merely because they contain information.
+Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Provider-side tool/retrieval results, WorkerResult material, returned data, and plan-local WorkStep output are not automatically Observations merely because they contain information.
 
 ### Late Binding
 
@@ -229,9 +229,9 @@ Rebinding must not silently overwrite prior binding history or inherit value-spe
 
 ### Continuation
 
-A successor resolution step that consumes attributable prior state plus new clarification, Observation, Outcome, Governance Constraint, or another explicitly admitted continuation input while preserving parent intent lineage.
+A successor resolution step that consumes attributable prior state plus new clarification, Observation, Outcome, WorkerResult, Governance Constraint, or another explicitly admitted continuation input while preserving parent intent lineage.
 
-Continuation is required when new information introduces a material semantic decision not already determined by admitted semantics. Continuation is not retrieval, observation, or authority.
+Continuation is required when new information introduces a material semantic decision not already determined by admitted semantics. Continuation is not retrieval, observation, Worker authority, or Governance authority.
 
 ## Trust and knowledge terms
 
@@ -243,7 +243,7 @@ A Claim is not automatically factual truth.
 
 ### Attribution
 
-The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, Governance Decision, Authorization, CandidateResolution, or other attributable material.
+The asserted source identity attached to an IntentRequest, Claim, Context Item, Observation, Governance Decision, Authorization, CandidateResolution, WorkerResult, or other attributable material.
 
 Attribution does not itself prove that the asserted source identity is verified.
 
@@ -275,7 +275,7 @@ Epistemic Trust is separate from Governance authority.
 
 ### Trust Amplification
 
-An invalid strengthening of evidentiary status beyond what underlying Evidence supports, including silent propagation from one Claim, identity, source, item, provider identity, or provider reputation to another Claim or payload.
+An invalid strengthening of evidentiary status beyond what underlying Evidence supports, including silent propagation from one Claim, identity, source, item, provider identity, Worker identity, or reputation to another Claim or payload.
 
 IRR MUST NOT perform Trust Amplification.
 
@@ -285,7 +285,7 @@ A condition where attributable semantic inputs make incompatible Claims relevant
 
 A Conflict that can materially change the next bounded path blocks ResolvedIntent admission until an explicit bounded precedence rule, clarification, or further attributable information resolves it. A non-blocking Conflict may remain explicit in a ResolvedIntent.
 
-Provider disagreement is candidate disagreement rather than admitted Context Conflict by default; Conflict semantics apply only when material has actually entered the relevant admitted semantic role.
+Provider disagreement and Worker disagreement are candidate/result disagreement rather than admitted Context Conflict by default; Conflict semantics apply only when material has actually entered the relevant admitted semantic role.
 
 ### Completeness
 
@@ -297,11 +297,11 @@ Absence within explicitly complete bounded evidence may support a negative concl
 
 ### Freshness
 
-The temporal relevance of a Claim, Context Item, Observation, Binding Input, Bound Value, Capability Availability statement, Authorization, or provider-produced candidate material to the semantics being resolved or executed.
+The temporal relevance of a Claim, Context Item, Observation, Binding Input, Bound Value, Capability Availability statement, Authorization, provider-produced candidate material, or Worker-produced result material to the semantics being resolved or executed.
 
 Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
 
-Successful Binding does not prove that the external world still matches the Binding Input indefinitely. Authorization is also not automatically timeless. Provider output does not become current merely because it was generated recently if its underlying evidence is stale or unspecified.
+Successful Binding does not prove that the external world still matches the Binding Input indefinitely. Authorization is also not automatically timeless. Provider or Worker output does not become current merely because it was generated recently if its underlying evidence is stale or unspecified.
 
 ### Temporal Basis
 
@@ -337,13 +337,23 @@ Information IRR could potentially discover from a machine, repository, browser, 
 
 IRR has no authority to acquire Ambient Context merely because it would help resolution.
 
-A Cognitive Provider does not gain Ambient Context authority merely because additional information would improve its candidate.
+A Cognitive Provider or Worker does not gain Ambient Context authority merely because additional information would improve its candidate or delegated subtask.
 
 ### Context Reference
 
 An explicit reference identifying possible Context material without necessarily providing the referenced content.
 
 A Context Reference is not retrieval authority or disclosure authority.
+
+### Worker Disclosure
+
+The act of making Context, artifacts, capability information, authority material, or other semantic/runtime material available to a Worker for a delegated subtask.
+
+Material being available inside IRR or the Host does not imply permission for Worker Disclosure.
+
+Worker Disclosure remains explicit for local and remote Workers. Remote Worker transport may itself create network/external-disclosure effects governed outside IRR.
+
+Exact disclosure policy and APIs are deferred.
 
 ## Work terms
 
@@ -374,7 +384,9 @@ Every operational WorkPlan is attributable to the exact applicable Capability Ca
 
 Authorization remains external and separate from the WorkPlan.
 
-A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR candidate admission validates the applicable M0.1–M0.6 semantics.
+A provider-proposed WorkPlan-like candidate does not become a WorkPlan until IRR candidate admission validates the applicable M0.1–M0.7 semantics.
+
+A Worker subordinate plan is not automatically an IRR WorkPlan and does not mutate the parent WorkPlan.
 
 ### WorkStep
 
@@ -411,11 +423,11 @@ structural compatibility != semantic substitutability
 
 An explicit boundary where additional attributable information must return to IRR before a new material semantic decision may be made.
 
-A Continuation Point is not an embedded autonomous planner loop, hidden runtime branch, provider self-continuation loop, or authority grant.
+A Continuation Point is not an embedded autonomous planner loop, hidden runtime branch, provider self-continuation loop, Worker scope-widening loop, or authority grant.
 
 ### Successor WorkPlan
 
-A later WorkPlan produced through IRR Continuation when new admitted information, including a semantic Governance Constraint, changes material operational semantics.
+A later WorkPlan produced through IRR Continuation when new admitted information, including a semantic Governance Constraint or material Worker result/need, changes material operational semantics.
 
 A Successor WorkPlan preserves lineage to the prior intent/work representation rather than silently mutating the prior plan in place. A materially changed Successor WorkPlan does not silently inherit prior Authorization. Exact identity and lineage representation are deferred.
 
@@ -427,15 +439,15 @@ A material WorkStep must derive from the parent ResolvedIntent, an explicit admi
 
 ### Completion Semantics
 
-The intended meaning of completion for a WorkStep, WorkPlan, or parent intent.
+The intended meaning of completion for a WorkStep, WorkPlan, DelegatedWork subtask, or parent intent.
 
-Step completion, plan completion, constrained-subset completion, and intent satisfaction are distinct concepts. Exact completion-condition and Outcome schemas are deferred.
+Step completion, plan completion, Worker subtask completion, constrained-subset completion, and intent satisfaction are distinct concepts. Exact completion-condition and Outcome schemas are deferred.
 
 ### WorkProposal
 
 The attributable bounded operational work representation presented to Governance for an authority decision.
 
-A WorkProposal refers to exact proposed work semantics rather than creating a second independent plan. It must preserve enough material scope, effect, resource, recipient, data-flow, uncertainty, capability/provider, completion, and lineage information for Governance to bind its decision to the work actually reviewed.
+A WorkProposal refers to exact proposed work semantics rather than creating a second independent plan. It must preserve enough material scope, effect, resource, recipient, data-flow, uncertainty, capability/provider/Worker, completion, and lineage information for Governance to bind its decision to the work actually reviewed.
 
 A human-readable summary may present a WorkProposal but is not a substitute for authority-binding semantic identity when material semantics are omitted.
 
@@ -445,6 +457,91 @@ WorkProposal != Authorization
 ```
 
 Exact WorkProposal fields, IDs, digests, and canonicalization are deferred.
+
+### DelegatedWork
+
+The bounded semantic representation of a complex subtask that IRR delegates to a Worker while retaining ownership of the parent intent lifecycle.
+
+Conceptually DelegatedWork preserves an explicit objective, scope, Worker-disclosed context surface, allowed capability surface or ceiling, forbidden effects, expected deliverables, completion semantics, parent lineage, and applicable authority requirements when material.
+
+DelegatedWork is not an ordinary WorkStep, blanket authority, or proof that the Worker can or may perform every operation inside the objective.
+
+Exact fields are deferred to M1/M7.
+
+### Delegated Objective
+
+The bounded objective a Worker is asked to accomplish inside the parent intent lifecycle.
+
+The objective must be specific enough to distinguish work inside the delegated subtask from material widening that must return to IRR.
+
+### Delegated Scope
+
+The bounded resource, repository, artifact, account, dataset, service, time, or semantic domain surface inside which the Worker may perform the delegated subtask when material.
+
+The parent resource universe is not delegated scope by default.
+
+### Worker Capability Ceiling
+
+The maximum capability surface admitted for a delegated subtask.
+
+A Worker Capability Ceiling is a restriction, not proof of Catalog Membership, Capability Match, Availability, invocation readiness, Authorization, success, semantic interchangeability, or a Worker-local selection policy.
+
+```text
+allowed capability != capability existence
+allowed capability != Authorization
+allowed capability set != worker selection policy
+```
+
+The Worker cannot ambiently widen the ceiling or invent fallback mechanisms merely because they would help complete the objective. Listing multiple allowed capabilities does not authorize Worker-local choice when the choice materially changes provider/service, disclosure, effect, cost/commitment, authority, completion meaning, or another admitted semantic dimension.
+
+### Forbidden Effect
+
+An explicitly disallowed effect or effect class inside one DelegatedWork envelope.
+
+A Forbidden Effect further restricts the delegation; absence from the forbidden set does not create positive Authorization.
+
+```text
+not forbidden != authorized
+```
+
+### Delegated Deliverable
+
+An expected artifact, analysis, proposal, report, patch, structured result, or other output whose semantics form part of the delegated completion contract.
+
+A useful but semantically different output does not silently satisfy a required deliverable.
+
+### Delegated Completion Contract
+
+The bounded semantics describing what must be established for the Worker subtask to count as complete.
+
+A Worker completion assertion, transport success, or progress state does not by itself establish satisfaction of the contract; returned deliverables/result semantics must actually satisfy the admitted completion meaning.
+
+```text
+worker completion claim != Delegated Completion Contract satisfied
+```
+
+Subtask completion does not by itself establish parent intent satisfaction.
+
+### CapabilityHandoff
+
+A future attributable handoff representing bounded operational work suitable for an Executor/Capability boundary.
+
+CapabilityHandoff is distinct from DelegatedWorkHandoff and does not itself grant Authorization.
+
+Exact fields are deferred.
+
+### DelegatedWorkHandoff
+
+A future attributable handoff transferring admitted DelegatedWork to a Worker boundary.
+
+DelegatedWorkHandoff preserves the delegated semantic envelope and parent lineage. It does not create Authorization, capability existence, or permission to widen scope.
+
+```text
+CapabilityHandoff != DelegatedWorkHandoff
+DelegatedWorkHandoff != Authorization
+```
+
+Exact fields and routing are deferred.
 
 ### Capability
 
@@ -486,7 +583,7 @@ The Catalog is the capability planning surface IRR may use. It is not necessaril
 
 IRR does not ambiently discover or widen the Catalog. Catalog omission does not by itself mean Governance denial.
 
-Catalog presence inside IRR does not authorize disclosure of the full Catalog to a Cognitive Provider.
+Catalog presence inside IRR does not authorize disclosure of the full Catalog to a Cognitive Provider or Worker.
 
 ### Catalog Snapshot
 
@@ -506,13 +603,13 @@ Catalog Membership means capability-known-for-planning. It does not establish cu
 
 The bounded determination that a Capability Descriptor can represent a planned Semantic Operation under the required semantic input, output/completion, effect, scope, and provider/executor constraints where material.
 
-Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, provider preference, provider assertion, or Governance approval.
+Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, provider preference, provider assertion, Worker assertion, or Governance approval.
 
 Descriptor presence alone does not establish a Capability Match. If material Descriptor semantics required to establish compatibility are absent or insufficient, IRR cannot upgrade that uncertainty into a positive match.
 
 Capability Match preserves material Completion Semantics: a weaker capability result contract cannot silently satisfy a stronger admitted WorkStep completion meaning.
 
-Authorization and provider recommendation cannot override an incompatible Capability Match.
+Authorization, provider recommendation, and Worker recommendation cannot override an incompatible Capability Match.
 
 ### Input Contract
 
@@ -524,13 +621,13 @@ Input compatibility is semantic rather than merely structural or primitive-type 
 
 The semantic attributable result/data contract a Capability may produce.
 
-Capability outputs may later serve as Binding Input, Observation, Outcome evidence, completion evidence, or another explicitly classified value; output status alone does not determine that classification.
+Capability outputs may later serve as Binding Input, Observation, Outcome evidence, completion evidence, Worker input, or another explicitly classified value; output status alone does not determine that classification.
 
 ### Effect Metadata
 
 Descriptive metadata representing the material externally observable effect surface or bounded effect envelope of a Capability contract.
 
-Effect Metadata is inspectable semantic information, not Authorization, safety approval, a Governance decision, or provider permission.
+Effect Metadata is inspectable semantic information, not Authorization, safety approval, a Governance decision, provider permission, or Worker permission.
 
 The Descriptor effect envelope remains distinct from the concrete requested effect semantics of a particular WorkStep. A match is invalid when unavoidable capability effects exceed or contradict the represented WorkStep semantics.
 
@@ -540,7 +637,7 @@ Exact per-invocation effect projection and effect taxonomies remain deferred.
 
 The bounded resource, destination, account, recipient, path, repository, network domain, or other semantic scope a Capability invocation requires.
 
-Scope Requirements are descriptive constraints, not authorized scope. A capability's maximum supported scope is not automatically the requested WorkStep scope.
+Scope Requirements are descriptive constraints, not authorized scope. A capability's maximum supported scope is not automatically the requested WorkStep or delegated scope.
 
 ### Capability Availability
 
@@ -558,9 +655,9 @@ An availability statement is not automatically an M0.4 Observation; classificati
 
 The conceptual condition where a required Semantic Operation has no compatible Capability admitted in the exact applicable Catalog Snapshot.
 
-`missing_capability` does not claim global impossibility or Governance denial and does not authorize fallback, Catalog widening, arbitrary command execution, browser automation, Cognitive Provider invention, Worker substitution, or silent omission of required work.
+`missing_capability` does not claim global impossibility or Governance denial and does not authorize fallback, Catalog widening, arbitrary command execution, browser automation, Cognitive Provider invention, Worker substitution, nested Worker delegation, or silent omission of required work.
 
-A same-named but semantically incompatible Descriptor does not satisfy the requirement. Authorization or provider assertion cannot create a missing Capability contract.
+A same-named but semantically incompatible Descriptor does not satisfy the requirement. Authorization, provider assertion, or Worker assertion cannot create a missing Capability contract.
 
 ### Capability Drift
 
@@ -590,7 +687,9 @@ A receiving boundary may later represent governance review, capability execution
 
 A Handoff may later carry or reference Authorization evidence, but carrying that evidence does not make the Handoff its source or permit authority widening.
 
-Exact handoff types and routing are deferred.
+CapabilityHandoff and DelegatedWorkHandoff are distinct specializations of this conceptual boundary.
+
+Exact handoff fields and routing are deferred.
 
 ## Authority and execution terms
 
@@ -606,37 +705,37 @@ An attributable external authority decision concerning a bounded WorkProposal.
 
 M0.6 freezes four conceptual decision classes: authorize, deny, constrain, and require_review. These are conceptual decision components, not a requirement that every Governance response contain exactly one mutually exclusive class; one response may address explicitly distinct portions of proposed work with different components. Exact enum/wire representation is deferred.
 
-A Governance Decision is not an Effect or Outcome.
+A Governance Decision is not an Effect, Outcome, or WorkerResult.
 
 ### Authorization
 
 An attributable external Governance decision permitting explicitly bounded work under stated conditions.
 
-Authorization remains separate from WorkPlan, WorkProposal, Capability Descriptor, CandidateResolution, Effect, and Outcome. It does not prove safety, factual truth, capability existence, availability, execution, or successful completion.
+Authorization remains separate from WorkPlan, WorkProposal, DelegatedWork, Capability Descriptor, CandidateResolution, WorkerResult, Effect, and Outcome. It does not prove safety, factual truth, capability existence, availability, execution, Worker acceptance, or successful completion.
 
 Authorization scope may cover an exact proposal, an explicitly identified bounded subset, or another bounded authority class established by a later Governance contract. IRR never invents or amplifies that scope.
 
-A materially changed Successor WorkPlan, rebound resource, provider boundary, recipient, disclosure, scope, or effect does not silently inherit prior Authorization unless the external authority scope explicitly covers the changed semantics.
+A materially changed Successor WorkPlan, rebound resource, provider/Worker boundary, recipient, disclosure, scope, or effect does not silently inherit prior Authorization unless the external authority scope explicitly covers the changed semantics.
 
 ### Authorization Condition
 
 A Governance-imposed condition limiting Authorization applicability without materially changing the admitted semantic meaning of the WorkProposal.
 
-Examples may include time/session validity, one-use limits, or requiring an already-admitted provider. If satisfying a condition materially changes work semantics, the decision is instead a semantic Governance Constraint.
+Examples may include time/session validity, one-use limits, or requiring an already-admitted provider/Worker. If satisfying a condition materially changes work semantics, the decision is instead a semantic Governance Constraint.
 
 ### Governance Constraint
 
 An attributable Governance decision requiring narrower or otherwise changed operational semantics before work may proceed.
 
-A semantic Governance Constraint does not mutate the prior WorkPlan in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
+A semantic Governance Constraint does not mutate the prior WorkPlan or DelegatedWork in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
 
-The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, candidate admission, or other IRR validation.
+The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, candidate admission, Worker delegation constraints, or other IRR validation.
 
 ### Denial
 
 An explicit attributable Governance decision that reviewed work may not proceed under the authority context covered by that decision.
 
-Denial is distinct from absence of Authorization, semantic invalidity, `missing_capability`, provider failure, global impossibility, and factual danger. It does not erase historical intent/work lineage and must not be bypassed by hidden work substitution.
+Denial is distinct from absence of Authorization, semantic invalidity, `missing_capability`, provider failure, Worker failure, global impossibility, and factual danger. It does not erase historical intent/work lineage and must not be bypassed by hidden work substitution.
 
 ### require_review
 
@@ -660,7 +759,7 @@ A downstream component that performs bounded Capabilities under the applicable a
 
 An Executor may later perform mechanical Binding when an explicit contract permits it, but mechanical Binding does not grant semantic discretion beyond explicitly admitted Binding Rule and Selection Policy semantics.
 
-An Executor must not treat IRR output or provider output itself as permission and must preserve the distinction between Authorization coverage and actual Effect/Outcome evidence.
+An Executor must not treat IRR output, provider output, Worker output, or a Handoff itself as permission and must preserve the distinction between Authorization coverage and actual Effect/Outcome evidence.
 
 IRR is not an Executor. A Cognitive Provider is also not an Executor merely because its transport calls an external model service.
 
@@ -668,15 +767,57 @@ IRR is not an Executor. A Cognitive Provider is also not an Executor merely beca
 
 A downstream component that performs delegated bounded work with its own subordinate lifecycle.
 
-A Worker may return a result to IRR while IRR retains the parent intent lifecycle.
+A Worker may internally analyze, plan subordinate steps, use explicitly permitted capabilities, produce artifacts, revise its subordinate plan, and return attributable result material while remaining inside the DelegatedWork envelope and applicable authority boundaries.
 
-Worker delegation is distinct from ordinary WorkStep execution and Cognitive Provider candidate generation; Worker judgment does not self-authorize widened parent work. Exact delegated-work handoff semantics are deferred to M0.8.
+IRR retains ownership of the parent intent lifecycle. Worker delegation is distinct from ordinary WorkStep execution and Cognitive Provider candidate generation.
+
+Worker judgment does not self-authorize widened parent work, and Worker-local planning does not mutate the parent WorkPlan.
+
+### Worker Subordinate Lifecycle
+
+The Worker-owned lifecycle used to pursue one DelegatedWork objective inside the delegation envelope.
+
+Its internal states, orchestration, prompts, agents, tools, and persistence are not IRR core semantics. Material widening outside the envelope must return to IRR rather than becoming hidden Worker discretion.
+
+Exact lifecycle states are deferred to M7/M0.9.
+
+### WorkerResult
+
+Attributable result material returned by a Worker for one delegated subtask.
+
+A WorkerResult may contain deliverables, findings, Claims/Evidence references, produced artifact references, subtask-completion assertions, blocked needs, uncertainty, covered scope, known omissions, and subordinate Outcome references when applicable.
+
+WorkerResult is not parent intent completion, factual truth, Observation, Outcome, Governance Decision, Authorization, or canonical memory by default.
+
+Material WorkerResult data that affects the parent path re-enters through explicit semantic classification and IRR Continuation. WorkerResult does not silently enter the M0.7 Candidate Admission seam merely because it proposes successor semantics.
+
+```text
+WorkerResult re-entry != Candidate Admission by default
+```
+
+### Worker Progress
+
+Attributable intermediate progress/status material emitted during a Worker subordinate lifecycle.
+
+Worker Progress may support inspection, UI, or later cancellation semantics but does not establish final WorkerResult completion or parent completion.
+
+Exact progress/event schemas are deferred.
+
+### Worker Escalation
+
+An attributable Worker-reported need for additional information, capability, scope, clarification, authority, changed objective, or another material condition not already satisfied by the DelegatedWork envelope.
+
+Worker Escalation is not permission to satisfy the need, scope expansion, or Authorization. IRR decides how the need re-enters the parent lifecycle.
 
 ### Outcome
 
-An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
+An attributable downstream operational or lifecycle result record explicitly classified as an Outcome under the applicable execution/recovery contract and reported by an Executor or Worker.
 
-Outcome semantics remain distinct from Observation, CandidateResolution, Governance Decision, and Authorization semantics even when one downstream event or system supplies more than one record.
+A WorkerResult is a broader delegated-result envelope that may contain or reference one or more Outcome records but is not automatically itself an Outcome.
+
+Exact Outcome states, including unknown-outcome handling, are deferred to M0.9.
+
+Outcome semantics remain distinct from Observation, CandidateResolution, WorkerResult, Governance Decision, and Authorization semantics even when one downstream event or system supplies more than one record.
 
 ## Required distinctions
 
@@ -696,6 +837,7 @@ evidence != authority
 epistemic trust != authorization
 context != authority
 context availability != provider disclosure
+context availability != Worker disclosure authority
 IRR state != Provider Input Envelope by default
 Provider Disclosure != Candidate Admission
 provider projection != uncertainty erasure
@@ -767,6 +909,70 @@ CandidateResolution != WorkerResult
 provider reasoning != delegated work lifecycle
 Cognitive Provider != Executor
 provider invocation != WorkStep effect by definition
+Worker != Executor by default
+DelegatedWork != ordinary WorkStep
+CapabilityHandoff != DelegatedWorkHandoff
+DelegatedWork != blanket authority
+DelegatedWorkHandoff != Authorization
+worker subplan != parent WorkPlan
+worker subplan revision != parent WorkPlan mutation
+worker judgment != parent Authorization
+worker capability ceiling != capability discovery authority
+allowed capability != capability existence
+allowed capability != current Availability
+allowed capability != Authorization
+allowed capability set != worker selection policy
+not forbidden != authorized
+worker context availability != disclosure authority
+local Worker != all-context entitlement
+remote Worker transport != authority exemption
+worker needs data != worker may acquire arbitrary data
+material delegation widening != worker-local discretion
+necessary prerequisite != delegated authority
+necessary prerequisite != delegated scope expansion
+Worker delegation != recursive-delegation authority
+worker-originated continuation != human Origin
+worker result != Principal statement
+WorkerResult != parent intent completion
+worker subtask completion != parent intent satisfaction
+WorkerResult != factual truth by default
+worker confidence != evidence amplification
+WorkerResult != Governance Decision
+worker recommendation != Authorization
+WorkerResult != Observation by default
+WorkerResult != Outcome by default
+WorkerResult re-entry != Candidate Admission by default
+worker proposal != CandidateResolution by default
+worker progress != WorkerResult completion
+worker progress != parent completion
+worker escalation != authority grant
+worker escalation != scope expansion
+worker completion claim != Delegated Completion Contract satisfied
+worker says done != parent done
+useful output != required deliverable by default
+deliverable complete != every claim true
+trusted Worker != trusted WorkerResult by default
+Worker reputation != claim verification
+Worker substitution != semantic equivalence by default
+Worker substitution != authority inheritance
+worker-produced artifact != human-authored artifact
+delegated mutation != hidden effect exemption
+research objective != disclosure authority
+worker-generated code != execution authority
+worker patch != applied mutation
+worker proposal != successor ResolvedIntent
+worker proposal != successor WorkPlan
+WorkerResult availability != ambient Context admission
+worker failure != automatic retry
+worker timeout != automatic retry
+worker failure != parent intent failure by definition
+worker failure != Denial
+worker failure != global impossibility
+Worker fallback != scope/disclosure expansion authority
+Worker disagreement != admitted Context Conflict by default
+Worker self-asserted privilege != privilege
+Worker internal memory != canonical memory by default
+Codexia integration != Codexia dependency in IRR core
 context reference != retrieval authority
 absence in incomplete context != negation
 bounded completeness != global completeness
@@ -856,6 +1062,7 @@ capability catalog != ambient capability discovery
 catalog scope != global environment capability
 catalog attribution != authorization
 catalog presence inside IRR != Provider Disclosure authority
+catalog presence inside IRR != Worker disclosure authority
 catalog omission != Governance denial
 catalog membership != Governance approval
 same capability_id != same capability semantics
@@ -887,6 +1094,7 @@ diagnostic capability analysis != admitted full-objective WorkPlan
 partial capability coverage != full intent satisfaction
 generic command execution != universal capability adapter
 provider proposal != capability existence
+worker proposal != capability existence
 capability prerequisite != implicit capability expansion
 effect metadata != authorization
 effect metadata != safety verdict
@@ -940,6 +1148,7 @@ Governance Constraint != capability synthesis
 Handoff != Authorization
 Handoff carrying Authorization != Handoff-created Authorization
 IRR output != executor permission
+IRR output != Worker permission
 Authorization != Effect
 Authorization != Outcome
 Authorization != successful completion
@@ -959,6 +1168,7 @@ unknown authority state != Authorization
 Authorization != timeless permission
 revoked now != unauthorized historically by definition
 Authorization for WorkPlan v1 != Authorization for materially changed WorkPlan v2
+Authorization for Worker subtask A != Authorization for materially widened Worker subtask B by default
 representation change != semantic work change by default
 semantic mutation != authorized work
 proposal presentation != uncertainty erasure
