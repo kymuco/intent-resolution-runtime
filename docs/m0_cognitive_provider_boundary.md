@@ -56,6 +56,7 @@ provider identity != trust amplification
 provider tool access != ambient IRR observation
 provider retrieval != admitted evidence by default
 provider disclosure != context availability
+model prior != admitted Evidence
 private reasoning != IRR evidence
 same prompt != same candidate by default
 provider failure != intent invalidity
@@ -166,6 +167,13 @@ Temporal Basis when permitted and material
 prior admitted resolution lineage when needed
 bounded Capability Catalog projection when permitted
 explicit task/request for candidate semantics
+```
+
+Any projection, redaction, or summary supplied to a provider MUST preserve material source distinctions, uncertainty, completeness/freshness limits, and evidentiary limitations needed for the candidate task. Provider convenience does not permit a lossy projection to be presented as semantically equivalent when omitted material could change the interpretation.
+
+```text
+provider projection != uncertainty erasure
+provider summary != stronger Evidence
 ```
 
 Exact fields, canonicalization, IDs, and transport are deferred.
@@ -330,11 +338,18 @@ semantic interpretation != fabricated referent
 
 ## 15. Candidate Inference
 
-A provider may propose an inference derived from disclosed material.
+A provider may propose an inference derived from disclosed material, provider-internal/parametric prior knowledge, or both.
+
+Its support MUST remain distinguishable: admitted Context/Evidence may support an inference, while provider-internal prior knowledge remains provider-originated candidate support rather than Host-supplied Context or independently established Evidence.
+
+```text
+model prior != admitted Evidence
+provider prior != Host Context
+```
 
 A material candidate inference MUST remain distinguishable from an established Claim or Observation when its evidentiary status matters.
 
-IRR may use a provider inference only within the support provided by admitted evidence and frozen trust rules.
+IRR may use a provider inference only within the support provided by admitted evidence and frozen trust rules. Provider prior may help generate a candidate, but it MUST NOT silently satisfy a material factual choice that requires attributable evidence.
 
 Unsupported factual inference MUST NOT silently satisfy a material resource, recipient, disclosure, mutation, executable, cost, authority, or trust choice.
 
@@ -623,11 +638,12 @@ Exact replay/persistence mechanics are deferred.
 
 IRR admission MUST depend on inspectable candidate semantics and attributable input/evidence, not on access to a provider's private chain-of-thought or hidden internal reasoning state.
 
-A provider may internally use private reasoning, latent state, search, or model-specific mechanisms, but those internals are not automatically IRR Evidence or authority.
+A provider may internally use private reasoning, latent state, or search over already disclosed/internal material. Any mechanism that acquires new external information remains subject to section 10 and is not automatically IRR Evidence or Context.
 
 ```text
 private reasoning != IRR Evidence
 private reasoning != Authorization
+internal search != ambient retrieval authority
 ```
 
 A future provider may optionally expose concise rationale or derivation metadata, but admission cannot require hidden chain-of-thought disclosure.
@@ -1128,7 +1144,7 @@ M0.7 is complete when the repository states unambiguously that:
 
 1. Cognitive Provider is a replaceable semantic dependency rather than owner of final IRR state.
 2. LLM, deterministic, hybrid, and future Organism-derived providers can fit the same semantic seam without IRR depending on their internals.
-3. Provider Input is explicit, bounded, attributable, and distinct from the whole IRR state.
+3. Provider Input is explicit, bounded, attributable, and distinct from the whole IRR state; material projections do not erase provenance/uncertainty/evidentiary limits.
 4. Context/Catalog/authority material available to IRR is not automatically authorized for Provider Disclosure.
 5. Local provider placement does not create unrestricted disclosure entitlement.
 6. Remote provider transport/disclosure is not exempt from external authority merely because it supports reasoning.
@@ -1137,9 +1153,9 @@ M0.7 is complete when the repository states unambiguously that:
 9. Provider output is CandidateResolution material, not Observation or Context by default.
 10. CandidateResolution is distinct from ResolvedIntent, WorkPlan, Authorization, Outcome, and Effect.
 11. Provider-produced material retains provider provenance and cannot be rewritten as user/Host/Observation provenance.
-12. Provider Claims, fluency, rationale, identity, or reputation do not establish factual truth automatically.
+12. Provider Claims, fluency, rationale, identity, reputation, and provider/model prior do not establish factual truth or admitted Evidence automatically.
 13. Semantic interpretation remains distinct from fabricated world facts or referents.
-14. Material candidate inferences retain evidentiary limitations.
+14. Material candidate inferences, including those influenced by provider prior, retain evidentiary limitations.
 15. Provider Assumptions obey the same M0.2 restrictions as IRR assumptions.
 16. Provider confidence/preference cannot resolve Material Ambiguity by itself.
 17. Provider may propose Clarification/Information Need/Observation Need without receiving acquisition authority.
@@ -1156,7 +1172,7 @@ M0.7 is complete when the repository states unambiguously that:
 28. Provider confidence is descriptive metadata, not Evidence, truth, Capability Match, safety, or Authorization by default.
 29. Provider provenance may be recorded without becoming authority.
 30. Same provider input does not imply byte-identical output unless the provider contract says so; re-query is not historical replay.
-31. IRR admission does not require private provider chain-of-thought.
+31. IRR admission does not require private provider chain-of-thought, and internal reasoning/search does not create ambient retrieval authority.
 32. Provider rationale does not substitute for evidence provenance.
 33. Multiple providers have no implicit universal precedence or majority-is-truth rule.
 34. Provider disagreement is candidate disagreement rather than admitted Context Conflict by default.
