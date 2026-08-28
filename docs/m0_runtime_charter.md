@@ -169,6 +169,8 @@ M0.1 freezes the distinction; exact mechanics belong to M0.2 and M0.4.
 
 Material semantic ambiguity MUST NOT be hidden behind late binding.
 
+A clarification request is not itself a ResolvedIntent. Material ambiguity that still blocks resolution MUST be addressed before a ResolvedIntent is admitted.
+
 **Late binding** is reserved for cases where the semantic selection rule is already explicit and bounded and a future observation merely supplies a value required to apply that rule.
 
 If a later observation exposes a new material choice that the existing rule cannot resolve, the intent MUST return to continuation or clarification rather than make a silent discretionary choice.
@@ -243,13 +245,14 @@ M0.1 is complete when the repository states unambiguously that:
 
 1. IRR resolves intent rather than executing effects.
 2. Not every resolved intent requires operational work or a WorkPlan.
-3. Intent, permission, and effect are distinct stages.
-4. Principal and Origin are distinct concepts.
-5. Origin is attributable provenance; its evidentiary status is not silently strengthened and it does not grant authority.
-6. Context and resolution do not grant authority.
-7. Cognitive-provider output is candidate material, not truth or permission.
-8. Governance and execution are external boundaries.
-9. Material ambiguity cannot be disguised as late binding.
-10. Capability meaning cannot drift silently after resolution.
-11. HDE, Character_OS, Organism, Codexia, and Runplane remain replaceable external neighbors rather than IRR-core dependencies.
-12. No implementation code or premature runtime schema is introduced.
+3. A clarification request is distinct from a ResolvedIntent.
+4. Intent, permission, and effect are distinct stages.
+5. Principal and Origin are distinct concepts.
+6. Origin is attributable provenance; its evidentiary status is not silently strengthened and it does not grant authority.
+7. Context and resolution do not grant authority.
+8. Cognitive-provider output is candidate material, not truth or permission.
+9. Governance and execution are external boundaries.
+10. Material ambiguity cannot be disguised as late binding.
+11. Capability meaning cannot drift silently after resolution.
+12. HDE, Character_OS, Organism, Codexia, and Runplane remain replaceable external neighbors rather than IRR-core dependencies.
+13. No implementation code or premature runtime schema is introduced.
