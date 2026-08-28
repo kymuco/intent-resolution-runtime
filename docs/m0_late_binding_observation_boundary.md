@@ -2,7 +2,7 @@
 
 Status: **normative for M0.4**.
 
-This document freezes how Intent Resolution Runtime (IRR) may defer concrete values without deferring semantic decisions, how symbolic work data becomes bound, and when downstream information must return to IRR for continuation.
+This document freezes how Intent Resolution Runtime (IRR) may defer concrete values without deferring semantic decisions, how symbolic work data becomes bound, and when new downstream information must return to IRR for continuation.
 
 It extends M0.1 Product Charter & Vocabulary, M0.2 Trust/Context/Resolution Semantics, and M0.3 Intent → Work Boundary without introducing runtime code, exact Python schemas, execution adapters, or authority.
 
@@ -19,7 +19,7 @@ resolved semantics
 symbolic reference
       |
       v
-bounded observation
+attributable Binding Input
       |
       v
 binding rule
@@ -27,10 +27,10 @@ binding rule
       +---------------------------+
       |                           |
       v                           v
-unique admissible value      new material choice
+admissible bound value       new material choice
       |                           |
       v                           v
-bound value                IRR Continuation
+bounded dataflow           IRR Continuation
                                   |
                          clarification / successor
 ```
@@ -43,7 +43,7 @@ late binding != deferred discretion
 
 ## 1. Late Binding defers a value, not a meaning
 
-Late Binding is allowed only when the semantic rule for obtaining or selecting a future value is already explicit and bounded before that value is observed.
+Late Binding is allowed only when the semantic rule for obtaining or selecting a future value is already explicit and bounded before that value becomes available.
 
 Example:
 
@@ -95,9 +95,9 @@ A Symbolic Reference MUST remain distinguishable from:
 
 - an observed value;
 - a guessed value;
-- an ambient lookup;
+- ambient lookup state;
 - a permission grant;
-- an executable variable owned by a general-purpose scripting language.
+- a general-purpose scripting variable.
 
 Conceptually:
 
@@ -106,20 +106,43 @@ $step1.backup_candidates
 $step2.selected_backup
 ```
 
-The notation above is illustrative only. Exact syntax is deferred to M1.
+The notation is illustrative only. Exact syntax is deferred to M1.
 
-A Symbolic Reference MUST preserve enough semantic lineage for later contracts to determine what planned result or attributable future input it refers to.
-
-M0.4 does not freeze exact IDs, path syntax, slot schemas, serialization, or digest representation.
+A Symbolic Reference MUST preserve enough semantic lineage for later contracts to identify the planned result or attributable future input it refers to.
 
 ```text
 symbolic reference != observed value
 symbolic reference != authority
 ```
 
-## 3. Binding Rule
+## 3. Binding Input
 
-A `Binding Rule` is the explicit bounded semantic rule that determines how an admissible future value may satisfy a Symbolic Reference.
+A `Binding Input` is attributable data supplied to a Binding Rule for the purpose of concretizing a Symbolic Reference.
+
+Binding Input is a semantic role, not a universal data class.
+
+Depending on the surrounding contract, Binding Input may be:
+
+- a plan-local output from a prior bounded WorkStep;
+- an Observation explicitly returned to IRR and later used during Continuation;
+- attributable Context supplied through the Host boundary;
+- another future input explicitly permitted by later contracts.
+
+Therefore:
+
+```text
+Binding Input != Observation by default
+Binding Input != Context by default
+Binding Input != Outcome by default
+```
+
+M0.4 MUST NOT reclassify all WorkStep outputs as Observations merely because they contain information.
+
+This preserves the M0.2 Observation boundary while allowing M0.3 symbolic dataflow to operate without forcing every intermediate value through a new IRR resolution cycle.
+
+## 4. Binding Rule
+
+A `Binding Rule` is the explicit bounded semantic rule that determines how compatible Binding Input may satisfy a Symbolic Reference.
 
 A Binding Rule MAY express bounded semantics such as:
 
@@ -133,9 +156,9 @@ A Binding Rule MUST NOT mean:
 
 - choose whichever candidate looks best;
 - infer the most likely resource without an explicit rule;
-- ask an executor to improvise;
+- ask an Executor to improvise;
 - choose according to ambient UI order;
-- choose the first returned result unless that ordering is itself an admitted semantic rule;
+- choose the first returned result unless that ordering is itself admitted semantics;
 - silently invent a tie-breaker.
 
 ```text
@@ -145,9 +168,11 @@ binding rule != executor discretion
 
 The exact rule representation is deferred.
 
-## 4. Binding is not semantic self-mutation
+## 5. Binding
 
-Applying an already admitted Binding Rule to compatible attributable data may concretize a Symbolic Reference without changing the semantic meaning of the WorkPlan.
+`Binding` is the act of associating a concrete `Bound Value` with a Symbolic Reference by applying an unchanged admitted Binding Rule to compatible attributable Binding Input.
+
+If the semantic rule was already admitted, concretizing the value does not by itself change WorkPlan meaning.
 
 Example:
 
@@ -155,7 +180,7 @@ Example:
 rule:
     newest by modification time
 
-observation:
+input:
     backup-A.zip mtime=10:00
     backup-B.zip mtime=12:00
 
@@ -163,19 +188,17 @@ binding:
     selected_backup = backup-B.zip
 ```
 
-If the rule was already part of the admitted work semantics, binding `backup-B.zip` is value instantiation, not a new semantic decision.
-
 Therefore:
 
 ```text
 binding != semantic plan mutation
 ```
 
-M0.3's successor-plan rule still applies when new information changes material work semantics. M0.4 distinguishes that from merely filling a previously declared symbolic slot according to an unchanged rule.
+M0.3's successor-plan rule still applies when new information changes material work semantics. M0.4 distinguishes that case from filling a previously declared symbolic slot according to an unchanged rule.
 
-Later identity/digest contracts may represent plans and binding environments separately. M0.4 freezes the semantic distinction, not that wire representation.
+Later identity/digest contracts may represent plans and bindings separately. M0.4 freezes the semantic distinction, not the wire representation.
 
-## 5. Binding MUST NOT rewrite the rule
+## 6. Binding MUST NOT rewrite the rule
 
 A binding operation MUST NOT modify, broaden, weaken, or replace the Binding Rule in order to obtain a value.
 
@@ -185,43 +208,31 @@ If the admitted rule is:
 newest backup by modification time
 ```
 
-and the available data lacks modification times, IRR or downstream orchestration MUST NOT silently reinterpret the rule as:
+and the Binding Input lacks modification times, IRR or downstream orchestration MUST NOT silently reinterpret the rule as:
 
 ```text
 first backup returned
-```
-
-or:
-
-```text
 largest backup
-```
-
-or:
-
-```text
 lexicographically last filename
 ```
 
-The correct result is unresolved binding, additional attributable information if allowed, or IRR Continuation.
+The binding remains unresolved until compatible attributable input is available or the lifecycle returns to IRR.
 
 ```text
 missing rule inputs != permission to substitute a rule
 ```
 
-## 6. Observation lineage
+## 7. Binding lineage
 
-An Observation used for binding MUST remain attributable to the external boundary, prior bounded step, or other explicit source that produced it.
+A material binding MUST remain attributable.
 
-Material provenance MUST NOT be erased merely because the Observation is consumed by a deterministic Binding Rule.
+Later representations must preserve enough semantic relationship to identify:
 
-At minimum, later representations must be able to preserve the semantic relationship between:
-
-- the Observation;
-- the step or external boundary that produced it;
-- the symbolic value being bound;
+- the Symbolic Reference being satisfied;
 - the Binding Rule applied;
-- the resulting Bound Value.
+- the attributable Binding Input;
+- the resulting Bound Value;
+- material provenance, scope, freshness, and completeness limitations used by the rule.
 
 Exact receipt, ID, digest, and lineage formats are deferred.
 
@@ -229,35 +240,34 @@ Exact receipt, ID, digest, and lineage formats are deferred.
 bound value != provenance-free value
 ```
 
-## 7. Observation eligibility
+## 8. Binding eligibility is semantic
 
-Not every Observation is eligible to satisfy every Symbolic Reference.
+Not every value is eligible to satisfy every Symbolic Reference.
 
-An Observation is usable for a binding only when its declared semantics are compatible with what the Symbolic Reference and Binding Rule require.
+Binding Input is usable only when its declared semantics are compatible with what the Symbolic Reference and Binding Rule require.
 
-For example, a rule requiring:
+A rule requiring:
 
 ```text
 newest by modification time
 ```
 
-cannot be satisfied by an Observation that contains only filenames with no attributable modification-time data.
+cannot be satisfied by filenames that lack attributable modification-time data.
 
-Similarly, a process identifier produced by one launch operation MUST NOT silently satisfy a symbolic reference expecting the result of a different launch operation merely because both values are integers.
-
-Compatibility is semantic, not merely structural.
+Likewise, a process identifier produced by one launch step MUST NOT silently satisfy a symbolic slot expecting the result of another launch step merely because both are integers.
 
 ```text
 same shape != same meaning
+structural compatibility != semantic substitutability
 ```
 
-Exact type contracts are deferred to M1 and capability-output contracts to M0.5.
+Exact type contracts are deferred to M1 and capability I/O contracts to M0.5.
 
-## 8. Observation scope, completeness, and freshness remain material
+## 9. Trust semantics survive binding
 
 Binding does not erase M0.2 trust semantics.
 
-A Binding Rule may require Observation properties such as:
+A Binding Rule may require properties such as:
 
 - bounded scope;
 - declared completeness;
@@ -266,7 +276,7 @@ A Binding Rule may require Observation properties such as:
 - source identity;
 - specific evidence fields.
 
-If those properties are material and unsupported, the binding MUST remain unresolved.
+If those properties are material and unsupported, binding MUST remain unresolved.
 
 Example:
 
@@ -275,9 +285,9 @@ rule:
     latest backup in D:\Backups
 ```
 
-A partial listing that explicitly covers only one subdirectory cannot silently prove the latest backup across all of `D:\Backups`.
+A partial listing covering only one subdirectory cannot silently establish the latest backup across all of `D:\Backups`.
 
-Likewise, an undated cached listing cannot silently satisfy a rule whose meaning depends on `latest now` when freshness is material.
+An old cached listing cannot silently satisfy `latest now` when freshness is material.
 
 ```text
 binding does not amplify evidence
@@ -285,7 +295,7 @@ binding does not imply completeness
 binding does not imply freshness
 ```
 
-## 9. Zero matches
+## 10. Zero matches
 
 A bounded rule may produce no admissible value.
 
@@ -295,31 +305,31 @@ Example:
 rule:
     exactly one artifact named release.zip
 
-observation:
+input:
     no matching artifact
 ```
 
-Zero matches MUST NOT cause IRR or an executor to invent a fallback artifact.
+Zero matches MUST NOT cause IRR or an Executor to invent a fallback artifact.
 
-Zero matches may represent:
+Depending on later contracts, zero matches may represent:
 
-- a valid bounded negative observation when completeness supports it;
-- an unresolved information need;
+- a bounded negative result supported by complete evidence;
+- an unresolved Information Need;
 - a missing resource condition;
 - a reason for IRR Continuation;
-- a downstream failure or blocked state under later contracts.
+- a downstream blocked or failed state.
 
-M0.4 does not freeze the terminal state enum.
+M0.4 does not freeze terminal state enums.
 
 ```text
 zero matches != permission to guess
 ```
 
-## 10. Multiple matches and deterministic selection
+## 11. Multiple matches
 
-Multiple observed candidates do not automatically imply Material Ambiguity.
+Multiple candidates do not automatically imply Material Ambiguity.
 
-If an explicit Binding Rule deterministically and uniquely selects one candidate, binding may proceed.
+If an admitted Binding Rule deterministically produces an admissible result, Binding may proceed.
 
 Example:
 
@@ -327,14 +337,13 @@ Example:
 rule:
     newest by modification time
 
-candidates:
-    A at 10:00
-    B at 12:00
+A at 10:00
+B at 12:00
 ```
 
 selects `B` without a new semantic decision.
 
-However, if the rule does not determine a unique result, the binding MUST NOT proceed.
+However, if the rule cannot determine the required result, Binding MUST stop.
 
 Example:
 
@@ -345,46 +354,32 @@ B at 12:00
 
 with no admitted tie-breaker.
 
-That produces a new material choice if the selected artifact affects downstream work.
+If choosing between them can materially change downstream work:
 
 ```text
-tie under material selection rule -> IRR Continuation
+tie under material rule -> IRR Continuation
 ```
 
-IRR MUST NOT use result order, filename order, provider ranking, UI ordering, or another hidden preference as an implicit tie-breaker.
+IRR and Executors MUST NOT use result order, filename order, provider ranking, UI ordering, or another hidden preference as an implicit tie-breaker.
 
-## 11. Selection order is semantic only when admitted
+## 12. Presentation order is not binding precedence
 
-A result sequence may have presentation order without carrying semantic ranking.
-
-Therefore:
+A result sequence may have presentation order without semantic ranking.
 
 ```text
 first result != preferred result by default
 presentation order != binding precedence
 ```
 
-A Binding Rule MAY intentionally use an ordering only when that ordering itself is semantically defined and attributable.
+A Binding Rule MAY use an ordering only when that ordering itself is semantically defined and attributable.
 
-For example:
+M0.4 defines no universal ordering precedence.
 
-```text
-source contract:
-    results sorted descending by signed monotonic sequence
+## 13. Plan-local symbolic dataflow
 
-binding rule:
-    choose highest sequence
-```
+Not every intermediate WorkStep result requires a new IRR Continuation.
 
-may be valid if the ordering semantics are part of the admitted evidence.
-
-M0.4 does not invent universal ordering semantics.
-
-## 12. Plan-local dataflow versus IRR Continuation
-
-Not every intermediate WorkStep result requires a new IRR resolution cycle.
-
-If all material semantics are already fixed, a bounded downstream path MAY carry an attributable value through symbolic dataflow and apply a pre-admitted Binding Rule without asking IRR to make a new semantic decision.
+If all material semantics are already fixed, bounded downstream work MAY carry attributable Binding Input through symbolic dataflow and apply a pre-admitted Binding Rule without asking IRR to make a new semantic decision.
 
 Conceptually:
 
@@ -404,48 +399,41 @@ selected_backup
 archive.inspect
 ```
 
-This plan-local dataflow does not grant IRR ambient context and does not imply that every intermediate Observation becomes newly admitted Context for unrelated resolution purposes.
+The intermediate `backup_candidates` may be plan-local output rather than an Observation returned to IRR.
 
-If the intermediate result creates a new material decision, the downstream path MUST stop at the applicable continuation boundary and return attributable information to IRR.
+Plan-local dataflow does not grant IRR ambient context and does not automatically admit intermediate values as Context for unrelated resolution purposes.
+
+If an intermediate result creates a new material semantic decision, the bounded path MUST stop and return the applicable attributable information through IRR Continuation.
 
 ```text
 fixed semantics -> bounded dataflow MAY continue
 new material semantics -> IRR Continuation REQUIRED
 ```
 
-## 13. Downstream binding does not create authority
+## 14. Binding does not determine authority timing
 
-A downstream executor or bounded capability may apply an explicit Binding Rule as part of an already represented operation when later capability contracts permit it.
+M0.4 does **not** establish that Binding happens before or after Governance.
 
-That does not make the executor an intent resolver or Governance authority.
+A WorkStep that produces Binding Input may itself require authorization before it can execute. A future Governance contract may also require review after a concrete resource becomes bound.
 
-The executor MUST NOT:
+Depending on later contracts, authority may be required:
 
-- invent a missing Binding Rule;
-- broaden the selection scope;
-- choose between materially different meanings;
-- add new effects to make the binding succeed;
-- interpret a failed binding as permission to try another semantic operation.
+- before an observation-oriented WorkStep executes;
+- before a mutating WorkStep executes;
+- after a symbolic resource becomes concrete;
+- again when a Bound Value materially changes the authority-relevant scope.
+
+M0.4 freezes no universal ordering such as:
 
 ```text
-deterministic binding != semantic discretion
-deterministic binding != authorization
+binding -> authorization
 ```
 
-M0.4 does not freeze where a specific implementation performs the mechanical rule application. It freezes that no component may convert mechanical binding into hidden semantic choice.
+or:
 
-## 14. Authorization and binding remain separate
-
-Late Binding does not decide when Governance must inspect or authorize concrete values.
-
-A future Governance contract may require:
-
-- authorization before binding;
-- authorization after concrete binding;
-- re-review when a bound resource becomes known;
-- constraints on which values a symbolic slot may accept.
-
-M0.4 does not choose that policy.
+```text
+authorization -> all future binding
+```
 
 It freezes only:
 
@@ -454,18 +442,39 @@ bound value != authorization
 binding success != permission
 ```
 
-M0.6 freezes the Governance boundary in detail.
+M0.6 freezes Governance semantics.
 
-## 15. Bound Value
+## 15. Mechanical Binding does not create semantic authority
 
-A `Bound Value` is the concrete value associated with a Symbolic Reference after an admissible Binding Rule has been applied to compatible attributable input.
+A downstream Executor or bounded capability may later be permitted to apply an explicit Binding Rule mechanically.
 
-A Bound Value MUST preserve semantic relationship to:
+That does not make the Executor an intent resolver or Governance authority.
+
+The Executor MUST NOT:
+
+- invent a missing Binding Rule;
+- broaden the selection scope;
+- choose between materially different meanings;
+- add new effects to make Binding succeed;
+- interpret unresolved Binding as permission to try a different semantic operation.
+
+```text
+deterministic binding != semantic discretion
+deterministic binding != authorization
+```
+
+M0.4 does not freeze where mechanical rule evaluation runs. It freezes that mechanical evaluation cannot become hidden semantic choice.
+
+## 16. Bound Value
+
+A `Bound Value` is the concrete value associated with a Symbolic Reference after admissible Binding.
+
+A Bound Value MUST retain material semantic relationship to:
 
 - the symbolic slot it satisfies;
 - the Binding Rule;
-- the attributable input or Observation used;
-- material scope/freshness/completeness limitations relevant to downstream interpretation.
+- the attributable Binding Input;
+- material scope/freshness/completeness limitations relevant downstream.
 
 A Bound Value is not automatically:
 
@@ -482,7 +491,7 @@ bound value != permission
 
 Exact binding-record schemas are deferred.
 
-## 16. Stale bindings and world drift
+## 17. World drift and stale bindings
 
 The external world may change after a value is bound.
 
@@ -494,25 +503,25 @@ selected_backup = D:\Backups\backup-42.zip
 
 may later refer to a file that was deleted, replaced, or changed.
 
-M0.4 MUST NOT treat successful binding as permanent proof that the world still matches the Observation.
+Successful Binding MUST NOT be treated as permanent proof that the world still matches the original input.
 
-If freshness or identity is material at execution time, later capability or Governance contracts may require revalidation.
+If freshness or identity is material at execution time, later Capability or Governance contracts may require revalidation.
 
-Revalidation MUST NOT silently change the bound value to another resource unless an already admitted Binding Rule explicitly permits a new binding under the applicable lifecycle.
+Revalidation MUST NOT silently change the Bound Value to another resource unless an admitted lifecycle explicitly permits a new Binding under the same rule.
 
 ```text
 stale binding != permission to reselect silently
 ```
 
-Exact revalidation and drift handling are deferred to later milestones.
+Exact revalidation and drift handling are deferred.
 
-## 17. Rebinding
+## 18. Rebinding
 
-A Symbolic Reference MUST NOT silently rebind from one concrete value to another after downstream inspection, authorization, or execution semantics depend on the original binding.
+A material Bound Value MUST NOT silently change from one concrete resource to another while pretending the earlier Binding never existed.
 
-If later attributable information requires a materially different bound value, IRR MUST preserve that change through an explicit lifecycle path rather than pretending the original binding never existed.
+If later attributable input requires a materially different value, the change must remain explicit and attributable.
 
-Depending on later lifecycle contracts, that may require:
+Depending on later lifecycle contracts, this may require:
 
 - a new binding instance;
 - IRR Continuation;
@@ -520,13 +529,13 @@ Depending on later lifecycle contracts, that may require:
 - Governance re-review;
 - rejection of the stale work path.
 
-M0.4 freezes the non-silent-rebinding invariant, not exact state transitions.
-
 ```text
 rebind != overwrite history
 ```
 
-## 18. Binding failure does not authorize fallback
+M0.4 freezes the non-silent-rebinding invariant, not exact state transitions.
+
+## 19. Binding failure does not authorize fallback
 
 If a Binding Rule cannot be satisfied, IRR or downstream execution MUST NOT silently substitute:
 
@@ -536,9 +545,7 @@ If a Binding Rule cannot be satisfied, IRR or downstream execution MUST NOT sile
 - another service;
 - arbitrary shell logic;
 - a broader search;
-- a user-like discretionary guess.
-
-The failure remains explicit and returns through the applicable bounded lifecycle.
+- discretionary guessing.
 
 ```text
 binding failure != fallback authority
@@ -546,14 +553,14 @@ binding failure != fallback authority
 
 This preserves M0.3's no-hidden-fallback boundary.
 
-## 19. Observation may reveal new semantics
+## 20. Material new information is not mechanical Binding Input
 
-An Observation can do more than supply a value.
+Downstream information may reveal more than a concrete value.
 
 It may reveal:
 
-- a previously unknown resource class;
-- a conflict;
+- a new resource class;
+- a Conflict;
 - a tie;
 - an additional recipient;
 - a new disclosure requirement;
@@ -561,9 +568,9 @@ It may reveal:
 - a new mutation surface;
 - missing prerequisites;
 - changed cost or commitment;
-- evidence that invalidates an earlier assumption.
+- evidence that invalidates an earlier Assumption.
 
-When such information can materially change the next bounded path, it MUST NOT be consumed as mere binding data.
+When such information can materially change the next bounded path, it MUST NOT be consumed merely as mechanical Binding Input.
 
 It becomes continuation-relevant semantic input.
 
@@ -571,21 +578,19 @@ It becomes continuation-relevant semantic input.
 material new information != mechanical binding input
 ```
 
-## 20. Continuation boundary
+## 21. IRR Continuation
 
-An `IRR Continuation` consumes attributable prior IRR state plus new clarification, Observation, or Outcome while preserving parent intent lineage.
+An `IRR Continuation` consumes attributable prior IRR state plus new clarification, Observation, Outcome, or other explicitly admitted continuation input while preserving parent intent lineage.
 
-M0.4 freezes when continuation is required for late-binding scenarios:
-
-Continuation is REQUIRED when new information introduces or exposes a material semantic decision not already determined by admitted semantics.
+For M0.4, Continuation is REQUIRED when new information introduces or exposes a material semantic decision not already determined by admitted semantics.
 
 Examples:
 
 - two tied latest backups with no tie-breaker;
 - two plausible launchers after archive inspection;
-- a selected resource requires external disclosure not represented in the plan;
-- an expected local operation now requires privilege escalation;
-- a prior assumption is contradicted in a way that changes downstream work.
+- a selected resource introduces external disclosure not represented in the current work semantics;
+- an expected operation now requires a materially different target or scope;
+- a prior Assumption is contradicted in a way that changes downstream work.
 
 Continuation MAY produce:
 
@@ -599,9 +604,9 @@ explicit inability to continue
 
 Exact lifecycle/state-machine representation remains deferred.
 
-## 21. Continuation is not automatic permission to observe more
+## 22. Continuation is not observation authority
 
-Returning to IRR does not grant authority to collect additional data.
+Returning to IRR does not grant authority to collect more data.
 
 If Continuation identifies another Information Need or Observation Need, M0.2 still applies:
 
@@ -610,37 +615,59 @@ information need != observation authority
 continuation != retrieval authority
 ```
 
-Any new observation effect remains external to IRR and subject to later capability/Governance contracts.
+Any new observation effect remains external to IRR and subject to later Capability/Governance contracts.
 
-## 22. Observation classification remains semantic
+## 23. Returned-data classification
 
 A returned value is not an Observation merely because it came from execution.
 
-Likewise, retrieval does not automatically make data observational.
-
-The Host or downstream contract must preserve whether returned material is:
+The surrounding contract must preserve whether returned material is:
 
 - plan-local output;
 - an Observation intended for IRR Continuation;
 - Context supplied through the Host boundary;
 - an Outcome from an Executor or Worker;
+- Binding Input used by a bounded rule;
 - another explicitly classified attributable input.
 
-M0.4 MUST NOT collapse these categories merely because they all contain data.
+These roles may overlap only when explicitly represented; they MUST NOT be silently collapsed because the same bytes participate in more than one role.
 
 ```text
 returned data != Observation by default
+retrieval != Observation by default
 ```
 
-## 23. Observation versus Outcome
+## 24. Observation boundary
 
-An Observation describes attributable information relevant to resolution or binding.
+An `Observation` retains the M0.2 meaning: attributable information explicitly supplied back to IRR from an external boundary or prior bounded step for continuation/resolution use.
+
+Observation is not automatic truth or authority.
+
+M0.4 adds one clarification: plan-local output used only for fixed symbolic dataflow does not have to become an Observation merely to be used as Binding Input.
+
+If the data must influence a new IRR semantic decision, it must re-enter through an attributable continuation boundary under its explicit classification.
+
+This preserves both:
+
+```text
+plan-local dataflow != ambient IRR context
+```
+
+and:
+
+```text
+new semantic decision -> attributable IRR input
+```
+
+## 25. Observation versus Outcome
+
+An Observation describes attributable information relevant to IRR resolution or continuation.
 
 An Outcome is an attributable reported result of Executor or Worker activity.
 
-One downstream event may later produce both observational information and an Outcome, but those meanings MUST remain distinguishable.
+One downstream event may later supply both meanings, but they MUST remain distinguishable.
 
-For example:
+Example:
 
 ```text
 archive.inspect succeeded
@@ -652,7 +679,7 @@ may be an Outcome about the inspect operation, while:
 two launchers found: A.exe, B.exe
 ```
 
-is Observation material relevant to continuation.
+may be Observation material relevant to Continuation.
 
 M0.9 freezes exact Outcome states.
 
@@ -660,19 +687,19 @@ M0.9 freezes exact Outcome states.
 observation != outcome
 ```
 
-## 24. Observation does not inherit execution authority
+## 26. Authorized observation does not authorize observed resources
 
-An Observation created by an authorized operation does not inherit that operation's authority.
+An Observation produced by an authorized operation does not inherit or propagate that operation's authority.
 
-For example, authorization to list a directory does not mean that every returned file is authorized for deletion, execution, disclosure, or future mutation.
+Authorization to list a directory does not mean that every returned file is authorized for deletion, execution, disclosure, or mutation.
 
 ```text
 authorized observation effect != authority over observed resources
 ```
 
-Observed resources may require separate Governance decisions under later contracts.
+Observed or Bound resources may require separate Governance decisions under later contracts.
 
-## 25. Chained symbolic dataflow
+## 27. Chained symbolic dataflow
 
 A bounded WorkPlan MAY contain finite chains of symbolic dependencies.
 
@@ -689,23 +716,17 @@ artifact.select
 archive.inspect
     <- selected_backup
     -> archive_manifest
-
-workspace.select_launcher
-    <- archive_manifest
-    -> launcher
 ```
 
-Each symbolic dependency MUST remain semantically attributable and must respect the finite acyclic Work Dependency graph frozen by M0.3.
+Each symbolic dependency MUST remain semantically attributable and respect the finite acyclic Work Dependency graph frozen by M0.3.
 
-A chain MUST stop for IRR Continuation when a new material semantic decision appears.
+The chain MUST stop for IRR Continuation when a new material semantic decision appears.
 
 Symbolic chaining MUST NOT become an autonomous planner loop.
 
-## 26. No implicit cross-slot substitution
+## 28. No implicit cross-slot substitution
 
-A value bound to one Symbolic Reference MUST NOT silently satisfy another merely because the values have compatible primitive types or similar names.
-
-For example:
+A value bound to one Symbolic Reference MUST NOT silently satisfy another merely because primitive types or names look compatible.
 
 ```text
 $selected_backup
@@ -717,7 +738,7 @@ must not automatically satisfy:
 $launch_target
 ```
 
-because both happen to be paths.
+merely because both are paths.
 
 ```text
 structural compatibility != semantic substitutability
@@ -725,9 +746,9 @@ structural compatibility != semantic substitutability
 
 Exact typing rules are deferred.
 
-## 27. No hidden widening during observation
+## 29. No hidden scope widening
 
-A bounded observation or binding step MUST NOT silently widen its scope merely because the initial scope did not produce a value.
+A bounded observation-oriented or binding step MUST NOT silently widen its scope because the initial scope failed to produce a value.
 
 Example:
 
@@ -741,7 +762,7 @@ must not become:
 search all drives
 ```
 
-without an explicit new semantic decision and applicable downstream authority.
+without a new explicit semantic decision and applicable downstream authority.
 
 ```text
 empty bounded result != permission to widen scope
@@ -749,7 +770,7 @@ empty bounded result != permission to widen scope
 
 This preserves M0.2 Context Boundary and M0.3 Plan Derivation semantics.
 
-## 28. Relationship to the backup scenario
+## 30. Backup scenario
 
 Intent:
 
@@ -759,7 +780,7 @@ extract it to W:\organism_lab,
 and launch the project."
 ```
 
-A valid conceptual path may be:
+A conceptual bounded work path may contain:
 
 ```text
 Step 1
@@ -788,9 +809,13 @@ workspace.inspect(input=W:\organism_lab)
 output -> $launcher_candidates
 ```
 
-If `$launcher_candidates` contains exactly one admissible launcher under an explicit rule, downstream binding may continue.
+Each WorkStep remains subject to whatever Capability and Governance conditions later contracts require. The example does not imply one authorization covers the whole chain.
 
-If it contains two materially different launchers and no admitted selection rule:
+`$backup_candidates` and `$selected_backup` may flow plan-locally while the admitted selection rule remains sufficient.
+
+If launcher selection is governed by an admitted rule such as `require exactly one admissible launcher`, one unique launcher may bind mechanically.
+
+If two materially different launcher candidates remain and no admitted rule chooses between them:
 
 ```text
 $launcher_candidates
@@ -805,27 +830,27 @@ IRR Continuation
 Clarification
 ```
 
-IRR MUST NOT choose one silently.
+IRR and Executors MUST NOT choose one silently.
 
-## 29. Relationship to authority
+## 31. Authority distinctions
 
 M0.4 freezes no permission policy.
-
-A plan may have symbolic resources, bound resources, observations, and continuation points without any of those granting authority.
 
 The following distinctions are mandatory:
 
 ```text
 symbolic reference != authority
+Binding Input != authority
 binding rule != authorization
-observation != permission
-bound value != permission
-continuation != authority
+binding != authorization
+Observation != permission
+Bound Value != permission
+Continuation != authority
 ```
 
 M0.6 freezes Governance semantics.
 
-## 30. Relationship to later milestones
+## 32. Relationship to later milestones
 
 M0.4 intentionally leaves these details to later contracts:
 
@@ -838,20 +863,22 @@ M0.4 intentionally leaves these details to later contracts:
 
 Later milestones may refine representation but MUST preserve the Late Binding and Observation boundary frozen here.
 
-## 31. M0.4 exclusions
+## 33. M0.4 exclusions
 
 M0.4 intentionally does NOT freeze:
 
 - Python classes, enums, protocols, or serialization;
 - exact `SymbolicReference` fields or syntax;
+- exact `BindingInput` representation;
 - exact `BindingRule` representation;
 - exact `BoundValue` or binding-record schema;
 - exact Observation or ObservationNeed schema;
-- exact capability input/output contracts;
+- exact Capability input/output contracts;
 - execution scheduling;
-- where mechanical Binding Rule evaluation runs in a concrete architecture;
+- where mechanical Binding Rule evaluation runs;
 - concrete trust/evidence enums;
 - Governance policy or consent rules;
+- whether a particular authority decision occurs before or after a particular Binding;
 - plan/step/binding IDs, digests, persistence, or receipt format;
 - exact revalidation or stale-binding algorithms;
 - exact Continuation state-machine transitions;
@@ -860,38 +887,42 @@ M0.4 intentionally does NOT freeze:
 
 M0.4 freezes semantic constraints, not implementation types.
 
-## 32. Acceptance criteria
+## 34. Acceptance criteria
 
 M0.4 is complete when the repository states unambiguously that:
 
 1. Late Binding defers concrete values, not semantic decisions.
 2. A Symbolic Reference is not an observed value, authority, or scripting variable.
-3. Every material late-bound value is governed by an explicit bounded Binding Rule.
-4. Binding Rule semantics cannot be silently rewritten to make a binding succeed.
-5. Applying an unchanged Binding Rule to compatible attributable data is binding, not semantic WorkPlan self-mutation.
-6. Bound Values retain material provenance and semantic lineage.
-7. Observation compatibility is semantic rather than merely structural.
-8. Binding preserves M0.2 scope, completeness, freshness, and evidentiary limitations.
-9. Zero matches do not authorize guessing or scope widening.
-10. Multiple candidates may bind only when the admitted rule uniquely determines the result.
-11. Ties or unresolved material choices return to IRR Continuation.
-12. Presentation order or first-result order is not implicit binding precedence.
-13. Bounded plan-local symbolic dataflow may continue without a new IRR semantic decision when all material semantics are already fixed.
-14. Downstream mechanical binding does not grant semantic discretion or authority.
-15. Binding and Governance authorization remain separate.
-16. A Bound Value is not a timeless fact or permission grant.
-17. Stale bindings do not authorize silent reselection.
-18. Rebinding cannot overwrite prior binding history silently.
-19. Binding failure does not authorize fallback semantics.
-20. Material new information is continuation input, not mechanical binding data.
-21. Continuation is required when new information creates a material semantic decision not already determined by admitted semantics.
-22. Continuation does not grant observation or retrieval authority.
-23. Returned data is not automatically classified as Observation.
-24. Observation and Outcome semantics remain distinguishable.
-25. Authorized observation does not grant authority over observed resources.
-26. Chained symbolic dataflow remains finite, acyclic, and stops at new semantic decisions.
-27. Primitive type similarity does not permit cross-slot substitution.
-28. Empty observation results do not permit hidden scope widening.
-29. The backup scenario can proceed through symbolic dataflow but stops for clarification when launcher selection becomes materially ambiguous.
-30. M0.5+, M0.6+, M0.7+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
-31. No runtime code or `src/` tree is introduced.
+3. Binding Input is an attributable semantic role and is not Observation, Context, or Outcome by default.
+4. Every material late-bound value is governed by an explicit bounded Binding Rule.
+5. Binding Rule semantics cannot be silently rewritten to make Binding succeed.
+6. Applying an unchanged Binding Rule to compatible attributable input is Binding, not semantic WorkPlan self-mutation.
+7. Bound Values retain material provenance and semantic lineage.
+8. Binding compatibility is semantic rather than merely structural.
+9. Binding preserves M0.2 scope, completeness, freshness, and evidentiary limitations.
+10. Zero matches do not authorize guessing or scope widening.
+11. Multiple candidates may bind only when the admitted rule determines the required result.
+12. Ties or unresolved material choices return to IRR Continuation.
+13. Presentation order is not implicit Binding precedence.
+14. Bounded plan-local symbolic dataflow may continue without a new IRR semantic decision while all material semantics remain fixed.
+15. Plan-local output does not become Observation or ambient IRR Context automatically.
+16. M0.4 does not fix Binding before or after Governance; observation-producing WorkSteps may themselves require authority.
+17. Mechanical downstream Binding does not grant semantic discretion or authority.
+18. Binding and authorization remain distinct.
+19. A Bound Value is not a timeless fact or permission grant.
+20. Stale bindings do not authorize silent reselection.
+21. Rebinding cannot overwrite prior binding history silently.
+22. Binding failure does not authorize fallback semantics.
+23. Material new information is continuation input, not mechanical Binding Input.
+24. Continuation is required when new information creates a material semantic decision not already determined by admitted semantics.
+25. Continuation does not grant observation or retrieval authority.
+26. Returned data is not automatically classified as Observation.
+27. Observation retains the M0.2 explicit return-to-IRR meaning.
+28. Observation and Outcome remain distinguishable.
+29. Authorized observation does not grant authority over observed resources.
+30. Chained symbolic dataflow remains finite, acyclic, and stops at new semantic decisions.
+31. Primitive type similarity does not permit cross-slot substitution.
+32. Empty bounded results do not permit hidden scope widening.
+33. The backup scenario can proceed through symbolic dataflow but stops for clarification when launcher selection becomes materially ambiguous.
+34. M0.5+, M0.6+, M0.7+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
+35. No runtime code or `src/` tree is introduced.
