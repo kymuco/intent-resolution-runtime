@@ -96,15 +96,15 @@ An Observation Need is not execution authority.
 
 ### Observation
 
-Attributable information returned from an external boundary or prior bounded step and supplied back to IRR for continuation or an explicitly defined binding path.
+Attributable information explicitly supplied back to IRR from an external boundary or prior bounded step for continuation or resolution use.
 
 Observation is data, not authority and not automatically truth beyond its stated provenance, completeness, temporal basis, and evidence.
 
-Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Returned data is not automatically an Observation merely because it came from execution.
+Ordinary Cognitive Provider output remains CandidateResolution material and is not silently reclassified as Observation. Returned data and plan-local WorkStep output are not automatically Observations merely because they contain information.
 
 ### Late Binding
 
-Deferred concretization of a value when the semantic Binding Rule is already explicit and bounded before the value is observed.
+Deferred concretization of a value when the semantic Binding Rule is already explicit and bounded before the value becomes available.
 
 Late Binding defers a value, not a discretionary semantic decision.
 
@@ -113,15 +113,23 @@ late binding != deferred discretion
 unknown value != unknown decision rule
 ```
 
+### Binding Input
+
+Attributable data supplied to a Binding Rule for the purpose of concretizing a Symbolic Reference.
+
+Binding Input is a semantic role, not a universal data class. Depending on the surrounding contract, it may be plan-local WorkStep output, an Observation, admitted Context, or another explicitly permitted attributable input.
+
+Binding Input is not Observation, Context, Outcome, or authority by default.
+
 ### Binding Rule
 
-An explicit bounded semantic rule that determines how compatible attributable future data may satisfy a Symbolic Reference.
+An explicit bounded semantic rule that determines how compatible Binding Input may satisfy a Symbolic Reference.
 
 A Binding Rule must not be a hidden heuristic, ambient ordering preference, or invitation for an Executor to improvise.
 
 ### Binding
 
-The act of associating a concrete Bound Value with a Symbolic Reference by applying an unchanged admitted Binding Rule to compatible attributable input.
+The act of associating a concrete Bound Value with a Symbolic Reference by applying an unchanged admitted Binding Rule to compatible attributable Binding Input.
 
 Binding is value instantiation, not semantic WorkPlan self-mutation, authorization, or permission.
 
@@ -133,13 +141,13 @@ A Bound Value retains material semantic lineage and evidentiary limitations. It 
 
 ### Rebinding
 
-A later association of a Symbolic Reference or successor symbolic slot with a materially different concrete value after an earlier binding exists.
+A later association of a Symbolic Reference or successor symbolic slot with a materially different concrete value after an earlier Binding exists.
 
 Rebinding must not silently overwrite prior binding history. Exact lifecycle and identity representation are deferred.
 
 ### Continuation
 
-A successor resolution step that consumes attributable prior state plus new clarification, Observation, or Outcome while preserving parent intent lineage.
+A successor resolution step that consumes attributable prior state plus new clarification, Observation, Outcome, or another explicitly admitted continuation input while preserving parent intent lineage.
 
 Continuation is required when new information introduces a material semantic decision not already determined by admitted semantics. Continuation is not retrieval or observation authority.
 
@@ -197,7 +205,7 @@ A Conflict that can materially change the next bounded path blocks ResolvedInten
 
 ### Completeness
 
-An attributable assertion that an Observation or Context Item exhaustively covers a stated bounded domain for a stated purpose or time.
+An attributable assertion that an Observation, Context Item, or other attributable Binding Input exhaustively covers a stated bounded domain for a stated purpose or time.
 
 Completeness MUST NOT be inferred merely because a result appears exhaustive.
 
@@ -205,11 +213,11 @@ Absence within explicitly complete bounded evidence may support a negative concl
 
 ### Freshness
 
-The temporal relevance of a Claim, Context Item, Observation, or Bound Value to the semantics being resolved or executed.
+The temporal relevance of a Claim, Context Item, Observation, Binding Input, or Bound Value to the semantics being resolved or executed.
 
 Freshness MUST NOT be inferred when time materially changes meaning and the available material does not support that inference.
 
-Successful Binding does not prove that the external world still matches the Observation indefinitely.
+Successful Binding does not prove that the external world still matches the Binding Input indefinitely.
 
 ### Temporal Basis
 
@@ -432,6 +440,10 @@ assumption != established fact
 information need != observation authority
 cognitive provider output != observation by default
 returned data != observation by default
+Binding Input != Observation by default
+Binding Input != Context by default
+Binding Input != Outcome by default
+Binding Input != authority
 observation != outcome
 resolution != approval
 resolved intent != work plan requirement
