@@ -1,10 +1,10 @@
 # Intent Resolution Runtime
 
-Intent Resolution Runtime (IRR) turns human-, companion-, worker-, or system-originated intent into bounded, inspectable operational work representations and downstream handoffs.
+Intent Resolution Runtime (IRR) resolves human-, companion-, worker-, or system-originated intent into bounded, inspectable resolution outcomes. When operational work is required, IRR produces bounded semantic work representations and downstream handoffs.
 
 > **Intent != Permission != Effect**
 
-IRR resolves what requested work means operationally. It does not grant authority and it does not perform effects.
+IRR resolves what an intent means and what, if anything, should happen next operationally. It does not grant authority and it does not perform effects.
 
 ## Status
 
@@ -32,20 +32,25 @@ human / companion / worker / system
                IRR
      interpret / clarify / resolve
                 |
-                v
-  bounded operational representation
-                |
-                v
-     governance / authorization
-                |
-                v
-     executor or delegated worker
-                |
-                v
-              effect
+        +-------+------------------+
+        |                          |
+        v                          v
+ non-operational              bounded operational
+resolution outcome             representation
+(answer / no work /                  |
+ clarification)                     v
+                         governance / authorization
+                                   |
+                                   v
+                         executor or delegated worker
+                                   |
+                                   v
+                                 effect
 ```
 
-IRR may describe requested scope, effects, dependencies, uncertainty, and required capabilities. It must not claim that a request is safe, approved, authorized, or true merely because it is structurally resolvable.
+Not every intent produces operational work. IRR may resolve an inquiry, request clarification, or determine that no operational work is required without manufacturing a WorkPlan.
+
+When operational work is required, IRR may describe requested scope, effects, dependencies, uncertainty, and required capabilities. It must not claim that a request is safe, approved, authorized, or true merely because it is structurally resolvable.
 
 ## What IRR is not
 
