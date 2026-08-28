@@ -1,6 +1,6 @@
 # IRR Terminology
 
-Status: **normative vocabulary through M0.4**.
+Status: **normative vocabulary through M0.5**.
 
 This document defines terms that later M0 contracts must use consistently. Exact data schemas are intentionally deferred.
 
@@ -64,7 +64,7 @@ A ResolvedIntent may support planning, answer-only completion, no-operational-wo
 
 A Clarification request is not itself a ResolvedIntent. If a later Observation introduces new blocking Material Ambiguity or Conflict, Continuation returns to clarification or another explicit resolution path before a successor ResolvedIntent is admitted.
 
-The exact schema and terminal states are not frozen in M0.4.
+The exact schema and terminal states are not frozen in M0.5.
 
 ### Material Ambiguity
 
@@ -307,6 +307,8 @@ A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outpu
 
 A WorkPlan is not executable authority, a general-purpose script, or an autonomous planner loop.
 
+Every operational WorkPlan is attributable to the exact applicable Capability Catalog Snapshot used to admit its WorkSteps.
+
 ### WorkStep
 
 A bounded semantic unit of requested operational work inside a WorkPlan.
@@ -316,6 +318,8 @@ A WorkStep must remain attributable to its parent ResolvedIntent/WorkPlan semant
 An ordinary WorkStep's semantic contract must itself be inspectably bounded. A broad or opaque step must not hide an open-ended observe/decide/act loop merely to make the containing WorkPlan look finite; long-form delegated cognition belongs to the separate Worker boundary.
 
 A valid WorkStep is not an authorized WorkStep.
+
+An operational WorkStep requiring a Capability is admissible only when a compatible Capability exists in the exact applicable Catalog Snapshot.
 
 ### Work Dependency
 
@@ -362,23 +366,122 @@ Step completion, plan completion, and intent satisfaction are distinct concepts.
 
 ### Capability
 
-A named operation class that an external execution environment can potentially provide, such as `filesystem.search` or `archive.extract`.
+A bounded operation contract that an external execution environment can potentially provide, such as `filesystem.search` or `archive.extract`.
 
-A Capability describes what may be requested; it does not itself grant permission to perform it.
+A Capability is distinct from both the Semantic Operation it can represent and the implementation command or adapter that may execute it.
 
-M0.5 freezes the exact relationship between Semantic Operations, capabilities, catalog membership, availability, and the Capability Catalog.
+A Capability does not grant permission, prove availability, or prove successful effect.
+
+```text
+semantic operation != capability
+capability != implementation command
+```
+
+### Capability Descriptor
+
+The attributable semantic definition of a Capability within a Capability Catalog Snapshot.
+
+A future Descriptor must preserve enough semantics to identify conceptually the capability identity, purpose, input contract, output contract, material effect metadata, scope requirements, and executor/provider identity when material.
+
+Exact fields are deferred to M1.
+
+### Capability Identity
+
+The semantic identity of a declared Capability contract.
+
+A stable human-readable capability identifier alone does not prove unchanged semantics across Catalog Snapshots.
+
+```text
+same capability_id != same capability semantics
+```
 
 ### Capability Catalog
 
-The externally supplied set of Capability definitions available to a resolution.
+The externally supplied bounded set of Capability definitions admitted for a resolution.
 
-A resolved plan must later bind to the exact catalog snapshot used to interpret those capabilities.
+The Catalog is the capability planning surface IRR may use. It is not necessarily a global inventory of every operation technically possible elsewhere.
+
+IRR does not ambiently discover or widen the Catalog.
+
+### Catalog Snapshot
+
+The exact attributable version of the Capability Catalog used for a resolution or planning decision.
+
+Every operational WorkPlan remains attributable to the exact applicable Catalog Snapshot used to validate its WorkSteps.
+
+Exact snapshot identity, digest, serialization, and persistence are deferred.
+
+### Catalog Membership
+
+The condition that a Capability Descriptor is present in the exact applicable Catalog Snapshot and is eligible for matching under that snapshot's scope.
+
+Catalog Membership means capability-known-for-planning. It does not establish current Availability, Authorization, or successful effect.
+
+### Capability Match
+
+The bounded determination that a Capability Descriptor can represent a planned Semantic Operation under the required semantic input, output, effect, scope, and provider/executor constraints.
+
+Capability Match is semantic compatibility, not name similarity, primitive type compatibility, implementation coercion, or provider preference.
+
+### Input Contract
+
+The semantic input shape and constraints a Capability may consume.
+
+Input compatibility is semantic rather than merely structural or primitive-type compatibility. Exact type representation is deferred.
+
+### Output Contract
+
+The semantic attributable result/data contract a Capability may produce.
+
+Capability outputs may later serve as Binding Input, Observation, Outcome evidence, completion evidence, or another explicitly classified value; output status alone does not determine that classification.
+
+### Effect Metadata
+
+Descriptive metadata representing the material externally observable effect surface of a Capability contract.
+
+Effect Metadata is inspectable semantic information, not Authorization, safety approval, or a Governance decision.
+
+Exact effect taxonomies remain deferred.
+
+### Scope Requirements
+
+The bounded resource, destination, account, recipient, path, repository, network domain, or other semantic scope a Capability invocation requires.
+
+Scope Requirements are descriptive constraints, not authorized scope.
+
+### Capability Availability
+
+The attributable, time-bounded condition describing whether a catalog-known Capability can currently be offered by the applicable downstream environment under stated runtime conditions.
+
+Availability is distinct from Catalog Membership and Authorization.
+
+A known but unavailable Capability is not `missing_capability`.
+
+### missing_capability
+
+The conceptual condition where a required Semantic Operation has no compatible Capability admitted in the exact applicable Catalog Snapshot.
+
+`missing_capability` does not claim global impossibility and does not authorize fallback, Catalog widening, arbitrary command execution, browser automation, Worker substitution, or silent omission of required work.
 
 ### Capability Drift
 
-A change in Capability Catalog identity or semantics after a resolution was produced.
+A material membership or descriptor-semantic change between the capability surface against which work was resolved and a later capability surface presented for validation, handoff, or execution.
+
+Capability Drift may include changed input/output contracts, effect metadata, scope requirements, or provider/executor identity when material.
 
 Capability Drift must not silently reinterpret an existing WorkPlan.
+
+### Availability Drift
+
+A change in whether a semantically known Capability is currently available without necessarily changing its Capability Descriptor semantics.
+
+Availability Drift may affect executability without changing WorkPlan meaning and remains distinct from semantic or membership Capability Drift.
+
+### Capability Revalidation
+
+A later bounded check that an existing capability-bound WorkStep remains compatible with a current capability surface.
+
+Revalidation is not Authorization and does not permit hidden capability substitution or semantic mutation.
 
 ### Handoff
 
@@ -466,6 +569,9 @@ observation != outcome
 resolution != approval
 resolved intent != work plan requirement
 semantic operation != implementation command
+semantic operation != capability
+capability != implementation command
+capability != autonomous goal loop
 platform neutrality != effect-changing substitution
 work plan != scripting language
 bounded work plan != opaque autonomous work step
@@ -510,6 +616,44 @@ failure != automatic retry
 unknown result != automatic retry
 missing implementation != permission to invent a different operation
 empty bounded result != permission to widen scope
+capability catalog != ambient capability discovery
+catalog scope != global environment capability
+catalog attribution != authorization
+same capability_id != same capability semantics
+same primitive shape != compatible capability input
+name similarity != capability compatibility
+implementation possibility != capability admission
+multiple matches != permission for hidden provider preference
+catalog order != capability precedence
+catalog membership != current availability
+catalog membership != authorization
+catalog membership != successful effect
+known capability + unavailable != missing capability
+availability != timeless fact
+available != authorized
+authorized != available
+missing_capability != global impossibility
+missing capability != fallback authority
+partial capability coverage != full intent satisfaction
+provider proposal != capability existence
+capability prerequisite != implicit capability expansion
+effect metadata != authorization
+effect metadata != safety verdict
+effect metadata != risk approval
+scope requirement != authorized scope
+capability drift != silent plan reinterpretation
+revalidation != authorization
+revalidation != capability substitution
+executor substitution != automatic semantic equivalence
+capability descriptor != authorization record
+risk/effect label != Governance decision
+new catalog snapshot != rewritten planning history
+later capability addition != retroactive capability existence
+binding != capability admission
+capability admission != bound-resource authorization
+worker availability != capability fallback
+missing capability != execution failure
+unavailable capability != unknown outcome
 worker delegation != ordinary work step execution
 inspectable != approved
 handoff != authorization
