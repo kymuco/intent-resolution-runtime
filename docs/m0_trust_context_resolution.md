@@ -443,20 +443,22 @@ At minimum, admission MUST preserve these properties:
 
 A ResolvedIntent may still contain uncertainty or Conflict that does not block its next bounded path. Such uncertainty or Conflict MUST remain explicit when material to interpretation, user understanding, or downstream planning.
 
-## 21. Non-operational resolution
+## 21. Non-operational resolution and pause
 
-Resolution may terminate without operational work.
+A resolution path may complete or pause without operational work.
 
 Examples include:
 
 - answer-only resolution;
 - determination that no operational work is required;
 - explanation of unresolved uncertainty;
-- a request for clarification before a ResolvedIntent exists.
+- a Clarification request that pauses the current resolution path pending attributable continuation input.
 
-IRR MUST NOT manufacture a WorkPlan merely to make every resolution look operational.
+A Clarification request is not a ResolvedIntent and does not by itself terminate the parent intent lifecycle.
 
-Exact terminal resolution schemas remain deferred.
+IRR MUST NOT manufacture a WorkPlan merely to make every resolution path look operational.
+
+Exact pause, continuation, and terminal resolution schemas remain deferred.
 
 ## 22. Cognitive Provider trust boundary
 
@@ -491,7 +493,7 @@ M0.2 intentionally does NOT freeze:
 - identity-provider integrations;
 - canonical provenance or digest formats;
 - persistence or runtime state machines;
-- exact clarification or terminal-resolution schemas;
+- exact clarification, pause, continuation, or terminal-resolution schemas;
 - `InformationNeed`, `ObservationNeed`, or observation-request schemas;
 - clock or timestamp wire formats;
 - Late Binding dataflow mechanics;
@@ -529,6 +531,7 @@ M0.2 is complete when the repository states unambiguously that:
 19. An information need does not collapse orchestration, Governance, and observation execution into IRR.
 20. Observation is attributable data, not automatic truth or authority.
 21. Cognitive Provider output is not silently reclassified as Observation.
-22. `ResolvedIntent` admission preserves provenance, uncertainty, conflicts, temporal basis, completeness, and trust limitations material to the next bounded path.
-23. Non-operational intents do not require a WorkPlan.
-24. No implementation code or premature M1 schema is introduced.
+22. Clarification pauses rather than silently terminating the parent intent lifecycle.
+23. `ResolvedIntent` admission preserves provenance, uncertainty, conflicts, temporal basis, completeness, and trust limitations material to the next bounded path.
+24. Non-operational intents do not require a WorkPlan.
+25. No implementation code or premature M1 schema is introduced.
