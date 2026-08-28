@@ -8,9 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.2 — Trust, Context & Resolution Semantics**.
+Current milestone: **M0.3 — Intent → Work Boundary**.
 
-M0.1 Product Charter & Vocabulary is frozen in `main`. M0.2 freezes how IRR may know and resolve intent: context is explicit and bounded, evidence remains scoped, material ambiguity blocks resolution, and missing semantics are clarified rather than invented.
+M0.1 Product Charter & Vocabulary and M0.2 Trust, Context & Resolution Semantics are frozen in `main`. M0.3 freezes the shape of operational work: finite semantic WorkPlans and WorkSteps, explicit dependencies and symbolic dataflow, no arbitrary executable control language, and no hidden semantic decisions after new observations.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -40,10 +40,17 @@ human / companion / worker / system
         +-------+------------------+
         |                          |
         v                          v
- non-operational              bounded operational
- resolution path               representation
-(answer / no work /                  |
- clarification)                     v
+ non-operational              ResolvedIntent
+ resolution path                   |
+(answer / no work /                 v
+ clarification)                 WorkPlan
+                                   |
+                                   v
+                              WorkStep[]
+                         semantic, finite,
+                         bounded, inspectable
+                                   |
+                                   v
                          governance / authorization
                                    |
                                    v
@@ -57,11 +64,13 @@ Not every intent produces operational work. IRR may resolve an inquiry, request 
 
 IRR has no ambient semantic context. Material used for resolution must enter through an explicit Host boundary and remain attributable. A context reference is not retrieval authority, evidence is not authority, and context available to IRR is not automatically authorized for disclosure to a Cognitive Provider.
 
-When operational work is required, IRR may describe requested scope, effects, dependencies, uncertainty, and required capabilities. It must not claim that a request is safe, approved, authorized, or true merely because it is structurally resolvable.
+When operational work is required, IRR represents **semantic operations**, not platform-specific command sequences. A WorkPlan is finite and inspectable; it may express dependencies, symbolic inputs/outputs, bounded ordering, and explicit continuation points, but it is not a scripting language and does not own arbitrary loops, hidden retries, embedded code, or silent observation-dependent branching.
+
+A valid WorkPlan is still only proposed work. It does not imply capability availability, authorization, execution, or successful effect.
 
 ## What IRR is not
 
-IRR is not a shell-command generator, desktop automation engine, policy or permission system, companion/personality runtime, memory system, general chat assistant, Runplane replacement, Codexia replacement, HDE-specific subsystem, or Organism runtime.
+IRR is not a shell-command generator, general-purpose workflow scripting language, desktop automation engine, policy or permission system, companion/personality runtime, memory system, general chat assistant, Runplane replacement, Codexia replacement, HDE-specific subsystem, or Organism runtime.
 
 These systems may later integrate with IRR through explicit boundaries, but they are not dependencies of the IRR core.
 
@@ -69,6 +78,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 
 - [M0 runtime charter](docs/m0_runtime_charter.md)
 - [M0.2 trust, context & resolution semantics](docs/m0_trust_context_resolution.md)
+- [M0.3 intent → work boundary](docs/m0_intent_work_boundary.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
