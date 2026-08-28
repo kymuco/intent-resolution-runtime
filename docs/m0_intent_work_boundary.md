@@ -63,7 +63,7 @@ clarification != intent completion
 
 A `WorkPlan` MUST represent **what operation is requested**, not a platform-specific command sequence for how an executor happens to implement it.
 
-Preferred semantic operation examples include:
+Conceptual semantic operation examples include:
 
 ```text
 filesystem.search
@@ -93,7 +93,9 @@ The mapping from semantic operation to executable mechanism belongs downstream o
 semantic operation != implementation command
 ```
 
-## 3. Platform neutrality
+Exact operation identifier syntax remains deferred.
+
+## 3. Platform neutrality without effect-changing substitution
 
 IRR core work semantics MUST NOT depend on a hard-coded catalog of Windows commands, Linux utilities, macOS applications, shell built-ins, browser automation snippets, or language-specific libraries.
 
@@ -101,11 +103,19 @@ A plan that means `archive.extract` should remain semantically recognizable as t
 
 - a native operating-system API;
 - a library call;
-- a sandboxed process;
-- a remote service;
-- another bounded implementation.
+- a sandboxed local process;
+- another bounded implementation whose material effect surface is compatible with the represented work semantics.
 
-Platform-specific execution details may exist downstream. They MUST NOT become IRR work semantics merely because one implementation currently uses them.
+Platform neutrality does **not** mean that any implementation is semantically interchangeable.
+
+An implementation choice that introduces a new material effect — for example uploading an archive to a remote service in order to extract it — is not a transparent implementation substitution unless that disclosure is already represented explicitly in the work semantics and handled by the applicable downstream authority boundary.
+
+```text
+platform neutrality != effect-changing substitution
+implementation equivalence != permission to hide new effects
+```
+
+Platform-specific execution details may exist downstream. They MUST NOT become IRR work semantics merely because one implementation currently uses them, and they MUST NOT silently add material effects that the WorkPlan does not represent.
 
 ## 4. WorkPlan is not a scripting language
 
@@ -391,27 +401,31 @@ executable-looking text != WorkPlan control flow
 
 M0.3 does not freeze such future capability contracts.
 
-## 15. WorkPlan validity is not executability
+## 15. WorkPlan validity is not current executability
 
-A `WorkPlan` may be semantically valid even when it cannot currently be executed.
+A `WorkPlan` may be semantically valid even when downstream execution cannot currently proceed.
 
 Examples include:
 
-- a required capability is unavailable;
+- a capability already admitted under the applicable later catalog contract has no currently reachable executor/provider;
 - Governance denies authorization;
 - required scope is unavailable;
 - required observation cannot be obtained;
-- a downstream executor is offline.
+- an otherwise applicable downstream executor is offline.
 
 Therefore:
 
 ```text
-valid plan != executable plan
+valid plan != currently executable plan
 valid plan != authorized plan
 valid plan != successful effect
 ```
 
-M0.5 freezes capability availability semantics. M0.6 freezes the Governance boundary. M0.9 freezes downstream outcome and unknown-outcome semantics.
+This section MUST NOT be read as permission to plan against unknown or absent capabilities.
+
+M0.3 deliberately does not decide whether a WorkPlan may be admitted when a required semantic operation has no corresponding capability in the applicable catalog. M0.5 freezes capability admission, `missing_capability`, exact catalog binding, availability semantics, and capability drift.
+
+M0.6 freezes the Governance boundary. M0.9 freezes downstream outcome and unknown-outcome semantics.
 
 ## 16. WorkPlan is not capability authority
 
@@ -428,8 +442,8 @@ inside a plan means only that the resolved operational semantics request a launc
 It does not mean:
 
 ```text
-launcher exists
-launcher is allowed
+launcher capability is known
+launcher is currently executable
 scope is authorized
 process was started
 ```
@@ -527,8 +541,11 @@ M0.8 freezes that boundary in detail.
 IRR MUST NOT use a generic `worker.do_everything` step as an escape hatch from bounded work semantics.
 
 ```text
+worker delegation != ordinary WorkStep execution
 worker delegation != arbitrary capability fallback
 ```
+
+A WorkPlan path through ordinary WorkSteps therefore MUST NOT be depicted or interpreted as automatically equivalent to delegated Worker execution.
 
 ## 23. Relationship to later M0 milestones
 
@@ -574,7 +591,7 @@ M0.3 is complete when the repository states unambiguously that:
 1. A `WorkPlan` is produced only when a `ResolvedIntent` requires operational work.
 2. Clarification or pre-resolution continuation does not require a WorkPlan and does not by itself complete the parent intent lifecycle.
 3. Work is represented as semantic operations rather than platform-specific implementation commands.
-4. IRR core work semantics are platform-neutral.
+4. IRR core work semantics are platform-neutral without permitting effect-changing implementation substitution.
 5. A `WorkPlan` is not a scripting language or general-purpose execution program.
 6. A v1 `WorkPlan` is finite and bounded.
 7. Ordinary WorkStep semantics are themselves inspectably bounded; a finite wrapper cannot launder an opaque autonomous loop into a bounded plan.
@@ -585,15 +602,15 @@ M0.3 is complete when the repository states unambiguously that:
 12. New material semantic decisions return to IRR continuation rather than hidden plan branching.
 13. Material plan changes produce successor semantics rather than silent in-place self-mutation.
 14. Every material WorkStep is derivable from the parent resolved intent, an admitted constraint, or a necessary explicit prerequisite.
-15. Material effects cannot be hidden inside misleading step semantics.
+15. Material effects cannot be hidden inside misleading step semantics or implementation substitution.
 16. Executable-looking user/context text is data unless an explicit downstream contract gives it bounded meaning; it is never hidden IRR control flow.
-17. Plan validity does not imply executability, authorization, or effect.
-18. Naming a semantic operation does not grant the corresponding capability.
+17. Plan validity does not imply current executability, authorization, or effect, and does not permit planning against unknown capabilities.
+18. Naming a semantic operation does not establish that its capability is known, currently executable, authorized, or performed.
 19. Step completion, plan completion, and intent satisfaction remain distinct.
 20. Observation-oriented and effectful work remain semantically distinguishable.
 21. Failure or unknown result does not imply automatic retry.
 22. Missing implementation does not permit arbitrary fallback operations.
 23. Work semantics remain inspectable before downstream Governance.
-24. Worker delegation is not an escape hatch from bounded operation semantics.
+24. Worker delegation remains distinct from ordinary WorkStep execution and is not an escape hatch from bounded operation semantics.
 25. M0.4+, M0.5+, M0.6+, M0.8+, M0.9+, and M1 implementation details remain explicitly deferred.
 26. No runtime code or `src/` tree is introduced.
