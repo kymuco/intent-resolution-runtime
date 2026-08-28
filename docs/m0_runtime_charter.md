@@ -6,7 +6,9 @@ This document freezes the product identity, actor vocabulary, responsibility bou
 
 ## 1. Product definition
 
-IRR converts human-, companion-, worker-, or system-originated intent into bounded, attributable operational work representations suitable for inspection, clarification, governance, execution handoff, or delegated-work handoff.
+IRR resolves human-, companion-, worker-, or system-originated intent into bounded, attributable resolution outcomes.
+
+A resolution does not necessarily imply operational work. IRR may resolve an inquiry without producing a WorkPlan, request clarification when semantics are insufficient, or determine that no operational work is required. When operational work is required, IRR may produce bounded, attributable operational work representations suitable for inspection, governance, execution handoff, or delegated-work handoff.
 
 IRR owns **intent resolution**. It does not own authority or effects.
 
@@ -35,11 +37,15 @@ Subject to later M0 contracts, IRR may:
 - receive an attributable intent request;
 - interpret objective and requested deliverables;
 - identify ambiguity, assumptions, missing information, and uncertainty;
-- represent requested work semantically rather than as arbitrary executable code;
+- resolve without operational work when no WorkPlan is required;
+- request clarification rather than invent missing semantics;
+- represent requested work semantically rather than as arbitrary executable code when operational work is required;
 - identify required capabilities from an externally supplied capability catalog;
 - represent dependencies, requested effects, and continuation needs;
 - produce bounded downstream proposals;
 - consume attributable observations or outcomes to continue the same intent lineage.
+
+IRR MUST NOT manufacture operational work merely because an intent is structurally resolvable.
 
 IRR MUST preserve the distinction between describing requested work and authorizing that work.
 
@@ -128,20 +134,22 @@ IntentRequest
      v
     IRR
      |
-     v
-bounded work proposal
-     |
-     v
-Governance
-     |
-     v
-authorization / constraint / denial
-     |
-     v
-Executor or Worker
+     +----------------------+
+     |                      |
+     v                      v
+non-operational       bounded work proposal
+resolution                  |
+                            v
+                       Governance
+                            |
+                            v
+             authorization / constraint / denial
+                            |
+                            v
+                   Executor or Worker
 ```
 
-Exact handoff schemas are deferred.
+Exact resolution and handoff schemas are deferred.
 
 ## 6. Context boundary
 
@@ -216,6 +224,7 @@ M0.1 intentionally does NOT freeze:
 - Python classes, enums, or serialization schemas;
 - runtime state machines;
 - exact `IntentRequest`, `ResolvedIntent`, `WorkPlan`, or handoff fields;
+- exact answer-only, clarification, no-operational-work, or terminal outcome schemas;
 - persistence or storage formats;
 - digest or identity algorithms;
 - context-envelope schemas;
@@ -233,13 +242,14 @@ Those belong to later milestones. M0.1 freezes the vocabulary and boundary they 
 M0.1 is complete when the repository states unambiguously that:
 
 1. IRR resolves intent rather than executing effects.
-2. Intent, permission, and effect are distinct stages.
-3. Principal and Origin are distinct concepts.
-4. Origin is attributable provenance; its evidentiary status is not silently strengthened and it does not grant authority.
-5. Context and resolution do not grant authority.
-6. Cognitive-provider output is candidate material, not truth or permission.
-7. Governance and execution are external boundaries.
-8. Material ambiguity cannot be disguised as late binding.
-9. Capability meaning cannot drift silently after resolution.
-10. HDE, Character_OS, Organism, Codexia, and Runplane remain replaceable external neighbors rather than IRR-core dependencies.
-11. No implementation code or premature runtime schema is introduced.
+2. Not every resolved intent requires operational work or a WorkPlan.
+3. Intent, permission, and effect are distinct stages.
+4. Principal and Origin are distinct concepts.
+5. Origin is attributable provenance; its evidentiary status is not silently strengthened and it does not grant authority.
+6. Context and resolution do not grant authority.
+7. Cognitive-provider output is candidate material, not truth or permission.
+8. Governance and execution are external boundaries.
+9. Material ambiguity cannot be disguised as late binding.
+10. Capability meaning cannot drift silently after resolution.
+11. HDE, Character_OS, Organism, Codexia, and Runplane remain replaceable external neighbors rather than IRR-core dependencies.
+12. No implementation code or premature runtime schema is introduced.
