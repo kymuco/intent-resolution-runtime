@@ -51,7 +51,7 @@ The **Principal** is the entity whose goals or interests an intent request purpo
 
 ### Origin
 
-The **Origin** is the actor that actually produced the `IntentRequest` presented to IRR.
+The **Origin** identifies the actor attributed as having produced the `IntentRequest` presented to IRR.
 
 Conceptual origin classes are:
 
@@ -62,13 +62,16 @@ worker
 system
 ```
 
-Origin is factual provenance and MUST NOT be rewritten to imply stronger authority.
+Origin is provenance metadata, not authority. The evidence supporting an origin attribution is a separate trust concern: it may later be self-asserted, Host-attested, cryptographically verified, or otherwise evidenced. M0.2 freezes those trust semantics.
+
+IRR MUST preserve the supplied origin attribution and MUST NOT silently strengthen its evidentiary status or rewrite it to imply stronger authority.
 
 ```text
 origin != principal
 origin != authority
 origin != permission
 origin != approval
+origin attribution != origin verification
 ```
 
 A companion may originate a request in support of a human principal. That does not make the request human-originated.
@@ -77,7 +80,7 @@ A companion may originate a request in support of a human principal. That does n
 
 The **Host** is the embedding system that invokes IRR and supplies bounded inputs such as context, capability catalogs, or continuation observations.
 
-IRR MUST NOT require HDE, Character_OS, Runplane, Codexia, Organism, or another named host to exist.
+IRR MUST NOT require HDE, Character_OS, Runplane, Codexia, Organism, or another named integration to exist.
 
 ### Cognitive Provider
 
@@ -107,6 +110,7 @@ The following distinctions are normative:
 intent != authority
 context != authority
 origin != authority
+origin attribution != origin verification
 resolution != approval
 candidate validity != factual truth
 candidate validity != safety
@@ -114,7 +118,7 @@ candidate validity != permission
 authorization != effect evidence
 ```
 
-IRR MUST NOT manufacture conclusions whose semantics imply that IRR granted permission, approved an effect, or proved that an effect occurred.
+IRR MUST NOT manufacture conclusions whose semantics imply that IRR granted permission, approved an effect, proved an origin attribution, or proved that an effect occurred.
 
 Conceptually:
 
@@ -231,7 +235,7 @@ M0.1 is complete when the repository states unambiguously that:
 1. IRR resolves intent rather than executing effects.
 2. Intent, permission, and effect are distinct stages.
 3. Principal and Origin are distinct concepts.
-4. Origin retains truthful provenance and does not grant authority.
+4. Origin is attributable provenance; its evidentiary status is not silently strengthened and it does not grant authority.
 5. Context and resolution do not grant authority.
 6. Cognitive-provider output is candidate material, not truth or permission.
 7. Governance and execution are external boundaries.
