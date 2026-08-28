@@ -1,6 +1,6 @@
 # Intent Resolution Runtime
 
-Intent Resolution Runtime (IRR) turns human and companion intent into bounded, inspectable operational work representations and downstream handoffs.
+Intent Resolution Runtime (IRR) turns human-, companion-, worker-, or system-originated intent into bounded, inspectable operational work representations and downstream handoffs.
 
 > **Intent != Permission != Effect**
 
@@ -57,6 +57,9 @@ These systems may later integrate with IRR through explicit boundaries, but they
 
 - [M0 runtime charter](docs/m0_runtime_charter.md)
 - [Terminology](docs/terminology.md)
+
+## Planning record
+
 - [Roadmap](ROADMAP.md)
 
-`ROADMAP.md` is the preserved planning record. Normative runtime contracts are frozen incrementally by M0.1 through M0.10.
+`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative runtime contracts are frozen incrementally by M0.1 through M0.10.
