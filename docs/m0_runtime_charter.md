@@ -6,7 +6,7 @@ This document freezes the product identity, actor vocabulary, responsibility bou
 
 ## 1. Product definition
 
-IRR resolves human-, companion-, worker-, or system-originated intent into bounded, attributable resolution outcomes.
+IRR interprets and resolves human-, companion-, worker-, or system-originated intent through bounded, attributable resolution paths.
 
 A resolution does not necessarily imply operational work. IRR may resolve an inquiry without producing a WorkPlan, request clarification when semantics are insufficient, or determine that no operational work is required. When operational work is required, IRR may produce bounded, attributable operational work representations suitable for inspection, governance, execution handoff, or delegated-work handoff.
 
@@ -138,7 +138,7 @@ IntentRequest
      |                      |
      v                      v
 non-operational       bounded work proposal
-resolution                  |
+resolution path             |
                             v
                        Governance
                             |
