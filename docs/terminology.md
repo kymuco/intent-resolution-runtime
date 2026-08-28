@@ -26,11 +26,13 @@ Principal identity does not prove authority, consent, or permission.
 
 ### Origin
 
-The actor that actually produced the IntentRequest presented to IRR.
+The actor attributed as having produced the IntentRequest presented to IRR.
 
 Conceptual origin classes are `human`, `companion`, `worker`, and `system`.
 
-Origin is provenance, not authority.
+Origin is provenance metadata, not authority. The evidence supporting an Origin attribution is a separate trust concern and is frozen later by M0.2.
+
+IRR must not silently strengthen an Origin attribution into verified identity, authority, permission, or approval.
 
 ### Host
 
@@ -169,6 +171,7 @@ Later contracts MUST preserve these distinctions:
 ```text
 origin != principal
 origin != authority
+origin attribution != origin verification
 context != authority
 intent != permission
 resolution != approval
