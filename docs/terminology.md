@@ -539,7 +539,7 @@ Governance may use external policy, human review, consent state, identity/role i
 
 An attributable external authority decision concerning a bounded WorkProposal.
 
-M0.6 freezes four conceptual decision classes: authorize, deny, constrain, and require_review. Exact enum/wire representation is deferred.
+M0.6 freezes four conceptual decision classes: authorize, deny, constrain, and require_review. These are conceptual decision components, not a requirement that every Governance response contain exactly one mutually exclusive class; one response may address explicitly distinct portions of proposed work with different components. Exact enum/wire representation is deferred.
 
 A Governance Decision is not an Effect or Outcome.
 
@@ -565,7 +565,7 @@ An attributable Governance decision requiring narrower or otherwise changed oper
 
 A semantic Governance Constraint does not mutate the prior WorkPlan in place. It returns through IRR Continuation or another explicit successor-resolution path and preserves lineage.
 
-The Governance Constraint itself is not a Successor WorkPlan and does not bypass ambiguity, capability, binding, or other IRR validation.
+The Governance Constraint itself is neither Authorization by default nor a Successor WorkPlan. A Governance response may separately authorize an already represented bounded subset, but executable successor work still requires applicable external authority. Constraint does not bypass ambiguity, capability, binding, or other IRR validation.
 
 ### Denial
 
@@ -784,6 +784,7 @@ Governance Decision != execution result
 Authorization != ambient general permission
 Authorization for A != Authorization for related B
 Authorization Condition != semantic WorkPlan mutation
+Governance Constraint != Authorization by default
 Governance Constraint != in-place WorkPlan rewrite
 Governance Constraint != Successor WorkPlan
 Denial != semantic invalidity
@@ -792,7 +793,7 @@ Denial != global impossibility
 Denial != delete proposal history
 Denial != permission to policy-shop
 no Authorization != Denial
-not proven authorized -> no effectful execution
+not proven authorized -> no authority-requiring execution
 require_review != Authorization
 require_review != eventual approval
 IRR authority boundary != policy engine implementation
