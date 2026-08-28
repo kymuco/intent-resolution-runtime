@@ -232,8 +232,11 @@ A platform-neutral description of requested operational meaning, such as `filesy
 
 A Semantic Operation describes what work is requested, not the command, API call, script, library, or adapter used to implement it.
 
+Platform neutrality does not permit an implementation to introduce material effects absent from the represented work semantics.
+
 ```text
 semantic operation != implementation command
+platform neutrality != effect-changing substitution
 ```
 
 ### WorkPlan
@@ -300,7 +303,7 @@ A named operation class that an external execution environment can potentially p
 
 A Capability describes what may be requested; it does not itself grant permission to perform it.
 
-M0.5 freezes the exact relationship between Semantic Operations, capabilities, and the Capability Catalog.
+M0.5 freezes the exact relationship between Semantic Operations, capabilities, catalog membership, availability, and the Capability Catalog.
 
 ### Capability Catalog
 
@@ -354,6 +357,8 @@ A downstream component that performs delegated bounded work with its own subordi
 
 A Worker may return a result to IRR while IRR retains the parent intent lifecycle.
 
+Worker delegation is distinct from ordinary WorkStep execution; exact delegated-work handoff semantics are deferred to M0.8.
+
 ### Outcome
 
 An attributable result reported by an Executor or Worker. Exact outcome states, including unknown-outcome handling, are deferred to M0.9.
@@ -387,6 +392,7 @@ cognitive provider output != observation by default
 resolution != approval
 resolved intent != work plan requirement
 semantic operation != implementation command
+platform neutrality != effect-changing substitution
 work plan != scripting language
 bounded work plan != opaque autonomous work step
 work dependency != arbitrary control flow
@@ -396,7 +402,7 @@ continuation point != autonomous planner loop
 necessary prerequisite != hidden side task
 executable-looking text != executable authority
 executable-looking text != work plan control flow
-valid plan != executable plan
+valid plan != currently executable plan
 valid plan != authorized plan
 valid plan != successful effect
 step completion != plan completion
@@ -404,6 +410,7 @@ plan completion != intent satisfaction by default
 failure != automatic retry
 unknown result != automatic retry
 missing implementation != permission to invent a different operation
+worker delegation != ordinary work step execution
 inspectable != approved
 handoff != authorization
 candidate validity != factual truth
