@@ -135,6 +135,13 @@ A bounded part of Binding semantics describing how a concrete value may be selec
 
 A Selection Policy may permit a bounded non-unique choice only when the admissible set and choice semantics were established before the Binding Input arrived. It is not permission to invent a tie-breaker after seeing the candidates.
 
+A Selection Policy is semantic selection metadata, not a Governance policy. It does not authorize a resource, effect, disclosure, scope, cost, or execution merely because that value is selectable.
+
+```text
+Selection Policy != Governance policy
+Selection Policy != authorization
+```
+
 Exact representation is deferred.
 
 ### Binding
@@ -476,6 +483,8 @@ binding evaluation != retrieval
 binding evaluation != external effect
 opaque cognitive judgment != mechanical binding
 explicit bounded choice != hidden discretion
+Selection Policy != Governance policy
+Selection Policy != authorization
 binding != semantic plan mutation
 binding != authorization
 bound value != timeless fact
