@@ -106,10 +106,10 @@ Ordinary Cognitive Provider output remains CandidateResolution material and is n
 
 Deferred concretization of a value when the semantic Binding Rule is already explicit and bounded before the value becomes available.
 
-Late Binding defers a value, not a discretionary semantic decision.
+Late Binding defers a value, not an unadmitted semantic decision.
 
 ```text
-late binding != deferred discretion
+late binding != unadmitted semantic discretion
 unknown value != unknown decision rule
 ```
 
@@ -119,17 +119,27 @@ Attributable data supplied to a Binding Rule for the purpose of concretizing a S
 
 Binding Input is a semantic role, not a universal data class. Depending on the surrounding contract, it may be plan-local WorkStep output, an Observation, admitted Context, or another explicitly permitted attributable input.
 
-Binding Input is not Observation, Context, Outcome, or authority by default.
+Binding Input is not Observation, Context, Outcome, or authority by default. Availability of Binding Input at one boundary does not authorize disclosure to another evaluator boundary.
 
 ### Binding Rule
 
 An explicit bounded semantic rule that determines how compatible Binding Input may satisfy a Symbolic Reference.
 
-A Binding Rule must not be a hidden heuristic, ambient ordering preference, or invitation for an Executor to improvise.
+A Binding Rule consumes supplied input; its evaluation does not itself observe, retrieve, query ambient state, or perform external effects.
+
+A Binding Rule must not be a hidden heuristic, ambient ordering preference, free-form model judgment, or invitation for an Executor to improvise beyond admitted semantics.
+
+### Selection Policy
+
+A bounded part of Binding semantics describing how a concrete value may be selected when admitted intent already treats multiple values as interchangeable.
+
+A Selection Policy may permit a bounded non-unique choice only when the admissible set and choice semantics were established before the Binding Input arrived. It is not permission to invent a tie-breaker after seeing the candidates.
+
+Exact representation is deferred.
 
 ### Binding
 
-The act of associating a concrete Bound Value with a Symbolic Reference by applying an unchanged admitted Binding Rule to compatible attributable Binding Input.
+The act of associating a concrete Bound Value with a Symbolic Reference by applying unchanged admitted Binding Rule and Selection Policy semantics to compatible attributable Binding Input.
 
 Binding is value instantiation, not semantic WorkPlan self-mutation, authorization, or permission.
 
@@ -286,7 +296,7 @@ A finite, bounded semantic representation of operational work derived from a Res
 
 Not every ResolvedIntent yields a WorkPlan.
 
-A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outputs, bounded ordering, Binding Rules, and explicit Continuation Points.
+A WorkPlan may represent WorkSteps, explicit dependencies, symbolic inputs/outputs, bounded ordering, Binding Rules, Selection Policies, and explicit Continuation Points.
 
 A WorkPlan is not executable authority, a general-purpose script, or an autonomous planner loop.
 
@@ -395,7 +405,7 @@ A change or externally observable operation produced by an Executor or Worker ou
 
 A downstream component that performs bounded Capabilities under the applicable authority conditions.
 
-An Executor may later perform mechanical Binding when an explicit contract permits it, but deterministic Binding does not grant semantic discretion or authority.
+An Executor may later perform mechanical Binding when an explicit contract permits it, but mechanical Binding does not grant semantic discretion beyond explicitly admitted Binding Rule and Selection Policy semantics.
 
 IRR is not an Executor.
 
@@ -444,6 +454,7 @@ Binding Input != Observation by default
 Binding Input != Context by default
 Binding Input != Outcome by default
 Binding Input != authority
+Binding Input availability != disclosure authority
 observation != outcome
 resolution != approval
 resolved intent != work plan requirement
@@ -456,10 +467,15 @@ presentation order != execution dependency
 presentation order != binding precedence
 symbolic reference != observed value
 symbolic reference != authority
-late binding != deferred discretion
+late binding != unadmitted semantic discretion
 unknown value != unknown decision rule
 binding rule != hidden heuristic
-binding rule != executor discretion
+binding rule != unbounded executor discretion
+binding evaluation != observation
+binding evaluation != retrieval
+binding evaluation != external effect
+opaque cognitive judgment != mechanical binding
+explicit bounded choice != hidden discretion
 binding != semantic plan mutation
 binding != authorization
 bound value != timeless fact
