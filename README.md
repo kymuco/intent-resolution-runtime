@@ -8,9 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.8 — Worker Delegation Boundary**.
+Current milestone: **M0.9 — Failure, Retry & Unknown Outcome Boundary**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, M0.6 Governance & Authority Boundary, and M0.7 Cognitive Provider Boundary are frozen in `main`. M0.8 freezes the explicit boundary for long-form delegated work so a Worker may own a bounded subordinate lifecycle without owning or silently widening the parent intent, authority, capability, disclosure, or completion semantics.
+M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, M0.6 Governance & Authority Boundary, M0.7 Cognitive Provider Boundary, and M0.8 Worker Delegation Boundary are frozen in `main`. M0.9 freezes the semantic boundary between confirmed success/failure, blocking, interruption, uncertain effects, retry, and fallback without introducing a runtime recovery engine.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -129,6 +129,34 @@ A `WorkerResult` is attributable Worker-produced result material. It may contain
 
 Worker-mediated research also preserves source lineage. If a Worker reads an external source and returns a finding, the Worker is an intermediary and the original source remains materially distinct when evidentiary provenance matters. The result cannot be rewritten as if IRR directly observed the source or as if Worker identity were the original factual source.
 
+M0.9 adds an explicit recovery boundary around downstream attempts and outcomes. `succeeded`, `failed`, `blocked`, `interrupted`, and `unknown_outcome` are conceptually distinct, but M0.9 does not freeze their future Python enum representation.
+
+```text
+unknown_outcome != failed
+failed != no effect
+blocked != Denial
+interrupted != no effect
+transport timeout != proof of failure
+lost acknowledgement != proof of no effect
+```
+
+A retry is a **new attributable Attempt**, not a harmless continuation of an earlier call. A later successful attempt does not rewrite the earlier attempt's history. Confirmed failure also does not prove retry safety because partial effects may already exist.
+
+```text
+retry != same attempt resuming
+retry != harmless repetition
+failed != automatic retry
+unknown effectful outcome != automatic retry
+```
+
+Retry correctness, capability readiness, and authority remain separate. A semantically safe replay basis does not grant Authorization; Authorization does not establish safe replay; and an available capability does not prove retry safety. Prior Authorization does not automatically cover a new attempt unless the external authority scope explicitly does so.
+
+Idempotency is not inferred from identical request bytes, deterministic names, HTTP verbs, or a self-asserted `idempotent=true` flag. Any idempotency or duplicate-suppression guarantee must come from an explicit admitted downstream contract and must cover the material effect being protected. A final state can be idempotent while repeated calls still create material audit, billing, notification, disclosure, or other side effects.
+
+Fallback is also explicit recovery work. Switching capability, provider, executor, or Worker cannot synthesize a missing capability, erase a prior unknown effect, inherit Authorization, or silently change scope/disclosure/cost/completion semantics. Material fallback changes return through IRR Continuation/successor semantics.
+
+Cancellation and recovery preserve history: requesting cancellation does not prove an in-flight effect was prevented, compensation is a new semantic operation rather than a retry, and rollback does not make an earlier effect historically nonexistent. Resolving an unknown outcome may require a separately admitted and, where applicable, authorized status Observation/query rather than ambient introspection.
+
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
 
 IRR has no ambient semantic context. Material used for resolution must enter through an explicit Host boundary and remain attributable. A context reference is not retrieval authority, evidence is not authority, and context available to IRR is not automatically authorized for disclosure to a Cognitive Provider or Worker.
@@ -217,6 +245,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.6 governance & authority boundary](docs/m0_governance_authority_boundary.md)
 - [M0.7 cognitive provider boundary](docs/m0_cognitive_provider_boundary.md)
 - [M0.8 worker delegation boundary](docs/m0_worker_delegation_boundary.md)
+- [M0.9 failure, retry & unknown outcome boundary](docs/m0_failure_retry_unknown_outcome_boundary.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
