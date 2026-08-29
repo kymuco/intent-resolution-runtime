@@ -4,53 +4,49 @@ Status: **normative architecture fixtures for M0.10**.
 
 This document closes the M0 boundary freeze by exercising the already-frozen M0.1–M0.9 contracts against concrete end-to-end scenarios.
 
-M0.10 does **not** introduce a new runtime model, Python schema, command language, policy engine, executor protocol, Worker protocol, provider API, or recovery implementation. It supplies architecture fixtures: stable semantic examples that later M1+ implementations and tests must be able to represent without violating the M0 contracts.
+M0.10 does **not** introduce a runtime model, Python schema, command language, policy engine, executor protocol, Worker protocol, provider API, recovery state machine, or fixture JSON format. It freezes architecture fixtures: stable semantic examples that M1+ implementations must be able to represent without weakening the M0 boundaries.
 
 The fixtures answer one question:
 
-> Can the frozen IRR architecture explain realistic human-, companion-, provider-, Worker-, capability-, governance-, execution-, and recovery-facing flows without hidden context, hidden authority, hidden capability discovery, hidden semantic choice, or hidden retry?
+> Can IRR explain realistic human-, companion-, provider-, Worker-, capability-, governance-, execution-, and recovery-facing flows without hidden context, hidden authority, hidden capability discovery, hidden semantic choice, or hidden retry?
 
 The required answer is **yes**.
 
 ---
 
-## 1. How to read these fixtures
+## 1. Fixture interpretation
 
-Each reference scenario contains:
+Each scenario records conceptually:
 
 ```text
 request / trigger
 explicit attributable inputs
-expected resolution semantics
-expected work / no-work shape
-binding / capability expectations
+resolution / clarification expectation
+work / delegation / no-work expectation
+Binding and Capability expectations
 applicable authority boundary
-handoff / downstream role
-result / continuation semantics
+handoff role
+result / recovery / continuation expectation
 forbidden shortcuts
 M0 contracts exercised
 ```
 
-The examples are semantic, not executable wire fixtures yet.
-
-Names such as `filesystem.search`, `archive.extract`, or `telegram.send_file` are illustrative Semantic Operations or Capability labels consistent with the frozen M0 documents. M1+ decides exact identifiers, immutable schemas, serialization, digests, and validation APIs.
-
-A reference scenario therefore constrains meaning while intentionally leaving representation open.
+The examples constrain meaning, not representation.
 
 ```text
 architecture fixture != frozen JSON
-architecture fixture != executable command sequence
+architecture fixture != command sequence
 architecture fixture != Authorization
-architecture fixture != test implementation
+architecture fixture != executable test implementation
 ```
 
-Later tests MAY encode these scenarios as immutable fixtures, but the encoded form must preserve the semantics frozen here rather than redefining them.
+Exact class names, operation identifiers, serialization, digests, adapters, and state layout remain later-milestone work.
 
 ---
 
 ## 2. Cross-scenario invariants
 
-Every scenario in this document preserves the following global invariants:
+All fixtures preserve:
 
 ```text
 origin != principal
@@ -59,7 +55,6 @@ context != authority
 intent != authorization
 resolution != authorization
 WorkPlan != execution
-WorkPlan != Authorization
 semantic operation != implementation command
 symbolic reference != observed value
 late binding != hidden semantic choice
@@ -76,7 +71,7 @@ failed != no effect
 Retry != continuation of the same Attempt
 ```
 
-No fixture may be made to “work” by weakening one of those distinctions.
+No fixture may be made to pass by weakening one of these distinctions.
 
 ---
 
@@ -89,18 +84,11 @@ No fixture may be made to “work” by weakening one of those distinctions.
 распакуй в W:\\organism_lab и запусти."
 ```
 
-Conceptual English gloss:
+This fixture exercises bounded discovery, Late Binding, selection, archive operations, filesystem mutation, process launch, capability admission, Governance, and scoped outcomes.
 
-```text
-Find the latest organism_lab backup,
-extract it to W:\organism_lab, and launch it.
-```
+## A.2 Explicit inputs
 
-This scenario tests bounded discovery, explicit selection semantics, Late Binding, archive inspection/extraction, filesystem mutation, process launch, capability admission, authority separation, and result continuation.
-
-## A.2 Explicit fixture inputs
-
-The fixture assumes the Host supplies attributable material sufficient to bound the request, conceptually:
+Conceptually the Host supplies:
 
 ```text
 Origin attribution:
@@ -118,105 +106,88 @@ Selection semantics:
     "latest" = greatest admitted modification timestamp
     within the bounded matching candidate set
 
-Temporal / evidence basis:
-    candidate timestamps are supplied by the bounded search result
+Binding Input basis:
+    candidate identities/timestamps returned by the bounded search
 
 Capability Catalog Snapshot:
     filesystem.search
-    artifact.select or equivalent admitted selection support
     archive.inspect
     archive.extract
     workspace.inspect
     process.launch
 ```
 
-The exact paths are fixture data, not an IRR right to inspect the rest of the machine.
+The bounded search root is fixture Context, not ambient discovery authority.
 
 ```text
 D:\Backups in Context
     !=
-authority to search the whole computer
+authority to search the whole machine
 ```
 
-If the Host does **not** supply a bounded search root or another admitted scope rule, IRR must not invent `D:\Backups`, scan home directories, inspect every drive, or ask a Cognitive Provider to discover the backup ambiently.
+If no bounded search scope is supplied, IRR must not invent one, scan every drive, or ask a provider to discover the backup ambiently.
 
-## A.3 Expected initial resolution
-
-The request is operational and may resolve into bounded semantic work when all material terms are sufficiently specified.
+## A.3 Expected semantic path
 
 Conceptually:
 
 ```text
 IntentRequest
-    |
-    v
-ResolvedIntent
-    |
-    v
-WorkPlan
+    -> ResolvedIntent
+    -> bounded operational semantics
 ```
 
-The WorkPlan represents semantic work, not commands:
+One valid semantic shape is:
 
 ```text
-1. filesystem.search
-      scope: D:\Backups
-      match: organism_lab backup constraint
-      output: $backup_candidates
+filesystem.search
+    scope: D:\Backups
+    output: $backup_candidates
 
-2. artifact.select
-      input: $backup_candidates
-      rule: greatest admitted modification timestamp
-      output: $selected_backup
+Binding / selection
+    input: $backup_candidates
+    rule: greatest admitted modification timestamp
+    output: $selected_backup
 
-3. archive.inspect
-      input: $selected_backup
-      output: $archive_manifest / launch-relevant metadata
+archive.inspect
+    input: $selected_backup
 
-4. archive.extract
-      input: $selected_backup
-      destination: W:\organism_lab
+archive.extract
+    input: $selected_backup
+    destination: W:\organism_lab
 
-5. workspace.inspect
-      scope: W:\organism_lab
-      output: bounded launch metadata
+workspace.inspect
+    scope: W:\organism_lab
 
-6. process.launch
-      target: a launch target selected only under already-admitted bounded semantics
+process.launch
+    target selected only under already-admitted bounded semantics
 ```
 
-This is illustrative dataflow. M0.10 does not freeze whether selection is represented as its own WorkStep, a Binding Rule attached to a Symbolic Reference, or another M1-compatible representation, provided the M0 semantics remain visible and bounded.
-
-## A.4 Late Binding expectations
-
-The concrete backup path is unknown before search.
-
-Therefore:
+The selection line above is deliberately **not** frozen as an external Capability or ordinary WorkStep. M0.4 allows effect-free Binding/Selection semantics inside IRR. A later implementation may represent selection as a Binding Rule, a dedicated semantic work unit, or a capability-backed operation only if the resulting representation still satisfies M0.3–M0.5.
 
 ```text
-$selected_backup
-    = future Bound Value
+selection semantics != external Capability requirement by default
 ```
 
-The value may be filled later only by applying the already-admitted selection semantics to attributable Binding Input.
+## A.4 Late Binding
+
+The concrete archive path is unknown before search.
 
 ```text
-unknown concrete backup
-    !=
-unknown decision rule
+$selected_backup = future Bound Value
 ```
 
-IRR must not permit:
+The value may be bound only by applying the already-admitted rule to compatible attributable Binding Input.
 
 ```text
-"pick whichever archive looks right"
+unknown value != unknown decision rule
 ```
 
-unless such discretion was already admitted as a bounded Selection Policy.
+No “looks best” choice, implicit first-result preference, or new tie-breaker may be invented later.
 
-## A.5 Capability expectations
+## A.5 Capability boundary
 
-Every operational capability-dependent unit must match the exact applicable Catalog Snapshot.
+Every **capability-dependent** operational unit must match the exact applicable Catalog Snapshot.
 
 If `archive.extract` is absent:
 
@@ -224,106 +195,67 @@ If `archive.extract` is absent:
 missing_capability
 ```
 
-is the correct capability condition.
+IRR must not silently lower the operation into PowerShell, `tar`, 7-Zip, browser upload, arbitrary Python, or another mechanism merely because it could implement extraction.
 
-IRR must not silently lower extraction into:
+## A.6 Governance / authority
 
-```text
-PowerShell Expand-Archive
-tar
-7-Zip CLI
-browser upload to an online extractor
-arbitrary Python code
-```
-
-merely because those mechanisms might implement extraction.
-
-A generic command capability is not a universal semantic adapter.
-
-## A.6 Governance / authority expectations
-
-Semantic validity does not authorize effects.
-
-The scenario may involve materially distinct authority surfaces:
+Material authority surfaces may include:
 
 ```text
 read/search backup directory
 read archive metadata
 write/replace W:\organism_lab
-launch a process
+launch process
 ```
 
-An external Governance mechanism may authorize all of them, authorize only an already represented subset, constrain mutation, require review, or deny some portion.
+Semantic validity does not authorize them.
 
-For example:
+Governance may authorize an already represented subset, require review, constrain, or deny. A semantic constraint that changes the objective returns through IRR Continuation rather than rewriting the old work silently.
 
-```text
-Governance:
-    inspect backup and archive metadata: authorized
-    extraction / mutation: require review
-    process launch: require review
-```
+## A.7 Handoff and result
 
-This does not silently rewrite the original objective into “inspect only.”
-
-If Governance semantically changes the objective, that change returns through IRR Continuation / successor semantics.
-
-## A.7 Handoff expectations
-
-Ordinary bounded operations use the capability/executor path rather than Worker delegation merely because several steps exist.
+Ordinary bounded effectful operations use the capability/executor path when applicable:
 
 ```text
-bounded WorkStep
+bounded operation
     -> applicable authority boundary when required
     -> CapabilityHandoff
     -> Executor
 ```
 
-A Worker is not required for the canonical fixture.
-
-## A.8 Result expectations
-
-Each downstream result remains scoped.
+Results remain scoped:
 
 ```text
-search succeeded
-    !=
-restore succeeded
-
-archive extraction succeeded
-    !=
-process launch succeeded
-
-process launch succeeded
-    !=
-parent intent satisfied unless the admitted completion semantics say so
+search succeeded != restore succeeded
+extract succeeded != launch succeeded
+launch succeeded != parent intent satisfied by default
 ```
 
-Known partial effects survive failure classification. For example, extraction may modify the destination and later readiness validation may fail.
+Failure does not erase known partial filesystem effects.
 
-## A.9 Forbidden shortcuts
+## A.8 Forbidden shortcuts
 
 The implementation must not:
 
-- scan arbitrary drives because the backup root was omitted;
-- infer a backup from filename aesthetics rather than admitted selection semantics;
-- choose the first search result as an implicit tie-breaker;
+- scan arbitrary locations because scope is missing;
+- conflate Binding/Selection with an automatically required external capability;
+- choose the first candidate as an implicit tie-break;
 - invent archive/process capabilities;
-- convert plan validity into permission;
+- convert work validity into permission;
 - let an Executor choose a materially different launch target;
-- erase partial filesystem effects after failure;
-- hide a retry loop inside `process.launch`.
+- erase partial effects after failure;
+- hide Retry inside an operation.
 
-## A.10 Contracts exercised
+## A.9 Contracts exercised
 
 ```text
-M0.1  Origin / Principal / roles
-M0.2  explicit Context / ambiguity / attribution
-M0.3  semantic WorkPlan / bounded steps
-M0.4  symbolic dataflow / Late Binding / Selection Policy
-M0.5  Capability Catalog / missing capability
-M0.6  Governance / Authorization
-M0.9  scoped Outcome / partial effects / Retry boundary
+M0.1 roles
+M0.2 Context / ambiguity / attribution
+M0.3 bounded semantic work
+M0.4 Late Binding / Selection Policy
+M0.5 Capability Catalog
+M0.6 Governance / Authorization
+M0.9 scoped Outcome / partial effect / Retry boundary
 ```
 
 ---
@@ -336,9 +268,9 @@ M0.9  scoped Outcome / partial effects / Retry boundary
 "Отправь мне последний Voice Engine report в Telegram."
 ```
 
-This scenario tests artifact discovery, recipient binding, external disclosure, network effects, authority, and uncertain effect recovery.
+This fixture exercises artifact selection, recipient binding, external disclosure, network effect, Governance, and unknown-outcome recovery.
 
-## B.2 Explicit fixture inputs
+## B.2 Explicit inputs
 
 Conceptually:
 
@@ -352,35 +284,33 @@ Principal:
 Context:
     bounded report search scope
     report family = Voice Engine report
-    explicit recipient identity / Telegram destination for "me"
+    explicit attributable Telegram destination for "me"
 
 Selection semantics:
-    latest = explicit bounded report ordering rule
+    latest = explicit bounded ordering rule
 
 Capability Catalog Snapshot:
-    artifact search / selection capability
-    telegram.send_file or equivalent bounded Telegram-send capability
+    artifact.search
+    telegram.send_file
 ```
 
-The pronoun `me` is resolvable only if the Host supplies one attributable recipient binding suitable for the request.
+Selection of the report is Binding/selection semantics unless a later representation explicitly and validly models some part as capability-backed work.
 
 ```text
-Principal=user
-    !=
-automatic Telegram recipient binding
+report selection != external Capability requirement by default
 ```
 
-If multiple Telegram destinations for the user remain materially possible, IRR must clarify rather than guess.
+`Principal=user` does not itself bind a Telegram account/chat.
 
-## B.3 Expected work semantics
+If multiple material destinations remain possible, IRR clarifies instead of guessing.
 
-Conceptually:
+## B.3 Expected semantic path
 
 ```text
 artifact.search
     -> $report_candidates
 
-artifact.select
+Binding / selection
     rule: admitted latest-report semantics
     -> $selected_report
 
@@ -389,108 +319,102 @@ telegram.send_file
     recipient: explicit bound Telegram destination
 ```
 
-The send operation must expose its material effect surface:
+The send semantics expose:
 
 ```text
 network use
-external disclosure of selected report
+external disclosure
 recipient / destination
 ```
 
-## B.4 Disclosure and authority
+Read/select authority is not send/disclosure authority.
 
-Reading/selecting the report is not the same authority as sending it externally.
+## B.4 Provider boundary
 
-```text
-read authorization != disclosure authorization
-local artifact access != Telegram send authorization
-recipient A authorization != recipient B authorization
-```
-
-A Cognitive Provider knowing that Telegram supports files does not create the capability or authority.
-
-## B.5 Normal success path
-
-If the downstream capability provides sufficient attributable completion evidence under its admitted contract, the send Attempt may be classified `succeeded` for that scoped send operation.
+A Cognitive Provider knowing that Telegram supports file transfer does not create either:
 
 ```text
-transport response
-    is sufficient only if
-admitted capability completion semantics say so
+Capability Match
+Authorization
 ```
 
-The exact receipt schema is deferred.
+The report also is not automatically Provider-disclosable merely because a provider could help reason about it.
 
-## B.6 Lost acknowledgement / unknown outcome branch
+## B.5 Confirmed success branch
 
-This branch is normative for M0.9 compatibility.
+If attributable evidence is sufficient under the admitted capability Completion Semantics, the scoped send Attempt may have a `succeeded` completion condition.
+
+Transport convenience does not strengthen completion semantics by itself.
+
+## B.6 Lost acknowledgement branch
 
 Suppose:
 
 ```text
 Attempt 1
-    request transmitted to Telegram-side service
-    connection lost before material completion acknowledgement
+    request transmitted
+    connection/lifecycle disrupted before material completion evidence
 ```
 
-If evidence is insufficient to establish whether the recipient-visible send occurred:
+If evidence cannot establish whether the recipient-visible effect occurred, the **effect/completion condition is `unknown_outcome`**.
+
+The same real-world episode may also be described as lifecycle `interrupted`. M0.10 does not collapse lifecycle discontinuity and effect certainty into one flat enum.
 
 ```text
-Outcome = unknown_outcome
+interrupted != unknown_outcome by definition
+unknown_outcome != failed
 ```
 
-IRR must **not** infer:
+IRR must not infer:
 
 ```text
-no acknowledgement
-    -> failed
-    -> send again
+no ACK -> failed -> send again
 ```
 
-The correct recovery path is conceptually:
+Recovery is conceptually:
 
 ```text
 unknown_outcome
     -> explicit recovery assessment
-    -> optional separately admitted status query / evidence acquisition
-    -> retry only if safe-replay basis + capability + authority conditions permit
+    -> optional separately admitted status/evidence operation
+    -> new Retry Attempt only if safe-replay + capability + authority conditions permit
 ```
 
-A Retry, if later admitted, is a **new Attempt** with separate lineage.
+A status query is itself subject to its own applicable capability/disclosure/authority boundary; “need to know whether it sent” is not query authority.
 
-## B.7 Fallback branch
+## B.7 Fallback
 
-Switching to email, Signal, another Telegram account, a browser UI, or another provider is not an automatic retry.
+Switching channel/account/provider is not automatic Retry.
 
-A material change of recipient, provider/service, disclosure surface, capability, or completion semantics is fallback/successor work and must pass the applicable semantic/capability/authority boundaries.
+A material fallback:
 
-```text
-Telegram unknown_outcome
-    !=
-permission to send through another channel
-```
+- preserves the prior Attempt/effect uncertainty;
+- is not proof the first effect was absent;
+- must pass applicable resolution/capability/authority boundaries;
+- becomes a new Attempt if actually executed.
 
 ## B.8 Forbidden shortcuts
 
 The implementation must not:
 
-- infer recipient from an unverified username guess;
-- disclose the report to a Cognitive Provider merely because it helps select the file;
-- treat `telegram.send_file` existence as Authorization;
-- retry an effectful unknown send automatically;
-- change recipient/channel to “make it work”;
-- erase Attempt 1 after a later successful Attempt 2.
+- guess recipient identity;
+- turn report selection into an ambient provider task;
+- treat `telegram.send_file` existence as permission;
+- flatten interruption and effect certainty into one required enum;
+- automatically retry an unknown effect;
+- switch channel to “make it work” without successor/fallback semantics;
+- rewrite Attempt 1 after later evidence or a later successful Attempt.
 
 ## B.9 Contracts exercised
 
 ```text
-M0.1  Principal / Origin
-M0.2  recipient evidence / explicit Context
-M0.4  late-bound report selection
-M0.5  Telegram Capability Match
-M0.6  external disclosure Authorization
-M0.7  provider knowledge != capability / authority
-M0.9  Attempt / unknown_outcome / retry / fallback
+M0.1 roles
+M0.2 recipient/context evidence
+M0.4 Binding / selection
+M0.5 Telegram Capability Match
+M0.6 disclosure Authorization
+M0.7 provider boundary
+M0.9 Attempt / interruption / unknown_outcome / Retry / fallback
 ```
 
 ---
@@ -503,11 +427,9 @@ M0.9  Attempt / unknown_outcome / retry / fallback
 "Изучи результаты CG2.42 и предложи следующий experiment."
 ```
 
-This is intentionally different from an ordinary bounded operation such as `filesystem.search`.
+This is long-form subordinate analysis rather than one ordinary bounded capability invocation.
 
-It requires long-form subordinate analysis and therefore exercises the Worker delegation boundary.
-
-## C.2 Explicit fixture inputs
+## C.2 Delegation envelope
 
 Conceptually:
 
@@ -519,76 +441,70 @@ Principal:
     user
 
 Context:
-    bounded CG2.42 result/evidence surface
+    bounded CG2.42 evidence surface
     relevant project lineage
 
-Worker surface:
-    Worker identity/adapter = Codexia-compatible worker
-    permitted context = explicitly delegated CG2.42 material
-    permitted objective = analyze supplied results and propose next experiment candidate(s)
-    forbidden effects = no repository mutation, no push, no external publication unless separately represented/authorized
-    expected deliverables = candidate experiment proposal(s) + rationale + evidence references
-    completion contract = return bounded attributable analysis result
+DelegatedWork:
+    Worker identity/adapter = Codexia-compatible Worker
+    objective = analyze supplied CG2.42 results and propose next experiment candidate(s)
+    context surface = explicitly delegated material
+    capability ceiling = only explicitly admitted subordinate capability surface
+    forbidden effects = repository mutation / commit / push / external publication are outside this delegation
+    deliverables = candidate(s) + rationale + evidence references
+    completion contract = bounded attributable analysis result
 ```
 
-Exact Worker transport and schemas are deferred.
+A forbidden effect is a semantic negative bound of the current delegation.
 
-## C.3 Expected delegation semantics
+```text
+Authorization != permission to mutate DelegatedWork semantics
+```
 
-The request may resolve into a bounded `DelegatedWork` representation rather than an ordinary opaque WorkStep.
+If mutation, push, publication, a new external search, or another material widening later becomes necessary, the Worker returns the need to IRR. Any successor work/delegation must represent the new semantics explicitly and then satisfy its own capability/authority requirements. Authorization alone does not “lift” a forbidden effect inside the old DelegatedWork.
+
+## C.3 Worker path
 
 Conceptually:
 
 ```text
-ResolvedIntent / parent WorkPlan semantics
-        |
-        v
-DelegatedWork
-        |
-        v
-DelegatedWorkHandoff
-        |
-        v
-Codexia Worker
+ResolvedIntent / parent work semantics
+        -> DelegatedWork
+        -> DelegatedWorkHandoff
+        -> Worker
+        -> WorkerResult / escalation
+        -> IRR Continuation
 ```
 
-The Worker may own a subordinate lifecycle inside the envelope:
+M0.10 does not freeze the exact M1 structural relation between `WorkPlan` and `DelegatedWork`; it freezes that Worker delegation is explicit and is **not** hidden inside an ordinary opaque WorkStep.
+
+The Worker may manage an internal subordinate lifecycle inside the envelope:
 
 ```text
-inspect supplied evidence
 analyze
+plan subordinate work
 compare candidates
-revise internal subordinate plan
+revise internal plan
 produce deliverable
 ```
 
-That subordinate lifecycle is not the parent IRR WorkPlan.
+That internal plan is not the parent IRR WorkPlan.
 
-## C.4 Capability and authority ceiling
+## C.4 Capability and authority ceilings
 
-If the Worker is allowed to read supplied files or use admitted analysis capabilities, that allowed surface is a **ceiling**, not a promise and not a hidden selection policy.
+Allowed capabilities are ceilings, not promises, discovery authority, Authorization, or a hidden selection policy.
 
-```text
-allowed capability != capability existence
-allowed capability != Authorization
-allowed capability set != arbitrary Worker choice
-```
+A necessary subordinate step does not inherit authority merely because it helps the objective.
 
-A newly required network search, repository mutation, external model disclosure, commit, push, or process launch cannot be smuggled in as a “necessary” Worker step unless already represented inside the delegation and covered by applicable downstream authority.
+## C.5 WorkerResult
 
-## C.5 WorkerResult semantics
-
-The Worker returns attributable `WorkerResult` material.
-
-Conceptually:
+`WorkerResult` may contain:
 
 ```text
-WorkerResult:
-    proposed experiment candidate(s)
-    rationale
-    evidence/source references
-    uncertainty / omissions
-    completion claim
+proposed experiment candidate(s)
+rationale
+evidence/source references
+uncertainty / omissions
+completion claim
 ```
 
 But:
@@ -601,66 +517,42 @@ WorkerResult != Authorization
 WorkerResult != parent intent completion
 ```
 
-IRR receives the result through an explicit continuation boundary and determines what it means for the parent lifecycle.
+A Worker saying `done` does not establish the delegated completion contract; the receiving boundary checks the returned deliverables/semantics.
 
-## C.6 Worker says `done`
+## C.6 Escalation
 
-A bare completion claim is insufficient.
-
-```text
-worker says done
-    !=
-Delegated Completion Contract satisfied
-```
-
-The receiving boundary must establish whether required deliverables are actually present under the delegated completion semantics.
-
-## C.7 Escalation branch
-
-Suppose the Worker decides it needs an additional experiment archive outside the delegated context.
-
-The correct behavior is:
+If additional material outside the envelope is required:
 
 ```text
 WorkerResult / escalation need
     -> IRR Continuation
 ```
 
-not:
+not ambient scanning and not automatic nested IRR Worker delegation.
 
-```text
-Worker scans unrelated directories
-```
-
-and not:
-
-```text
-Worker launches another IRR Worker automatically
-```
-
-## C.8 Forbidden shortcuts
+## C.7 Forbidden shortcuts
 
 The implementation must not:
 
-- encode the whole delegated lifecycle as `codexia.do_work` ordinary WorkStep;
-- give Codexia ambient repository/home-directory access;
-- let the Worker create its own authority;
-- let “needed for the task” expand scope automatically;
-- relabel Worker-originated findings as user statements;
-- treat Worker confidence as Evidence amplification;
-- treat returned proposal as an admitted successor plan without IRR continuation.
+- hide the lifecycle inside `codexia.do_work` ordinary WorkStep;
+- give ambient repository/home access;
+- let Authorization silently erase a forbidden-effect bound;
+- let “necessary for the task” expand delegation automatically;
+- relabel Worker findings as user statements;
+- turn Worker confidence into Evidence;
+- treat Worker output as admitted successor semantics without continuation.
 
-## C.9 Contracts exercised
+## C.8 Contracts exercised
 
 ```text
-M0.1  Worker / Origin / Principal roles
-M0.2  provenance / Evidence / Context
-M0.3  ordinary WorkStep boundedness
-M0.5  capability ceiling remains external catalog semantics
-M0.6  Worker does not own Authorization
-M0.7  Cognitive Provider != Worker
-M0.8  DelegatedWork / WorkerResult / parent lifecycle ownership
-M0.9  Worker failure/result does not collapse parent outcome
+M0.1 roles
+M0.2 provenance / Context / Evidence
+M0.3 ordinary WorkStep boundedness
+M0.5 capability boundary
+M0.6 authority separation
+M0.7 Cognitive Provider != Worker
+M0.8 DelegatedWork / WorkerResult / parent ownership
+M0.9 Worker result/failure remains scoped
 ```
 
 ---
@@ -673,80 +565,52 @@ M0.9  Worker failure/result does not collapse parent outcome
 "Запусти его."
 ```
 
-Assume the admitted Context does not identify one unique launch target and no already-admitted bounded referent rule resolves the pronoun.
+Assume admitted Context does not identify one unique launch target and no already-admitted referent rule resolves the pronoun.
 
 ## D.2 Expected result
 
-This is a blocking `Material Ambiguity`.
-
-IRR must return a clarification path rather than a ResolvedIntent for process launch.
-
-Conceptually:
+This is blocking `Material Ambiguity`:
 
 ```text
 IntentRequest
-    |
-    v
-Material Ambiguity
-    |
-    v
-Clarification
+    -> Material Ambiguity
+    -> Clarification
 ```
 
-There is no operational WorkPlan yet.
+There is no admitted process-launch ResolvedIntent/operational work yet.
 
 ```text
 clarification != ResolvedIntent
 clarification != WorkPlan
-clarification != parent intent completion
+clarification != parent completion
 ```
 
-## D.3 Cognitive Provider branch
+## D.3 Provider and ambient context
 
-A Cognitive Provider may propose:
-
-```text
-"probably the project discussed most recently"
-confidence = 0.94
-```
-
-That remains provider-produced candidate inference.
+A provider may propose a likely referent and confidence score, but:
 
 ```text
 provider confidence != ambiguity-resolution authority
 model prior != admitted Evidence
 ```
 
-IRR must not admit a materially different executable target solely because the model prefers it.
+IRR/provider must not silently inspect foreground windows, running processes, shell history, recent files, HDE memory, or arbitrary machine state to manufacture the missing referent.
 
-## D.4 No ambient discovery
+## D.4 Governance
 
-IRR/provider must not resolve the ambiguity by silently:
-
-- scanning running processes;
-- inspecting the foreground window;
-- reading shell history;
-- searching recent files;
-- inspecting HDE memory not supplied in Context;
-- choosing the first executable found.
-
-If the Host explicitly supplies new attributable information, Continuation may resolve the referent later.
-
-## D.5 Authority cannot repair ambiguity
-
-Even if Governance says “launching applications is generally allowed,” that does not tell IRR **which application** the user meant.
+Even broad launch Authorization cannot answer **which target was meant**.
 
 ```text
 Authorization != ambiguity resolution
 ```
 
-## D.6 Contracts exercised
+## D.5 Contracts exercised
 
 ```text
-M0.2  Material Ambiguity / Clarification / no ambient Context
-M0.3  no WorkPlan before admitted semantics
-M0.6  Authorization cannot repair semantics
-M0.7  provider confidence cannot choose material referent
+M0.2 Material Ambiguity / no ambient Context
+M0.3 no operational work before admitted semantics
+M0.6 authority cannot repair semantics
+M0.7 provider confidence cannot choose material referent
 ```
 
 ---
@@ -761,82 +625,57 @@ A companion such as Kaguya proposes:
 "Стоит проверить последние логи."
 ```
 
-The fixture intentionally distinguishes who generated the request from whose interests the request may serve.
-
 ## E.2 Attribution
 
-Conceptually:
-
 ```text
-Origin:
-    companion
-
-Principal:
-    user
+Origin = companion
+Principal = user
 ```
 
-The companion must not be relabeled as human Origin merely because it serves the user.
+The companion is not relabeled as human because it serves the user.
 
 ```text
-origin = companion
-origin != human
-principal = user
+origin != principal
 origin != authority
 ```
 
-## E.3 Resolution
+## E.3 Resolution and Context
 
-If “latest logs” and their bounded source are already sufficiently specified by explicit Context, IRR may resolve a bounded inspection objective.
+If log scope and “latest” semantics are sufficiently bounded by explicit attributable Context, IRR may resolve a bounded inspection objective. Otherwise clarification/information is required.
 
-If the log scope or referent is materially ambiguous, clarification / additional information is required instead.
-
-The companion’s confidence or familiarity with the project does not create missing Context.
+Companion familiarity or confidence does not create missing Context.
 
 ## E.4 Authority
-
-Companion initiative is not delegated permission by default.
 
 ```text
 companion intent != Authorization
 companion recommendation != Governance Decision
 ```
 
-The embedding system may later have a standing externally defined grant for a bounded read-only class. If so, its applicability is established by Governance/Host authority semantics, not inferred by IRR from the companion relationship.
+A Host may later supply an externally defined reusable grant for a bounded class, but IRR does not infer such a grant from the relationship.
 
-## E.5 Capability path
+## E.5 Capability and result
 
-If the resolved objective requires log inspection, required capabilities must come from the applicable Catalog Snapshot.
+Any required log-inspection capability comes from the applicable Catalog Snapshot. Result provenance remains with the actual source/executor boundary and is not rewritten as a human statement.
 
-The companion cannot imply:
-
-```text
-"I suggested it, therefore I may inspect arbitrary files."
-```
-
-## E.6 Result provenance
-
-Any resulting Observation/Outcome remains attributable to the actual source/executor boundary.
-
-It is not rewritten as a human statement merely because the Principal is the user.
-
-## E.7 Forbidden shortcuts
+## E.6 Forbidden shortcuts
 
 The implementation must not:
 
 - relabel companion Origin as human;
 - treat relationship/history as authority;
-- grant companion ambient memory/filesystem access through IRR;
-- infer a standing grant unless an external Governance contract supplies one;
-- report executed effects as if the user explicitly requested them when they did not.
+- give ambient memory/filesystem access;
+- infer standing grants;
+- report effects as if the human explicitly originated them.
 
-## E.8 Contracts exercised
+## E.7 Contracts exercised
 
 ```text
-M0.1  Origin != Principal != authority
-M0.2  explicit Context / attribution
-M0.5  capability admission
-M0.6  external Governance / reusable grants only if externally supplied
-M0.7  cognition/recommendation != authority
+M0.1 Origin / Principal
+M0.2 Context / attribution
+M0.5 Capability Catalog
+M0.6 external authority
+M0.7 recommendation != authority
 ```
 
 ---
@@ -849,80 +688,47 @@ M0.7  cognition/recommendation != authority
 "Отправь файл через Signal."
 ```
 
-Assume the file and recipient semantics are otherwise sufficiently resolved, but the exact applicable Capability Catalog Snapshot contains no compatible Signal send capability.
+Assume file/recipient semantics are otherwise resolved, but the exact applicable Catalog Snapshot has no compatible Signal-send capability.
 
-## F.2 Expected capability result
-
-The required semantic operation is valid as requested work, but no compatible admitted capability exists.
-
-Therefore:
+## F.2 Expected result
 
 ```text
 missing_capability
+    -> blocked work path
+    -> no Signal effect Attempt is implied to have started
 ```
 
-The work path is blocked under that Catalog Snapshot.
-
-This does not require inventing a fake execution Attempt.
-
-```text
-missing_capability
-    -> blocked path
-    -> no Signal effect Attempt began
-```
-
-## F.3 What absence does not mean
+`blocked` describes inability to proceed; the cause remains `missing_capability`.
 
 ```text
 missing_capability != Denial
 missing_capability != global impossibility
-missing_capability != permission to search for plugins
 missing_capability != fallback authority
 ```
 
-Signal might be technically available elsewhere in the world or machine. That is irrelevant to the exact Catalog Snapshot currently admitted to IRR.
+## F.3 Forbidden fallback
 
-## F.4 Forbidden fallback
+IRR/provider/Worker/Executor must not silently substitute Telegram, email, browser automation, shell, arbitrary code, plugin discovery, or another service.
 
-IRR, Cognitive Provider, Executor, or Worker must not silently substitute:
+If a later Host supplies a new Catalog Snapshot or the user explicitly accepts another channel, that enters through explicit successor/revalidation semantics with preserved lineage.
 
-```text
-Telegram
-email
-browser automation
-shell command
-Signal desktop UI scraping
-new plugin discovery
-arbitrary code
-```
+## F.4 Governance
 
-If the user later accepts a materially different channel, that is explicit successor semantics rather than hidden fallback.
-
-If an external Host later supplies a new Catalog Snapshot containing a Signal capability, the successor path must preserve lineage and revalidate capability/authority conditions.
-
-## F.5 Governance cannot synthesize capability
-
-Even an explicit Authorization such as:
-
-```text
-"You may send this file through Signal."
-```
-
-cannot manufacture a missing execution capability.
+Authorization cannot synthesize an absent capability.
 
 ```text
 Authorization + missing_capability != executable work
 ```
 
-## F.6 Contracts exercised
+## F.5 Contracts exercised
 
 ```text
-M0.3  semantic operation remains distinct from mechanism
-M0.5  exact Catalog Snapshot / fail-closed missing capability
-M0.6  Authorization != capability existence
-M0.7  provider knowledge cannot create capability
-M0.8  Worker cannot be capability fallback
-M0.9  pre-attempt blocked != failed Attempt
+M0.3 semantic operation != mechanism
+M0.5 fail-closed Capability Catalog
+M0.6 Authorization != capability existence
+M0.7 provider knowledge != capability
+M0.8 Worker != fallback authority
+M0.9 pre-attempt blocked != failed Attempt
 ```
 
 ---
@@ -935,175 +741,130 @@ M0.9  pre-attempt blocked != failed Attempt
 "Как ты думаешь, этот эксперимент хороший?"
 ```
 
-Assume the relevant experiment material is already explicitly supplied or otherwise admitted as Context for the inquiry.
+Assume the relevant experiment material is already admitted as bounded Context.
 
 ## G.2 Expected resolution
 
-The request is an inquiry/evaluation, not automatically a request to change the world.
+This is an inquiry/evaluation, not automatically a request for effects.
 
-IRR may admit a non-operational ResolvedIntent such as conceptually:
+IRR may admit a non-operational ResolvedIntent:
 
 ```text
 answer / assessment requested
 no operational work required
 ```
 
-No WorkPlan is manufactured merely to normalize the request into actions.
-
 ```text
 ResolvedIntent != WorkPlan requirement
-answer-only intent -> no operational WorkPlan
 ```
 
-## G.3 Cognitive Provider use
+## G.3 Provider boundary
 
-IRR may invoke a permitted Cognitive Provider to propose evaluative semantics or an answer path.
+A permitted Cognitive Provider may propose evaluative semantics/answer material. Its output remains CandidateResolution until IRR admission.
 
-Provider output remains `CandidateResolution` material until IRR admission.
-
-If remote provider disclosure would expose experiment material, that disclosure remains an explicit boundary rather than an automatic consequence of “just reasoning.”
+Remote provider transport may create disclosure effects; “just reasoning” does not exempt disclosure from the surrounding boundary.
 
 ## G.4 Governance
 
-M0 does not impose a universal Governance requirement on every internal/non-operational computation.
-
-A Host may impose product-level review or disclosure controls, but IRR does not manufacture a WorkProposal solely because every intent must look operational.
+M0 does not impose a universal Governance requirement on every non-operational/internal computation. A Host may impose additional product policy, but IRR does not manufacture a WorkProposal just to normalize every request into actions.
 
 ## G.5 Forbidden shortcuts
 
-The implementation must not silently turn the question into:
+The implementation must not silently:
 
 - run another experiment;
 - inspect additional files ambiently;
-- ask Codexia to modify the experiment;
-- commit a proposed change;
-- execute a tool call emitted by the model.
-
-If operational follow-up is later requested, that becomes explicit successor intent/work semantics.
+- delegate mutation work to Codexia;
+- commit changes;
+- execute provider tool-call syntax.
 
 ## G.6 Contracts exercised
 
 ```text
-M0.2  bounded Context / evidence semantics
-M0.3  WorkPlan is conditional, not universal
-M0.6  no manufactured WorkProposal for answer-only resolution
-M0.7  provider proposes, IRR admits; reasoning transport may disclose
+M0.2 bounded Context
+M0.3 conditional WorkPlan creation
+M0.6 non-operational path need not manufacture WorkProposal
+M0.7 provider proposes / disclosure remains explicit
 ```
 
 ---
 
-# Scenario H — Observation creates a new material choice
+# Scenario H — Returned search data creates a new material choice
 
-## H.1 Initial request
+The preserved roadmap historically called this fixture **“Observation changes plan.”** Under the later-frozen M0.4 terminology, the search output used below is `Binding Input` / returned data and is **not an Observation by default**. The fixture preserves the roadmap intent without collapsing those semantic roles.
 
-Use the backup-restore family from Scenario A.
+## H.1 Initial selection semantics
 
-Assume the admitted selection semantics are:
+Use the backup family from Scenario A.
+
+The admitted rule is:
 
 ```text
 select the unique latest matching backup
 by greatest modification timestamp
 ```
 
-The initial search returns:
+Search returns:
 
 ```text
 backup-A.zip  mtime = T
 backup-B.zip  mtime = T
 ```
 
-and both otherwise satisfy the admitted match constraints.
-
-There is no admitted tie-break rule.
+Both satisfy the match constraint and no tie-break rule was admitted.
 
 ## H.2 Binding result
 
-The Binding Rule cannot produce one unique Bound Value without inventing a new semantic choice.
-
-Therefore:
+The Binding Rule cannot produce one unique Bound Value.
 
 ```text
-Binding Rule evaluation
+Binding Input
     -> multiple equally admissible candidates
     -> no Bound Value
 ```
 
-The implementation must not choose:
-
-- first result;
-- lexicographically first filename;
-- smaller/larger archive;
-- most recently returned API item;
-- the candidate preferred by an LLM;
-- the candidate preferred by an Executor;
-- a random candidate.
-
-unless that choice rule was already admitted.
+The implementation must not choose by result order, lexical order, size, provider preference, Executor preference, randomness, or another invented rule.
 
 ## H.3 Continuation
 
-The new material choice returns through IRR Continuation.
-
-Conceptually:
-
 ```text
-search result / Binding Input
-        |
-        v
-unresolved material selection
-        |
-        v
-IRR Continuation
-        |
-        v
-Clarification
+returned search data / Binding Input
+        -> unresolved material selection
+        -> IRR Continuation
+        -> Clarification
 ```
 
-A user clarification such as:
+A later clarification such as:
 
 ```text
 "Use backup-B.zip."
 ```
 
-may later support successor semantics / binding lineage.
+may produce successor/binding lineage. The historical earlier rule is not rewritten to pretend that tie-break existed originally.
 
-The historical initial WorkPlan/rule is not silently rewritten to pretend the tie-break existed from the beginning.
+## H.4 Governance
 
-## H.4 Governance interaction
+Authority over a symbolic class/rule does not automatically expand merely because a later material choice is resolved differently. Applicability of prior external Authorization must be checked against the actual successor/bound semantics.
 
-An Authorization that covered the symbolic class “the uniquely latest backup selected by rule R” does not necessarily cover a user-selected alternative after rule R failed to yield a unique value.
+## H.5 Provider
 
-The new concrete/successor semantics must be checked against the applicable external authority scope.
-
-```text
-binding ambiguity resolved
-    !=
-authority automatically expanded
-```
-
-## H.5 Provider interaction
-
-A Cognitive Provider may explain the tie or propose a clarification question.
-
-It must not resolve the tie by confidence ranking unless the admitted semantics explicitly permit provider judgment for that material choice.
+A provider may explain the tie or propose clarification. It must not resolve the material choice via confidence unless such provider judgment was already admitted as the selection semantics.
 
 ## H.6 Contracts exercised
 
 ```text
-M0.2  Material Ambiguity / explicit clarification
-M0.3  successor semantics instead of self-modifying plan
-M0.4  Binding Rule / tie / no hidden Selection Policy
-M0.6  rebound/successor value does not silently inherit authority
-M0.7  provider confidence cannot invent tie-break semantics
+M0.2 Material Ambiguity / Clarification
+M0.3 successor semantics instead of self-modifying plan
+M0.4 Binding Input / Binding Rule / no invented Selection Policy
+M0.6 successor binding does not amplify authority
+M0.7 provider confidence cannot invent tie-break semantics
 ```
 
 ---
 
 # 3. Scenario × boundary matrix
 
-The canonical eight fixtures collectively cover the M0 boundary surface.
-
-| Scenario | M0.1 roles | M0.2 trust/context | M0.3 work | M0.4 binding | M0.5 capability | M0.6 governance | M0.7 provider | M0.8 worker | M0.9 recovery |
+| Scenario | M0.1 | M0.2 | M0.3 | M0.4 | M0.5 | M0.6 | M0.7 | M0.8 | M0.9 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | A Restore backup | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  |  | ✓ |
 | B Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
@@ -1112,115 +873,102 @@ The canonical eight fixtures collectively cover the M0 boundary surface.
 | E Companion initiative | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ |  |  |
 | F Missing Signal capability |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ |
 | G No operational intent |  | ✓ | ✓ |  |  | ✓ | ✓ |  |  |
-| H Observation changes plan |  | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  |
+| H Returned data changes path |  | ✓ | ✓ | ✓ |  | ✓ | ✓ |  |  |
 
-A blank means the milestone is not the scenario's primary distinguishing feature, not that the milestone ceases to apply.
+A blank means the milestone is not the scenario's primary distinguishing feature, not that it ceases to apply.
 
 ---
 
 # 4. Negative architecture assertions
 
-The fixtures are considered failed if an implementation requires any of these shortcuts to pass:
+The fixture set fails if an implementation requires:
 
 ```text
 ambient filesystem/repository/browser/memory inspection
-implicit wall clock/timezone when time is material
-provider confidence as factual or ambiguity authority
-provider tool call as direct execution permission
-shell/browser fallback for missing semantic capability
+implicit wall clock/timezone when material
+provider confidence as truth/ambiguity authority
+provider tool-call syntax as execution permission
+shell/browser/Worker fallback for missing capability
+Binding/Selection automatically reclassified as external Capability
 WorkPlan as arbitrary scripting language
-ordinary WorkStep hiding an autonomous Worker loop
+ordinary WorkStep hiding autonomous Worker lifecycle
 companion/Worker Origin relabeled as human
-principal identity treated as permission
-Governance approval used to repair semantic ambiguity
+Principal identity treated as permission
+Governance used to repair semantic ambiguity
+Authorization used to mutate DelegatedWork forbidden effects
 Capability availability treated as Authorization
-DelegatedWork treated as blanket Worker authority
 WorkerResult treated as parent completion
-failure treated as proof of no effect
-timeout treated as proof of failure
+failed treated as no effect
+timeout treated as failure
+interrupted forced to equal unknown_outcome
 unknown effectful outcome automatically retried
-fallback treated as continuation of the same Attempt
-later success rewriting earlier uncertain/failed history
+fallback treated as continuation of same Attempt
+later success rewriting earlier uncertainty/history
 ```
-
-These are not implementation preferences; they are consequences of M0.1–M0.9.
 
 ---
 
 # 5. Future executable-fixture requirements
 
-When M1+ turns these scenarios into code-level fixtures, each encoded case should preserve enough structure to inspect conceptually:
+M1+ fixture encodings should preserve enough structure to inspect conceptually:
 
 ```text
-fixture identity / version
-input IntentRequest attribution
-Principal / Origin distinctions when material
-explicit Context surface
-Temporal Basis when material
+fixture identity/version
+IntentRequest attribution
+Origin / Principal distinction
+explicit Context and Temporal Basis when material
 Catalog Snapshot identity
-candidate/provider provenance when used
+Provider provenance when used
 ResolvedIntent / clarification / no-work classification
-WorkPlan or DelegatedWork semantics when produced
-Binding Rules / symbolic lineage when used
+ordinary bounded work vs DelegatedWork role
+Binding Rules / symbolic lineage
 Capability Match / missing-capability condition
-WorkProposal / Governance / Authorization references when applicable
-Handoff role: Executor vs Worker
-Attempt / Outcome lineage when downstream work occurs
-Continuation lineage when new material information arrives
+Governance / Authorization references when applicable
+Executor vs Worker handoff role
+Attempt / Outcome / WorkerResult lineage
+Continuation lineage
 expected forbidden transitions
 ```
 
-Exact fields are M1+ work.
+Exact fields remain later work.
 
-M0.10 freezes only that future executable fixtures must be capable of proving the architectural distinctions, not merely comparing one opaque expected JSON blob.
+The fixture encoding must prove semantic distinctions rather than compare one opaque expected blob.
 
 ---
 
-# 6. Fixture stability rule
+# 6. Stability rule
 
-These scenarios are architecture fixtures, not product-specific permanent APIs.
+Later milestones may change Python types, serialization, identifiers, adapters, persistence, UI wording, provider/Worker transport, or recovery representation.
 
-Later milestones may change:
+They must not silently change the **material semantic outcome** of these fixtures without an explicit architecture revision.
 
-- Python class names;
-- serialization shapes;
-- exact operation identifiers;
-- adapter names;
-- persistence implementation;
-- UI wording;
-- provider/Worker transport;
-- recovery state representation.
-
-They must **not** silently change the material semantic outcome of the fixtures without an explicit architectural revision.
-
-For example, later implementation may represent Scenario H using a typed `BindingFailure`, a continuation record, or another schema, but it must still preserve:
+Examples:
 
 ```text
-no admitted tie-break
-    -> no silent candidate selection
-    -> explicit continuation / clarification
-```
+Scenario H:
+no admitted tie-break -> no silent selection -> explicit continuation
 
-Likewise Scenario B may use a durable idempotency contract later, but absent sufficient evidence it must still preserve:
+Scenario B:
+unknown effectful outcome -> no automatic Retry
 
-```text
-unknown effectful outcome != automatic retry
+Scenario C:
+forbidden effect in current DelegatedWork
+    -> cannot be enabled by Authorization alone
+    -> material widening returns to IRR
 ```
 
 ---
 
-# 7. M0.10 reference-scenario verdict
+# 7. M0.10 fixture verdict
 
-The eight roadmap scenarios can be represented coherently using the M0.1–M0.9 boundaries without requiring IRR to become:
+The eight roadmap scenarios compose coherently under M0.1–M0.9 without requiring IRR to become:
 
-- a shell-command generator;
 - an ambient environment scanner;
+- a shell-command generator;
 - a policy/permission engine;
-- an executor;
+- an Executor;
 - a general autonomous Worker;
 - a provider-specific LLM wrapper;
-- an HDE-, Character_OS-, Codexia-, Runplane-, or organism_lab-specific subsystem.
+- an HDE-, Character_OS-, Codexia-, Runplane-, or organism_lab-specific core.
 
-The architecture therefore has a coherent end-to-end semantic explanation for the reference set.
-
-The M0 closure proof and M1 handoff are recorded separately in [`m0_closure.md`](m0_closure.md).
+The closure proof and M1 handoff are recorded in [`m0_closure.md`](m0_closure.md).
