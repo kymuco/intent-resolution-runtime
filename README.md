@@ -8,9 +8,9 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.9 — Failure, Retry & Unknown Outcome Boundary**.
+Current milestone: **M0.10 — Reference Scenarios & M0 Closure**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, M0.6 Governance & Authority Boundary, M0.7 Cognitive Provider Boundary, and M0.8 Worker Delegation Boundary are frozen in `main`. M0.9 freezes the semantic boundary between confirmed success/failure, blocking, interruption, uncertain effects, retry, and fallback without introducing a runtime recovery engine.
+M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, M0.6 Governance & Authority Boundary, M0.7 Cognitive Provider Boundary, M0.8 Worker Delegation Boundary, and M0.9 Failure, Retry & Unknown Outcome Boundary are frozen in `main`. M0.10 exercises those boundaries through canonical architecture fixtures and records the M0 closure/M1 handoff without introducing runtime code.
 
 This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
 
@@ -86,7 +86,7 @@ human / companion / worker / system
 
 The diagram is conceptual, not a universal timing rule. A `WorkProposal` and Governance review bind exact proposed semantics when external authority review is required; they are not omitted from the contract merely because the diagram keeps the two downstream handoff branches readable. M0.6/M0.8 do not require every non-effectful analysis handoff to pass through one universal Governance sequence, nor do they imply that handing work to a Worker grants authority. The invariant is narrower and stronger: whenever an invocation, disclosure, mutation, external effect, or other downstream operation requires authority, applicable Authorization coverage must exist before that authority-requiring effect occurs.
 
-A Cognitive Provider is a replaceable proposal source, not the owner of IRR state. IRR discloses only an explicitly permitted bounded input surface to a provider; the provider returns attributable `CandidateResolution` material; IRR independently validates and admits or rejects those semantics under the same M0.1–M0.6 contracts used without a provider.
+A Cognitive Provider is a replaceable proposal source, not the owner of IRR state. IRR discloses only an explicitly permitted bounded input surface to a provider; the provider returns attributable `CandidateResolution` material; IRR independently validates and admits or rejects those semantics under all applicable frozen M0 contracts through M0.9.
 
 ```text
 provider proposes != IRR admits
@@ -102,7 +102,7 @@ Context or Capability Catalog material available inside IRR is not automatically
 
 The Cognitive Provider boundary does not grant ambient retrieval or tool authority. If a provider needs files, repository state, browser data, current world state, or other new information, it may propose a bounded Information Need or Observation Need; hidden model-side tools/retrieval cannot be used to launder new facts into IRR Context or Observation. A tool-using/provider-agent implementation that acquires external information must return that information through an explicit attributable Host/acquisition boundary before IRR can use it as evidence.
 
-A provider may propose semantic interpretation, clarification, candidate inferences, bounded work semantics, or capability usage based on disclosed material. IRR still validates material references, ambiguity, assumptions, WorkPlan boundedness, capability requirements, exact Catalog membership, and Governance separation. Provider-generated shell/code/tool-call syntax remains candidate data rather than execution authority.
+A provider may propose semantic interpretation, clarification, candidate inferences, bounded work semantics, or capability usage based on disclosed material. IRR still validates material references, ambiguity, assumptions, WorkPlan boundedness, Worker delegation semantics, recovery semantics, capability requirements, exact Catalog membership, and Governance separation. Provider-generated shell/code/tool-call syntax remains candidate data rather than execution authority.
 
 Provider output is not canonical memory and cannot self-expand future privileges. Candidate rejection also does not reject the parent intent by definition: another provider, deterministic path, clarification, or later attributable information may still resolve it. IRR may resolve simple paths without invoking any Cognitive Provider at all, so IRR is not an LLM wrapper.
 
@@ -156,6 +156,8 @@ Idempotency is not inferred from identical request bytes, deterministic names, H
 Fallback is also explicit recovery work. Switching capability, provider, executor, or Worker cannot synthesize a missing capability, erase a prior unknown effect, inherit Authorization, or silently change scope/disclosure/cost/completion semantics. Material fallback changes return through IRR Continuation/successor semantics.
 
 Cancellation and recovery preserve history: requesting cancellation does not prove an in-flight effect was prevented, compensation is a new semantic operation rather than a retry, and rollback does not make an earlier effect historically nonexistent. Resolving an unknown outcome may require a separately admitted and, where applicable, authorized status Observation/query rather than ambient introspection.
+
+M0.10 closes the charter by applying the frozen M0.1–M0.9 semantics to eight canonical architecture fixtures and by recording the Definition-of-Done/M1 handoff. The fixtures are semantic constraints, not frozen JSON or executable runtime tests; later implementations may change representation while preserving the material architecture outcomes.
 
 Clarification pauses resolution before a successor ResolvedIntent exists; it does not by itself complete the parent intent lifecycle. A ResolvedIntent may then complete without operational work or, when bounded operational work is required, produce a WorkPlan.
 
@@ -246,6 +248,8 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.7 cognitive provider boundary](docs/m0_cognitive_provider_boundary.md)
 - [M0.8 worker delegation boundary](docs/m0_worker_delegation_boundary.md)
 - [M0.9 failure, retry & unknown outcome boundary](docs/m0_failure_retry_unknown_outcome_boundary.md)
+- [M0.10 reference scenarios](docs/reference_scenarios.md)
+- [M0 closure & M1 handoff](docs/m0_closure.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
