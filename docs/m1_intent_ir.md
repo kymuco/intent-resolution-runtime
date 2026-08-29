@@ -84,15 +84,24 @@ without relabeling the companion as human.
 
 ## Canonical serialization
 
-The v1 wire representation is deterministic UTF-8 JSON:
+`IntentRequest.v1` intentionally uses a narrow canonical domain: nested JSON objects whose keys and leaf values are Unicode scalar strings. M1.1 does not define canonical numbers, arrays, booleans, or null because the v1 record does not contain them.
 
-- object keys sorted lexicographically;
-- no insignificant whitespace;
-- UTF-8 text preserved without silent Unicode normalization;
-- duplicate object keys rejected while parsing;
-- `NaN` / `Infinity` rejected;
-- unknown fields rejected at every M1.1 record boundary;
-- schema discriminator required exactly.
+Canonical bytes are defined independently of Python object insertion order:
+
+- object keys are ordered lexicographically by Unicode code point;
+- keys and values must contain Unicode scalar values only; lone surrogate code points are rejected;
+- `"` is encoded as `\"`;
+- `\` is encoded as `\\`;
+- U+0000 through U+001F are encoded as lowercase `\u00xx` escapes;
+- all other Unicode scalar values are emitted directly as UTF-8;
+- no insignificant whitespace is emitted;
+- duplicate object keys are rejected while parsing;
+- unknown fields are rejected at every M1.1 record boundary;
+- schema discriminator is required exactly.
+
+Input JSON need not already be canonical. Parsing produces typed IR; identity is computed only from re-encoded canonical bytes.
+
+The restricted object/string domain is deliberate. Later M1 slices may extend the canonical value domain only with explicit encoding rules while preserving byte-for-byte encoding of the M1.1 subset.
 
 Unknown fields are fail-closed. In particular, a producer cannot smuggle authority or verification semantics into `IntentRequest` by adding fields the schema does not own.
 
@@ -102,6 +111,14 @@ Record identity is:
 
 ```text
 sha256(canonical_json_bytes(record))
+```
+
+The digest is exactly 64 lowercase ASCII hexadecimal characters.
+
+The M1.1 golden vector is frozen by tests. The canonical Kaguya companion request with source event `hde.event:evt-001`, principal `hde.principal:user:self`, and text `Стоит проверить последние логи.` has SHA-256:
+
+```text
+bedad2f962490352db8d156a3e39cbd40c2cbc6071a0bfc64899607fdd2967e8
 ```
 
 The digest is content identity for the complete v1 record, including origin attribution, source event, principal, and expression.
@@ -130,6 +147,7 @@ M1.1 does **not** freeze:
 - Governance / Authorization;
 - Attempt / Outcome / Continuation;
 - non-text expression schemas;
+- canonical numeric/array/boolean/null encoding;
 - transport or persistence.
 
 Those arrive in later M1 slices and must preserve the M0 distinctions.
@@ -143,10 +161,13 @@ immutable records
 origin != principal representability
 origin attribution != verification
 same text + different source event -> different identity
+canonical golden bytes + digest
 canonical round-trip determinism
 material field change -> identity change
+Unicode surrogate rejection
 unknown fields rejected
 duplicate JSON keys rejected
 authority-like extra fields rejected
 unknown v1 origin kinds rejected
+strict lowercase ASCII SHA-256 identity
 ```

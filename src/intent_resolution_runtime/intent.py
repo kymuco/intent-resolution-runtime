@@ -16,6 +16,11 @@ class OriginKind(str, Enum):
     SYSTEM = "system"
 
 
+def _reject_surrogates(value: str, *, field: str) -> None:
+    if any(0xD800 <= ord(character) <= 0xDFFF for character in value):
+        raise ValidationError(f"{field} must contain only Unicode scalar values")
+
+
 def _require_token(value: object, *, field: str) -> str:
     if not isinstance(value, str):
         raise ValidationError(f"{field} must be a string")
@@ -23,6 +28,7 @@ def _require_token(value: object, *, field: str) -> str:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
         raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+    _reject_surrogates(value, field=field)
     return value
 
 
@@ -31,6 +37,7 @@ def _require_text(value: object, *, field: str) -> str:
         raise ValidationError(f"{field} must be a string")
     if not value.strip():
         raise ValidationError(f"{field} must contain non-whitespace text")
+    _reject_surrogates(value, field=field)
     return value
 
 
