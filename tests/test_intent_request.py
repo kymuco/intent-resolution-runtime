@@ -10,10 +10,21 @@ from intent_resolution_runtime import (
     IntentRequest,
     OriginAttribution,
     OriginKind,
+    RecordIdentity,
     SerializationError,
     StableRef,
     ValidationError,
 )
+
+
+GOLDEN_BYTES = (
+    '{"expression":{"text":"Стоит проверить последние логи."},'
+    '"origin":{"actor_ref":{"namespace":"character_os.actor","value":"kaguya"},'
+    '"kind":"companion","source_event_ref":{"namespace":"hde.event","value":"evt-001"}},'
+    '"principal_ref":{"namespace":"hde.principal","value":"user:self"},'
+    '"schema":"irr.intent_request.v1"}'
+).encode("utf-8")
+GOLDEN_SHA256 = "bedad2f962490352db8d156a3e39cbd40c2cbc6071a0bfc64899607fdd2967e8"
 
 
 def make_request(*, source_event: str = "evt-001", text: str = "Стоит проверить последние логи.") -> IntentRequest:
@@ -46,6 +57,13 @@ def test_records_are_deeply_immutable() -> None:
         request.origin.kind = OriginKind.HUMAN  # type: ignore[misc]
     with pytest.raises(FrozenInstanceError):
         request.principal_ref.value = "someone-else"  # type: ignore[misc]
+
+
+def test_canonical_golden_vector_and_identity_are_frozen() -> None:
+    request = make_request()
+
+    assert request.canonical_bytes() == GOLDEN_BYTES
+    assert request.identity == RecordIdentity("sha256", GOLDEN_SHA256)
 
 
 def test_canonical_bytes_are_deterministic_and_round_trip() -> None:
@@ -104,11 +122,21 @@ def test_text_is_preserved_exactly_without_silent_normalization() -> None:
         (lambda: StableRef("", "x"), "namespace"),
         (lambda: StableRef("x", " "), "value"),
         (lambda: IntentExpression("   "), "text"),
+        (lambda: StableRef("host.actor", "bad\ud800ref"), "Unicode scalar"),
+        (lambda: IntentExpression("bad\ud800intent"), "Unicode scalar"),
     ],
 )
-def test_blank_required_values_are_rejected(factory, message: str) -> None:
+def test_invalid_required_values_are_rejected(factory, message: str) -> None:
     with pytest.raises(ValidationError, match=message):
         factory()
+
+
+def test_parser_rejects_escaped_unicode_surrogate() -> None:
+    encoded = make_request().canonical_bytes().decode("utf-8")
+    encoded = encoded.replace("kaguya", "bad\\ud800actor", 1)
+
+    with pytest.raises(SerializationError, match="invalid origin.actor_ref"):
+        IntentRequest.from_json_bytes(encoded.encode("utf-8"))
 
 
 def test_parser_rejects_authority_smuggling_via_unknown_top_level_field() -> None:
@@ -167,3 +195,8 @@ def test_origin_kind_is_closed_for_v1() -> None:
 
     with pytest.raises(SerializationError, match="unsupported origin.kind"):
         IntentRequest.from_json_bytes(encoded.encode("utf-8"))
+
+
+def test_record_identity_rejects_non_ascii_hex_digits() -> None:
+    with pytest.raises(ValidationError, match="lowercase ASCII hex"):
+        RecordIdentity("sha256", "١" * 64)

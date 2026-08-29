@@ -8,17 +8,17 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M0.10 — Reference Scenarios & M0 Closure**.
+Current milestone: **M1.1 — IntentRequest Core & Canonical Identity**.
 
-M0.1 Product Charter & Vocabulary, M0.2 Trust, Context & Resolution Semantics, M0.3 Intent → Work Boundary, M0.4 Late Binding & Observation Boundary, M0.5 Capability Boundary, M0.6 Governance & Authority Boundary, M0.7 Cognitive Provider Boundary, M0.8 Worker Delegation Boundary, and M0.9 Failure, Retry & Unknown Outcome Boundary are frozen in `main`. M0.10 exercises those boundaries through canonical architecture fixtures and records the M0 closure/M1 handoff without introducing runtime code.
+**M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 now encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
-This repository is currently charter-first. There is intentionally no runtime implementation or `src/` tree yet. Python schemas and executable APIs begin only after the M0 boundary freeze is complete.
+M1.1 introduces the first `src/intent_resolution_runtime/` package and intentionally limits implementation to the `IntentRequest` input core, canonical object/string encoding, SHA-256 record identity, and tests. Context, resolution, work, delegation, capability/governance, and recovery IR remain later M1 slices.
 
 ## Product identity
 
 - Repository: `intent-resolution-runtime`
-- Planned distribution: `intent-resolution-runtime`
-- Planned Python namespace: `intent_resolution_runtime`
+- Distribution: `intent-resolution-runtime`
+- Python namespace: `intent_resolution_runtime`
 - Short name: `IRR`
 - License: Apache-2.0
 
@@ -250,10 +250,11 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.9 failure, retry & unknown outcome boundary](docs/m0_failure_retry_unknown_outcome_boundary.md)
 - [M0.10 reference scenarios](docs/reference_scenarios.md)
 - [M0 closure & M1 handoff](docs/m0_closure.md)
+- [M1 Intent IR](docs/m1_intent_ir.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
 
 - [Roadmap](ROADMAP.md)
 
-`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative runtime contracts are frozen incrementally by M0.1 through M0.10.
+`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts are frozen in `main`; M1 implementation slices encode them incrementally without silently reopening those boundaries.
