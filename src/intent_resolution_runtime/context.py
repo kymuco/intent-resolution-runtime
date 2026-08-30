@@ -50,6 +50,8 @@ def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str)
 
 
 class _CanonicalRecord:
+    __slots__ = ()
+
     def to_primitive(self) -> dict[str, object]:
         raise NotImplementedError
 
