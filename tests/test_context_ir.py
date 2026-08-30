@@ -45,6 +45,13 @@ def host_attr(event: str) -> SourceAttribution:
     )
 
 
+def boundary_attr(event: str) -> SourceAttribution:
+    return SourceAttribution(
+        source_ref=StableRef("host.boundary", "context-admission"),
+        source_event_ref=StableRef("host.context_boundary", event),
+    )
+
+
 def make_context() -> ContextEnvelope:
     request = make_request()
     temporal = TemporalBasisRecord(
@@ -68,6 +75,7 @@ def make_context() -> ContextEnvelope:
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.CLAIM,
         target_identity=claim.identity,
+        scope="newest-by-modification-time within the admitted /reports listing",
         description="bounded workspace index entry ordering supports the report recency claim",
     )
     evidence_attr = EvidenceRecord(
@@ -75,6 +83,7 @@ def make_context() -> ContextEnvelope:
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.ATTRIBUTION,
         target_identity=claim.identity,
+        scope="source attribution of claim-001 to workspace-index",
         description="host receipt links claim-001 to workspace-index",
     )
     reference = ContextReferenceRecord(
@@ -84,8 +93,15 @@ def make_context() -> ContextEnvelope:
     )
     return ContextEnvelope(
         intent_request_identity=request.identity,
-        boundary_event_ref=StableRef("host.context_boundary", "ctx-001"),
-        records=(reference, evidence_attr, completeness, claim, temporal, evidence_claim),
+        boundary_attribution=boundary_attr("ctx-001"),
+        records=(
+            reference,
+            evidence_attr,
+            completeness,
+            claim,
+            temporal,
+            evidence_claim,
+        ),
     )
 
 
@@ -99,7 +115,20 @@ def test_context_envelope_is_explicit_and_occurrence_attributable() -> None:
     first = make_context()
     second = ContextEnvelope(
         intent_request_identity=first.intent_request_identity,
-        boundary_event_ref=StableRef("host.context_boundary", "ctx-002"),
+        boundary_attribution=boundary_attr("ctx-002"),
+        records=first.records,
+    )
+    assert first.identity != second.identity
+
+
+def test_boundary_source_is_identity_material_not_inferred_from_event_namespace() -> None:
+    first = make_context()
+    second = ContextEnvelope(
+        intent_request_identity=first.intent_request_identity,
+        boundary_attribution=SourceAttribution(
+            source_ref=StableRef("host.boundary", "alternate-admission"),
+            source_event_ref=first.boundary_attribution.source_event_ref,
+        ),
         records=first.records,
     )
     assert first.identity != second.identity
@@ -109,7 +138,7 @@ def test_record_order_is_not_implicit_precedence() -> None:
     first = make_context()
     second = ContextEnvelope(
         intent_request_identity=first.intent_request_identity,
-        boundary_event_ref=first.boundary_event_ref,
+        boundary_attribution=first.boundary_attribution,
         records=tuple(reversed(first.records)),
     )
     assert second.records == first.records
@@ -121,8 +150,8 @@ def test_claim_evidence_and_attribution_evidence_remain_distinct() -> None:
     envelope = make_context()
     claim = next(record for record in envelope.records if isinstance(record, ClaimRecord))
     evidence = [
-        record for record in envelope.records
-        if isinstance(record, EvidenceRecord) and record.target_identity == claim.identity
+        record for record in envelope.records if isinstance(record, EvidenceRecord)
+        and record.target_identity == claim.identity
     ]
     assert {record.target_kind for record in evidence} == {
         EvidenceTargetKind.CLAIM,
@@ -138,11 +167,12 @@ def test_origin_attribution_can_be_targeted_without_becoming_authority() -> None
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.ORIGIN_ATTRIBUTION,
         target_identity=request.identity,
+        scope="attribution of this IntentRequest occurrence to host.actor:user",
         description="host-authenticated session evidence supports the attributed request origin",
     )
     envelope = ContextEnvelope(
         intent_request_identity=request.identity,
-        boundary_event_ref=StableRef("host.context_boundary", "ctx-origin"),
+        boundary_attribution=boundary_attr("ctx-origin"),
         records=(evidence,),
     )
     primitive = envelope.to_primitive()
@@ -157,12 +187,13 @@ def test_evidence_target_must_be_inside_bounded_context() -> None:
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.CLAIM,
         target_identity=missing,
+        scope="missing claim target",
         description="claimed support",
     )
     with pytest.raises(ValidationError, match="target must be present"):
         ContextEnvelope(
             intent_request_identity=make_request().identity,
-            boundary_event_ref=StableRef("host.context_boundary", "ctx"),
+            boundary_attribution=boundary_attr("ctx"),
             records=(evidence,),
         )
 
@@ -178,7 +209,7 @@ def test_completeness_requires_explicit_temporal_link_when_one_is_named() -> Non
     with pytest.raises(ValidationError, match="temporal basis must resolve"):
         ContextEnvelope(
             intent_request_identity=make_request().identity,
-            boundary_event_ref=StableRef("host.context_boundary", "ctx"),
+            boundary_attribution=boundary_attr("ctx"),
             records=(completeness,),
         )
 
@@ -186,7 +217,7 @@ def test_completeness_requires_explicit_temporal_link_when_one_is_named() -> Non
 def test_absence_does_not_create_completeness_or_temporal_basis() -> None:
     envelope = ContextEnvelope(
         intent_request_identity=make_request().identity,
-        boundary_event_ref=StableRef("host.context_boundary", "empty"),
+        boundary_attribution=boundary_attr("empty"),
         records=(),
     )
     assert envelope.records == ()
@@ -216,6 +247,39 @@ def test_provider_disclosure_smuggling_is_rejected() -> None:
         ContextEnvelope.from_json_bytes(tampered.encode())
 
 
+def test_boundary_attribution_preserves_host_source_and_event() -> None:
+    envelope = make_context()
+    assert envelope.boundary_attribution.source_ref == StableRef(
+        "host.boundary", "context-admission"
+    )
+    assert envelope.boundary_attribution.source_event_ref == StableRef(
+        "host.context_boundary", "ctx-001"
+    )
+
+
+def test_evidence_scope_is_mandatory_and_identity_material() -> None:
+    claim = ClaimRecord(attribution=host_attr("scope-claim"), statement="A and B")
+    broad = EvidenceRecord(
+        attribution=host_attr("scope-evidence"),
+        relation=EvidenceRelation.SUPPORTS,
+        target_kind=EvidenceTargetKind.CLAIM,
+        target_identity=claim.identity,
+        scope="A only",
+        description="evidence only covers proposition A",
+    )
+    other = EvidenceRecord(
+        attribution=broad.attribution,
+        relation=broad.relation,
+        target_kind=broad.target_kind,
+        target_identity=broad.target_identity,
+        scope="A and B",
+        description=broad.description,
+    )
+    assert broad.identity != other.identity
+    text = broad.canonical_bytes().decode("utf-8")
+    assert '"scope":"A only"' in text
+
+
 def test_round_trip_and_cross_links_are_preserved() -> None:
     envelope = make_context()
     decoded = ContextEnvelope.from_json_bytes(envelope.canonical_bytes())
@@ -226,7 +290,7 @@ def test_round_trip_and_cross_links_are_preserved() -> None:
 
 def test_m12_context_golden_digest_is_frozen() -> None:
     assert make_context().identity.digest == (
-        "5929077095122f7315b5e4380cc817688c5ec47641bae0750002db9d5cae1d46"
+        "de7e426fec93946c94f90d769e0517fb70e7ba3684a1153a350aef977340fcf0"
     )
 
 
@@ -257,6 +321,22 @@ def test_unknown_nested_attribution_field_is_rejected() -> None:
         ClaimRecord.from_json_bytes(tampered.encode())
 
 
+def test_evidence_scope_is_required_on_wire() -> None:
+    claim = ClaimRecord(attribution=host_attr("scope-wire-claim"), statement="A and B")
+    evidence = EvidenceRecord(
+        attribution=host_attr("scope-wire-evidence"),
+        relation=EvidenceRelation.SUPPORTS,
+        target_kind=EvidenceTargetKind.CLAIM,
+        target_identity=claim.identity,
+        scope="A only",
+        description="supports A",
+    )
+    text = evidence.canonical_bytes().decode("utf-8")
+    text = text.replace('"scope":"A only",', "", 1)
+    with pytest.raises(SerializationError, match="missing=.*scope"):
+        EvidenceRecord.from_json_bytes(text.encode("utf-8"))
+
+
 def test_invalid_enum_values_are_rejected() -> None:
     claim = ClaimRecord(attribution=host_attr("claim"), statement="x")
     evidence = EvidenceRecord(
@@ -264,6 +344,7 @@ def test_invalid_enum_values_are_rejected() -> None:
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.CLAIM,
         target_identity=claim.identity,
+        scope="example claim support",
         description="support",
     )
     text = evidence.canonical_bytes().decode().replace('"supports"', '"proves"', 1)
@@ -289,13 +370,13 @@ def test_context_records_require_immutable_tuple_and_unique_identities() -> None
     with pytest.raises(ValidationError, match="must be a tuple"):
         ContextEnvelope(  # type: ignore[arg-type]
             intent_request_identity=make_request().identity,
-            boundary_event_ref=StableRef("host.context_boundary", "ctx-list"),
+            boundary_attribution=boundary_attr("ctx-list"),
             records=[claim],
         )
     with pytest.raises(ValidationError, match="duplicate record identities"):
         ContextEnvelope(
             intent_request_identity=make_request().identity,
-            boundary_event_ref=StableRef("host.context_boundary", "ctx-dup"),
+            boundary_attribution=boundary_attr("ctx-dup"),
             records=(claim, claim),
         )
 
@@ -312,12 +393,13 @@ def test_claim_evidence_cannot_target_non_claim_record() -> None:
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.CLAIM,
         target_identity=temporal.identity,
+        scope="wrong target class",
         description="wrong target class",
     )
     with pytest.raises(ValidationError, match="claim evidence must target"):
         ContextEnvelope(
             intent_request_identity=make_request().identity,
-            boundary_event_ref=StableRef("host.context_boundary", "ctx-target"),
+            boundary_attribution=boundary_attr("ctx-target"),
             records=(temporal, evidence),
         )
 
@@ -328,11 +410,12 @@ def test_origin_attribution_evidence_cannot_target_another_request() -> None:
         relation=EvidenceRelation.SUPPORTS,
         target_kind=EvidenceTargetKind.ORIGIN_ATTRIBUTION,
         target_identity=RecordIdentity("sha256", "2" * 64),
+        scope="wrong request origin attribution",
         description="wrong request target",
     )
     with pytest.raises(ValidationError, match="must target this envelope"):
         ContextEnvelope(
             intent_request_identity=make_request().identity,
-            boundary_event_ref=StableRef("host.context_boundary", "ctx-origin-wrong"),
+            boundary_attribution=boundary_attr("ctx-origin-wrong"),
             records=(evidence,),
         )

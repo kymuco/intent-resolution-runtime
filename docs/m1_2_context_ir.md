@@ -73,10 +73,11 @@ EvidenceRecord
 │  ├─ attribution
 │  └─ origin_attribution
 ├─ target_identity
+├─ scope
 └─ description
 ```
 
-The target is explicit.
+The target and evidentiary scope are explicit. `scope` states the exact aspect of the target that this evidence supports or weakens; targeting a broad Claim does not imply support for every proposition that Claim may contain.
 
 - `claim` targets the proposition represented by a `ClaimRecord` or the structured completeness assertion represented by a `CompletenessRecord`.
 - `attribution` targets the source attribution attached to a Context record.
@@ -148,13 +149,15 @@ M1.2 contains no fetch, filesystem, network, account, browser, memory, GitHub, o
 ContextEnvelope
 ├─ schema = irr.context_envelope.v1
 ├─ intent_request_identity
-├─ boundary_event_ref
+├─ boundary_attribution
+│  ├─ source_ref
+│  └─ source_event_ref
 └─ records[]
 ```
 
 The envelope is the explicit bounded Host-supplied semantic surface for one `IntentRequest` occurrence.
 
-`boundary_event_ref` makes the admission occurrence attributable. Re-admitting the same Context records through a different Host boundary event is a distinct envelope occurrence.
+`boundary_attribution` makes both the Host boundary source and the admission occurrence explicit. Its `source_ref` identifies the attributed boundary source and its `source_event_ref` identifies the concrete admission event. Neither field verifies the Host or grants authority. Re-admitting the same Context records through a different attributable Host boundary event is a distinct envelope occurrence.
 
 All evidence targets that refer to Context records must resolve inside the same envelope. Evidence for `origin_attribution` must target the exact `intent_request_identity` carried by that envelope.
 
@@ -200,7 +203,7 @@ bedad2f962490352db8d156a3e39cbd40c2cbc6071a0bfc64899607fdd2967e8
 The M1.2 reference ContextEnvelope golden digest is:
 
 ```text
-5929077095122f7315b5e4380cc817688c5ec47641bae0750002db9d5cae1d46
+de7e426fec93946c94f90d769e0517fb70e7ba3684a1153a350aef977340fcf0
 ```
 
 ## Validation and fail-closed behavior
@@ -214,6 +217,7 @@ M1.2 rejects:
 - invalid enum values;
 - non-scalar Unicode;
 - evidence targets outside the bounded envelope;
+- missing or empty evidentiary scope;
 - `claim` evidence targeting a non-claim record;
 - `origin_attribution` evidence targeting another IntentRequest;
 - Completeness temporal references that do not resolve to an included TemporalBasisRecord;
@@ -245,9 +249,10 @@ M1.2 is correct when executable tests prove at least:
 
 ```text
 all records immutable
-Context boundary occurrence attributable
+Context boundary source + occurrence attributable
 same record set in different order -> same envelope identity
 Claim evidence != attribution evidence
+Evidence scope is explicit and identity-material
 Origin-attribution evidence can be represented without authority
 evidence target must remain inside bounded Context
 explicit Completeness required
