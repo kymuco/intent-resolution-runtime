@@ -18,9 +18,9 @@ class RecordIdentity:
     digest: str
 
     def __post_init__(self) -> None:
-        if self.algorithm != "sha256":
+        if type(self.algorithm) is not str or self.algorithm != "sha256":
             raise ValidationError("only sha256 record identity is supported in M1")
-        if not isinstance(self.digest, str) or _SHA256_HEX.fullmatch(self.digest) is None:
+        if type(self.digest) is not str or _SHA256_HEX.fullmatch(self.digest) is None:
             raise ValidationError("sha256 digest must be exactly 64 lowercase ASCII hex characters")
 
     def __str__(self) -> str:
@@ -37,7 +37,7 @@ class RecordIdentity:
             raise SerializationError(f"{field} has invalid fields")
         algorithm = value["algorithm"]
         digest = value["digest"]
-        if not isinstance(algorithm, str) or not isinstance(digest, str):
+        if type(algorithm) is not str or type(digest) is not str:
             raise SerializationError(f"{field} identity fields must be strings")
         try:
             return cls(algorithm=algorithm, digest=digest)
