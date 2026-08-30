@@ -30,12 +30,10 @@ def _require_unicode_scalars(value: str, *, field: str) -> None:
 
 def parse_json_object(data: bytes | bytearray | memoryview) -> dict[str, Any]:
     """Decode one UTF-8 JSON object while rejecting duplicate keys and NaN/Infinity."""
-
     try:
         text = bytes(data).decode("utf-8")
     except (TypeError, UnicodeDecodeError) as exc:
         raise SerializationError("canonical JSON input must be valid UTF-8 bytes") from exc
-
     try:
         value = json.loads(
             text,
@@ -46,7 +44,6 @@ def parse_json_object(data: bytes | bytearray | memoryview) -> dict[str, Any]:
         raise
     except (json.JSONDecodeError, TypeError, ValueError) as exc:
         raise SerializationError("invalid JSON object") from exc
-
     if not isinstance(value, dict):
         raise SerializationError("top-level canonical JSON value must be an object")
     return value
@@ -81,14 +78,15 @@ def _encode_value(value: object) -> str:
         return "{" + ",".join(
             f"{_encode_string(key)}:{_encode_value(value[key])}" for key in sorted(keys)
         ) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_encode_value(item) for item in value) + "]"
     raise SerializationError(
-        "M1.1 canonical domain supports only objects and Unicode scalar strings"
+        "M1.2 canonical domain supports only objects, arrays, and Unicode scalar strings"
     )
 
 
 def canonical_json_bytes(value: Mapping[str, Any]) -> bytes:
-    """Serialize the M1.1 object/string canonical domain to deterministic UTF-8 bytes."""
-
+    """Serialize the M1 object/array/string canonical domain to deterministic UTF-8 bytes."""
     if not isinstance(value, Mapping):
         raise SerializationError("top-level canonical value must be an object")
     return _encode_value(value).encode("utf-8")
