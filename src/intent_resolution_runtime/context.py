@@ -159,6 +159,7 @@ class EvidenceRecord(_CanonicalRecord):
     relation: EvidenceRelation
     target_kind: EvidenceTargetKind
     target_identity: RecordIdentity
+    scope: str
     description: str
 
     def __post_init__(self) -> None:
@@ -170,6 +171,7 @@ class EvidenceRecord(_CanonicalRecord):
             raise ValidationError("EvidenceRecord.target_kind must be an EvidenceTargetKind")
         if not isinstance(self.target_identity, RecordIdentity):
             raise ValidationError("EvidenceRecord.target_identity must be a RecordIdentity")
+        _require_text(self.scope, field="EvidenceRecord.scope")
         _require_text(self.description, field="EvidenceRecord.description")
 
     def to_primitive(self) -> dict[str, object]:
@@ -178,6 +180,7 @@ class EvidenceRecord(_CanonicalRecord):
             "description": self.description,
             "relation": self.relation.value,
             "schema": self.SCHEMA,
+            "scope": self.scope,
             "target_identity": self.target_identity.to_primitive(),
             "target_kind": self.target_kind.value,
         }
@@ -187,7 +190,7 @@ class EvidenceRecord(_CanonicalRecord):
         obj = _expect_object(value, field="EvidenceRecord")
         _expect_exact_keys(
             obj,
-            {"schema", "attribution", "relation", "target_kind", "target_identity", "description"},
+            {"schema", "attribution", "relation", "target_kind", "target_identity", "scope", "description"},
             field="EvidenceRecord",
         )
         if obj["schema"] != cls.SCHEMA:
@@ -205,6 +208,7 @@ class EvidenceRecord(_CanonicalRecord):
                 target_identity=RecordIdentity.from_primitive(
                     obj["target_identity"], field="EvidenceRecord.target_identity"
                 ),
+                scope=obj["scope"],
                 description=obj["description"],
             )
         except ValidationError as exc:
@@ -419,14 +423,14 @@ class ContextEnvelope(_CanonicalRecord):
     SCHEMA: ClassVar[str] = "irr.context_envelope.v1"
 
     intent_request_identity: RecordIdentity
-    boundary_event_ref: StableRef
+    boundary_attribution: SourceAttribution
     records: tuple[ContextRecord, ...]
 
     def __post_init__(self) -> None:
         if not isinstance(self.intent_request_identity, RecordIdentity):
             raise ValidationError("ContextEnvelope.intent_request_identity must be a RecordIdentity")
-        if not isinstance(self.boundary_event_ref, StableRef):
-            raise ValidationError("ContextEnvelope.boundary_event_ref must be a StableRef")
+        if not isinstance(self.boundary_attribution, SourceAttribution):
+            raise ValidationError("ContextEnvelope.boundary_attribution must be a SourceAttribution")
         if not isinstance(self.records, tuple):
             raise ValidationError("ContextEnvelope.records must be a tuple")
         allowed = (
@@ -479,7 +483,7 @@ class ContextEnvelope(_CanonicalRecord):
 
     def to_primitive(self) -> dict[str, object]:
         return {
-            "boundary_event_ref": self.boundary_event_ref.to_primitive(),
+            "boundary_attribution": self.boundary_attribution.to_primitive(),
             "intent_request_identity": self.intent_request_identity.to_primitive(),
             "records": [record.to_primitive() for record in self.records],
             "schema": self.SCHEMA,
@@ -490,7 +494,7 @@ class ContextEnvelope(_CanonicalRecord):
         obj = _expect_object(value, field="ContextEnvelope")
         _expect_exact_keys(
             obj,
-            {"schema", "intent_request_identity", "boundary_event_ref", "records"},
+            {"schema", "intent_request_identity", "boundary_attribution", "records"},
             field="ContextEnvelope",
         )
         if obj["schema"] != cls.SCHEMA:
@@ -501,8 +505,8 @@ class ContextEnvelope(_CanonicalRecord):
                 intent_request_identity=RecordIdentity.from_primitive(
                     obj["intent_request_identity"], field="ContextEnvelope.intent_request_identity"
                 ),
-                boundary_event_ref=StableRef.from_primitive(
-                    obj["boundary_event_ref"], field="ContextEnvelope.boundary_event_ref"
+                boundary_attribution=SourceAttribution.from_primitive(
+                    obj["boundary_attribution"], field="ContextEnvelope.boundary_attribution"
                 ),
                 records=tuple(
                     _parse_context_record(item, index=index) for index, item in enumerate(records)
