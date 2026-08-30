@@ -16,7 +16,7 @@ def _reject_surrogates(value: str, *, field: str) -> None:
 
 
 def _require_text(value: object, *, field: str) -> str:
-    if not isinstance(value, str):
+    if type(value) is not str:
         raise ValidationError(f"{field} must be a string")
     if not value.strip():
         raise ValidationError(f"{field} must contain non-whitespace text")
@@ -71,9 +71,9 @@ class SourceAttribution:
     source_event_ref: StableRef
 
     def __post_init__(self) -> None:
-        if not isinstance(self.source_ref, StableRef):
+        if type(self.source_ref) is not StableRef:
             raise ValidationError("SourceAttribution.source_ref must be a StableRef")
-        if not isinstance(self.source_event_ref, StableRef):
+        if type(self.source_event_ref) is not StableRef:
             raise ValidationError("SourceAttribution.source_event_ref must be a StableRef")
 
     def to_primitive(self) -> dict[str, object]:
@@ -123,7 +123,7 @@ class ClaimRecord(_CanonicalRecord):
     statement: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.attribution, SourceAttribution):
+        if type(self.attribution) is not SourceAttribution:
             raise ValidationError("ClaimRecord.attribution must be a SourceAttribution")
         _require_text(self.statement, field="ClaimRecord.statement")
 
@@ -165,13 +165,13 @@ class EvidenceRecord(_CanonicalRecord):
     description: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.attribution, SourceAttribution):
+        if type(self.attribution) is not SourceAttribution:
             raise ValidationError("EvidenceRecord.attribution must be a SourceAttribution")
-        if not isinstance(self.relation, EvidenceRelation):
+        if type(self.relation) is not EvidenceRelation:
             raise ValidationError("EvidenceRecord.relation must be an EvidenceRelation")
-        if not isinstance(self.target_kind, EvidenceTargetKind):
+        if type(self.target_kind) is not EvidenceTargetKind:
             raise ValidationError("EvidenceRecord.target_kind must be an EvidenceTargetKind")
-        if not isinstance(self.target_identity, RecordIdentity):
+        if type(self.target_identity) is not RecordIdentity:
             raise ValidationError("EvidenceRecord.target_identity must be a RecordIdentity")
         _require_text(self.scope, field="EvidenceRecord.scope")
         _require_text(self.description, field="EvidenceRecord.description")
@@ -231,9 +231,9 @@ class TemporalBasisRecord(_CanonicalRecord):
     scope: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.attribution, SourceAttribution):
+        if type(self.attribution) is not SourceAttribution:
             raise ValidationError("TemporalBasisRecord.attribution must be a SourceAttribution")
-        if not isinstance(self.kind, TemporalBasisKind):
+        if type(self.kind) is not TemporalBasisKind:
             raise ValidationError("TemporalBasisRecord.kind must be a TemporalBasisKind")
         _require_text(self.value, field="TemporalBasisRecord.value")
         _require_text(self.scope, field="TemporalBasisRecord.scope")
@@ -284,13 +284,13 @@ class CompletenessRecord(_CanonicalRecord):
     temporal_basis_refs: tuple[RecordIdentity, ...] = ()
 
     def __post_init__(self) -> None:
-        if not isinstance(self.attribution, SourceAttribution):
+        if type(self.attribution) is not SourceAttribution:
             raise ValidationError("CompletenessRecord.attribution must be a SourceAttribution")
         _require_text(self.bounded_domain, field="CompletenessRecord.bounded_domain")
         _require_text(self.purpose, field="CompletenessRecord.purpose")
-        if not isinstance(self.temporal_basis_refs, tuple):
+        if type(self.temporal_basis_refs) is not tuple:
             raise ValidationError("CompletenessRecord.temporal_basis_refs must be a tuple")
-        if not all(isinstance(item, RecordIdentity) for item in self.temporal_basis_refs):
+        if not all(type(item) is RecordIdentity for item in self.temporal_basis_refs):
             raise ValidationError(
                 "CompletenessRecord.temporal_basis_refs must contain RecordIdentity values"
             )
@@ -351,9 +351,9 @@ class ContextReferenceRecord(_CanonicalRecord):
     description: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.attribution, SourceAttribution):
+        if type(self.attribution) is not SourceAttribution:
             raise ValidationError("ContextReferenceRecord.attribution must be a SourceAttribution")
-        if not isinstance(self.reference, StableRef):
+        if type(self.reference) is not StableRef:
             raise ValidationError("ContextReferenceRecord.reference must be a StableRef")
         _require_text(self.description, field="ContextReferenceRecord.description")
 
@@ -410,7 +410,7 @@ _RECORD_BY_SCHEMA = {
 def _parse_context_record(value: object, *, index: int) -> ContextRecord:
     obj = _expect_object(value, field=f"ContextEnvelope.records[{index}]")
     schema = obj.get("schema")
-    if not isinstance(schema, str):
+    if type(schema) is not str:
         raise SerializationError(f"ContextEnvelope.records[{index}].schema must be a string")
     record_type = _RECORD_BY_SCHEMA.get(schema)
     if record_type is None:
@@ -429,11 +429,11 @@ class ContextEnvelope(_CanonicalRecord):
     records: tuple[ContextRecord, ...]
 
     def __post_init__(self) -> None:
-        if not isinstance(self.intent_request_identity, RecordIdentity):
+        if type(self.intent_request_identity) is not RecordIdentity:
             raise ValidationError("ContextEnvelope.intent_request_identity must be a RecordIdentity")
-        if not isinstance(self.boundary_attribution, SourceAttribution):
+        if type(self.boundary_attribution) is not SourceAttribution:
             raise ValidationError("ContextEnvelope.boundary_attribution must be a SourceAttribution")
-        if not isinstance(self.records, tuple):
+        if type(self.records) is not tuple:
             raise ValidationError("ContextEnvelope.records must be a tuple")
         allowed = (
             ClaimRecord,
@@ -442,7 +442,7 @@ class ContextEnvelope(_CanonicalRecord):
             CompletenessRecord,
             ContextReferenceRecord,
         )
-        if not all(isinstance(record, allowed) for record in self.records):
+        if not all(type(record) in allowed for record in self.records):
             raise ValidationError("ContextEnvelope.records contains an unsupported record type")
 
         identities = [record.identity for record in self.records]
@@ -456,7 +456,7 @@ class ContextEnvelope(_CanonicalRecord):
     def _validate_links(self) -> None:
         records_by_identity = {record.identity: record for record in self.records}
         for record in self.records:
-            if isinstance(record, EvidenceRecord):
+            if type(record) is EvidenceRecord:
                 if record.target_kind is EvidenceTargetKind.ORIGIN_ATTRIBUTION:
                     if record.target_identity != self.intent_request_identity:
                         raise ValidationError(
@@ -468,16 +468,16 @@ class ContextEnvelope(_CanonicalRecord):
                     raise ValidationError(
                         "EvidenceRecord target must be present in the bounded ContextEnvelope"
                     )
-                if record.target_kind is EvidenceTargetKind.CLAIM and not isinstance(
-                    target, (ClaimRecord, CompletenessRecord)
+                if record.target_kind is EvidenceTargetKind.CLAIM and type(target) not in (
+                    ClaimRecord, CompletenessRecord
                 ):
                     raise ValidationError(
                         "claim evidence must target a ClaimRecord or CompletenessRecord"
                     )
-            elif isinstance(record, CompletenessRecord):
+            elif type(record) is CompletenessRecord:
                 for temporal_ref in record.temporal_basis_refs:
                     target = records_by_identity.get(temporal_ref)
-                    if not isinstance(target, TemporalBasisRecord):
+                    if type(target) is not TemporalBasisRecord:
                         raise ValidationError(
                             "CompletenessRecord temporal basis must resolve to a TemporalBasisRecord "
                             "inside the same ContextEnvelope"

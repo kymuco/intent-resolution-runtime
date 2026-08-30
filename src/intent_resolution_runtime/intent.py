@@ -22,7 +22,7 @@ def _reject_surrogates(value: str, *, field: str) -> None:
 
 
 def _require_token(value: object, *, field: str) -> str:
-    if not isinstance(value, str):
+    if type(value) is not str:
         raise ValidationError(f"{field} must be a string")
     if not value:
         raise ValidationError(f"{field} must not be empty")
@@ -33,7 +33,7 @@ def _require_token(value: object, *, field: str) -> str:
 
 
 def _require_text(value: object, *, field: str) -> str:
-    if not isinstance(value, str):
+    if type(value) is not str:
         raise ValidationError(f"{field} must be a string")
     if not value.strip():
         raise ValidationError(f"{field} must contain non-whitespace text")
@@ -93,11 +93,11 @@ class OriginAttribution:
     source_event_ref: StableRef
 
     def __post_init__(self) -> None:
-        if not isinstance(self.kind, OriginKind):
+        if type(self.kind) is not OriginKind:
             raise ValidationError("OriginAttribution.kind must be an OriginKind")
-        if not isinstance(self.actor_ref, StableRef):
+        if type(self.actor_ref) is not StableRef:
             raise ValidationError("OriginAttribution.actor_ref must be a StableRef")
-        if not isinstance(self.source_event_ref, StableRef):
+        if type(self.source_event_ref) is not StableRef:
             raise ValidationError("OriginAttribution.source_event_ref must be a StableRef")
 
     def to_primitive(self) -> dict[str, object]:
@@ -112,7 +112,7 @@ class OriginAttribution:
         obj = _expect_object(value, field="origin")
         _expect_exact_keys(obj, {"kind", "actor_ref", "source_event_ref"}, field="origin")
         kind_value = obj["kind"]
-        if not isinstance(kind_value, str):
+        if type(kind_value) is not str:
             raise SerializationError("origin.kind must be a string")
         try:
             kind = OriginKind(kind_value)
@@ -160,11 +160,11 @@ class IntentRequest:
     expression: IntentExpression
 
     def __post_init__(self) -> None:
-        if not isinstance(self.origin, OriginAttribution):
+        if type(self.origin) is not OriginAttribution:
             raise ValidationError("IntentRequest.origin must be an OriginAttribution")
-        if not isinstance(self.principal_ref, StableRef):
+        if type(self.principal_ref) is not StableRef:
             raise ValidationError("IntentRequest.principal_ref must be a StableRef")
-        if not isinstance(self.expression, IntentExpression):
+        if type(self.expression) is not IntentExpression:
             raise ValidationError("IntentRequest.expression must be an IntentExpression")
 
     def to_primitive(self) -> dict[str, object]:
