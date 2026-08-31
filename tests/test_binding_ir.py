@@ -39,15 +39,16 @@ TEMPORAL = _id("3")
 COMPLETE = _id("4")
 EVIDENCE = _id("5")
 SELECTION_SCOPE = r"D:\Backups"
+SOURCE_REF = StableRef(namespace="host.source", value="filesystem-search")
 
 
 def _ref(namespace: str, value: str) -> StableRef:
     return StableRef(namespace=namespace, value=value)
 
 
-def _attribution(event: str) -> SourceAttribution:
+def _attribution(event: str, *, source_ref: StableRef = SOURCE_REF) -> SourceAttribution:
     return SourceAttribution(
-        source_ref=_ref("host.source", "filesystem-search"),
+        source_ref=source_ref,
         source_event_ref=_ref("host.event", event),
     )
 
@@ -75,6 +76,7 @@ def _input(
     value: str,
     mtime: str | None,
     source_identity: RecordIdentity = SOURCE,
+    source_ref: StableRef = SOURCE_REF,
     role: BindingInputRole = BindingInputRole.PLAN_LOCAL_OUTPUT,
     semantic_type: str = "artifact.path",
     selection_scope: str = SELECTION_SCOPE,
@@ -101,7 +103,7 @@ def _input(
     return BindingInput(
         resolved_intent_identity=RESOLVED,
         input_ref=_ref("irr.binding_input", input_name),
-        attribution=_attribution(f"search-{input_name}"),
+        attribution=_attribution(f"search-{input_name}", source_ref=source_ref),
         role=role,
         source_identity=source_identity,
         semantic_type=semantic_type,
@@ -120,6 +122,7 @@ def _rule(
     mode: BindingSelectionMode = BindingSelectionMode.MAX_ATTRIBUTE,
     constraints: tuple[BindingConstraint, ...] = (),
     allowed_sources: tuple[RecordIdentity, ...] = (SOURCE,),
+    allowed_source_refs: tuple[StableRef, ...] = (SOURCE_REF,),
     required_completeness: tuple[RecordIdentity, ...] = (COMPLETE,),
 ) -> BindingRule:
     if mode in (BindingSelectionMode.MAX_ATTRIBUTE, BindingSelectionMode.MIN_ATTRIBUTE):
@@ -141,6 +144,7 @@ def _rule(
         rule_ref=_ref("irr.binding_rule", "latest-backup"),
         symbolic_reference=_symbolic(),
         allowed_input_roles=(BindingInputRole.PLAN_LOCAL_OUTPUT,),
+        allowed_source_refs=allowed_source_refs,
         allowed_source_identities=allowed_sources,
         input_semantic_type="artifact.path",
         required_selection_scope=SELECTION_SCOPE,
@@ -214,6 +218,7 @@ def test_binding_rule_rejects_foreign_symbolic_lineage() -> None:
             rule_ref=_ref("irr.binding_rule", "foreign"),
             symbolic_reference=foreign,
             allowed_input_roles=(BindingInputRole.PLAN_LOCAL_OUTPUT,),
+            allowed_source_refs=(SOURCE_REF,),
             allowed_source_identities=(SOURCE,),
             input_semantic_type="artifact.path",
             required_selection_scope=SELECTION_SCOPE,
@@ -245,6 +250,24 @@ def test_newest_timestamp_binds_unique_winner_and_retains_full_input_set() -> No
         item.identity for item in inputs
     )
     assert BoundValue.from_json_bytes(result.canonical_bytes()) == result
+
+
+def test_sub_microsecond_timestamp_precision_is_preserved() -> None:
+    inputs = (
+        _input(
+            input_name="older.zip",
+            value=r"D:\Backups\older.zip",
+            mtime="2026-08-30T12:00:00.0000001Z",
+        ),
+        _input(
+            input_name="newer.zip",
+            value=r"D:\Backups\newer.zip",
+            mtime="2026-08-30T12:00:00.0000002Z",
+        ),
+    )
+    result = evaluate_binding(_rule(), inputs, attribution=_binding_attribution())
+    assert type(result) is BoundValue
+    assert result.value == r"D:\Backups\newer.zip"
 
 
 def test_selection_scope_and_concrete_value_scope_are_distinct() -> None:
@@ -333,6 +356,44 @@ def test_equivalent_timestamp_offsets_are_a_tie() -> None:
     assert result.kind is BindingIssueKind.TIE
 
 
+def test_timestamp_constraint_equality_compares_instants_not_lexical_forms() -> None:
+    constraint = BindingConstraint(
+        attribute_name="modification_time",
+        operator=BindingConstraintOperator.EQUALS,
+        expected_kind=BindingAttributeKind.RFC3339_TIMESTAMP,
+        expected_value="2026-08-30T06:00:00Z",
+    )
+    candidate = _input(
+        input_name="backup-a.zip",
+        value=r"D:\Backups\backup-a.zip",
+        mtime="2026-08-30T12:00:00+06:00",
+    )
+    result = evaluate_binding(
+        _rule(mode=BindingSelectionMode.REQUIRE_UNIQUE, constraints=(constraint,)),
+        (candidate,),
+        attribution=_binding_attribution(),
+    )
+    assert type(result) is BoundValue
+
+
+def test_unknown_rfc3339_offset_is_rejected_for_instant_comparison() -> None:
+    with pytest.raises(ValidationError, match="unknown-offset"):
+        BindingAttribute(
+            name="modification_time",
+            kind=BindingAttributeKind.RFC3339_TIMESTAMP,
+            value="2026-08-30T12:00:00-00:00",
+        )
+
+
+def test_leap_second_notation_is_fail_closed_in_v1() -> None:
+    with pytest.raises(ValidationError, match="leap-second"):
+        BindingAttribute(
+            name="modification_time",
+            kind=BindingAttributeKind.RFC3339_TIMESTAMP,
+            value="2026-12-31T23:59:60Z",
+        )
+
+
 def test_zero_matches_does_not_guess() -> None:
     constraint = BindingConstraint(
         attribute_name="name",
@@ -391,6 +452,12 @@ def test_missing_material_completeness_provenance_blocks_binding() -> None:
             input_name="backup-a.zip",
             value=r"D:\Backups\backup-a.zip",
             mtime="2026-08-30T10:00:00+06:00",
+            source_ref=_ref("host.source", "different-source"),
+        ),
+        _input(
+            input_name="backup-a.zip",
+            value=r"D:\Backups\backup-a.zip",
+            mtime="2026-08-30T10:00:00+06:00",
             role=BindingInputRole.OBSERVATION,
         ),
         _input(
@@ -412,6 +479,19 @@ def test_structurally_plausible_but_semantically_incompatible_input_is_rejected(
     input_value: BindingInput,
 ) -> None:
     result = evaluate_binding(_rule(), (input_value,), attribution=_binding_attribution())
+    assert type(result) is BindingIssue
+    assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
+
+
+def test_source_ref_and_source_identity_are_independent_admission_dimensions() -> None:
+    candidate = _input(
+        input_name="backup-a.zip",
+        value=r"D:\Backups\backup-a.zip",
+        mtime="2026-08-30T10:00:00+06:00",
+        source_identity=SOURCE,
+        source_ref=_ref("host.source", "different-source"),
+    )
+    result = evaluate_binding(_rule(), (candidate,), attribution=_binding_attribution())
     assert type(result) is BindingIssue
     assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
 
@@ -507,22 +587,14 @@ def test_binding_issue_cannot_lie_about_mechanical_result() -> None:
             binding_inputs=_inputs(),
             kind=BindingIssueKind.ZERO_MATCHES,
             selection_scope=SELECTION_SCOPE,
-            description="False issue assertion.",
         )
 
 
-def test_binding_issue_description_is_mechanically_reproducible() -> None:
+def test_binding_issue_wire_contains_only_machine_semantics() -> None:
     result = evaluate_binding(_rule(), (), attribution=_binding_attribution())
     assert type(result) is BindingIssue
-    with pytest.raises(ValidationError, match="description"):
-        BindingIssue(
-            binding_attribution=result.binding_attribution,
-            rule=result.rule,
-            binding_inputs=result.binding_inputs,
-            kind=result.kind,
-            selection_scope=result.selection_scope,
-            description="A different story.",
-        )
+    assert "description" not in result.to_primitive()
+    assert BindingIssue.from_json_bytes(result.canonical_bytes()) == result
 
 
 def test_bound_value_cannot_override_selected_concrete_value() -> None:
