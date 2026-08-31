@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, TypeAlias, cast
 
 from .canonical import canonical_json_bytes, parse_json_object
 from .errors import SerializationError, ValidationError
@@ -47,18 +47,6 @@ def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str)
         if extra:
             detail.append(f"extra={extra}")
         raise SerializationError(f"{field} has invalid fields ({', '.join(detail)})")
-
-
-def _normalize_identity_tuple(
-    value: object, *, field: str
-) -> tuple[RecordIdentity, ...]:
-    if type(value) is not tuple:
-        raise ValidationError(f"{field} must be a tuple")
-    if not all(type(item) is RecordIdentity for item in value):
-        raise ValidationError(f"{field} must contain RecordIdentity values")
-    if len(set(value)) != len(value):
-        raise ValidationError(f"{field} must not contain duplicate identities")
-    return tuple(sorted(value, key=str))
 
 
 def _normalize_record_tuple(
@@ -486,11 +474,25 @@ def _validate_common_resolution_output(
         raise ValidationError(f"{field_prefix}.context_envelope_identity must be a RecordIdentity")
     if type(admission_attribution) is not ResolutionAttribution:
         raise ValidationError(f"{field_prefix}.admission_attribution must be a ResolutionAttribution")
-    return _normalize_record_tuple(
-        candidate_inputs,
-        field=f"{field_prefix}.candidate_inputs",
-        allowed=(CandidateResolution,),
-    )  # type: ignore[return-value]
+
+    candidates = cast(
+        tuple[CandidateResolution, ...],
+        _normalize_record_tuple(
+            candidate_inputs,
+            field=f"{field_prefix}.candidate_inputs",
+            allowed=(CandidateResolution,),
+        ),
+    )
+    for candidate in candidates:
+        if candidate.intent_request_identity != intent_request_identity:
+            raise ValidationError(
+                f"{field_prefix}.candidate_inputs must belong to the same IntentRequest identity"
+            )
+        if candidate.context_envelope_identity != context_envelope_identity:
+            raise ValidationError(
+                f"{field_prefix}.candidate_inputs must belong to the same ContextEnvelope identity"
+            )
+    return candidates
 
 
 @dataclass(frozen=True, slots=True)
