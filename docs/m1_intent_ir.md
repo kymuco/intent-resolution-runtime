@@ -224,3 +224,49 @@ resolution admission != Effect
 M1.3 preserves ordinary epistemic `uncertainty` separately from `conflict` and `missing_information`; uncertainty may be blocking or non-blocking, does not invent competing alternatives, and is not a confidence or trust score.
 
 M1.3 does not introduce WorkPlan, Binding, Observation, Capability/Governance, Attempt/Outcome, provider transport, trust scoring, retrieval authority, or persistence. Those remain later M1 slices.
+
+---
+
+# M1.4 — Binding / Symbolic Reference IR
+
+M1.4 encodes the frozen M0.4 Late Binding boundary as immutable symbolic-reference, attributable binding-input, bounded rule, successful bound-value, and unresolved binding-issue records.
+
+The detailed normative implementation contract is maintained in [M1.4 Binding / Symbolic Reference IR](m1_4_binding_ir.md).
+
+Core executable distinctions:
+
+```text
+late binding != unadmitted semantic discretion
+symbolic reference != observed value
+Binding Input != Observation by default
+selection_scope != value_scope
+Binding Rule != hidden program
+input order != binding precedence
+source attribution != source verification
+binding evaluation != retrieval
+binding evaluation != external effect
+BoundValue != Authorization
+BindingIssue != Continuation
+binding failure != fallback authority
+```
+
+`BindingRule` freezes the semantic type, bounded selection domain, admitted input roles, source-attribution and source-lineage dimensions, required material provenance, declarative constraints, and selection policy before future values arrive. M1.4 does not cryptographically prove an association between a caller-supplied `SourceAttribution.source_ref` and `source_identity`; both remain explicit admitted dimensions and neither becomes authentication or authority.
+
+`selection_scope` names the admitted domain over which mechanical selection occurs. `value_scope` is the concrete resource/surface associated with one candidate and may become known only at binding time. A concrete value scope becoming known does not grant Authorization over that scope.
+
+RFC3339 timestamp comparison in M1.4 preserves arbitrary supplied fractional precision and compares offset-equivalent lexical forms as the same instant. The v1 comparator fail-closes on RFC3339 `-00:00` unknown-offset form and leap-second notation rather than silently interpreting either as a known ordinary instant.
+
+M1.4 golden identity fixtures freeze the current canonical wire for a representative symbolic backup-selection path:
+
+```text
+SymbolicReference  ec1a9dc741af9bded6fbcfcf39e09b8772ca866ea77314b7e5553ebfca451a69
+BindingInput A     80d924d187cb42fd2385d258294e6069d7fc601d127f3788dd8c609ebcb0e8c8
+BindingInput B     d87a892f54532f4acb6367fc0a62195001e9bdcfa509ac2cbaccf1e02b21c5e8
+BindingRule        cdf10037dbeeae766b5eb7aaba51702d2828a7e11b4888f2db4b85ffbc32db03
+BoundValue         c42a00e3a5632831215e56a2739d0b6671454d575b81d69bcbb3bc2cc2c9bd68
+BindingIssue       ba6fe8fb6071a8eec52e5893a37faf6967d2f00df894ac1d2a55471180e76b5e
+```
+
+The same full test suite continues to execute the frozen M1.1 request, M1.2 context, and M1.3 candidate/resolved golden identities, so adding M1.4 cannot silently redefine earlier canonical bytes.
+
+M1.4 deliberately does not introduce WorkPlan/WorkStep, DelegatedWork, Capability/Governance records, generic Continuation, Observation/Outcome schemas, external retrieval, execution scheduling, retry/fallback, or persistence. Those remain later slices.
