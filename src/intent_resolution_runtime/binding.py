@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 from enum import Enum
+from fractions import Fraction
 from typing import Any, ClassVar, TypeAlias, cast
 
 from .canonical import canonical_json_bytes, parse_json_object
@@ -14,7 +15,9 @@ from .intent import StableRef
 
 
 _RFC3339_PATTERN = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+    r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T"
+    r"(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})"
+    r"(?P<fraction>\.\d+)?(?P<zone>Z|[+-]\d{2}:\d{2})$"
 )
 
 
@@ -82,6 +85,20 @@ def _normalize_identity_tuple(
     return tuple(sorted(value, key=str))
 
 
+def _normalize_ref_tuple(
+    value: object, *, field: str, nonempty: bool = False
+) -> tuple[StableRef, ...]:
+    if type(value) is not tuple:
+        raise ValidationError(f"{field} must be a tuple")
+    if not all(type(item) is StableRef for item in value):
+        raise ValidationError(f"{field} must contain StableRef values")
+    if nonempty and not value:
+        raise ValidationError(f"{field} must not be empty")
+    if len(set(value)) != len(value):
+        raise ValidationError(f"{field} must not contain duplicates")
+    return tuple(sorted(value, key=lambda item: (item.namespace, item.value)))
+
+
 def _normalize_text_tuple(
     value: object, *, field: str, nonempty: bool = False
 ) -> tuple[str, ...]:
@@ -98,16 +115,53 @@ def _normalize_text_tuple(
     return tuple(sorted(value))
 
 
-def _parse_rfc3339(value: str, *, field: str) -> datetime:
-    if not _RFC3339_PATTERN.fullmatch(value):
-        raise ValidationError(f"{field} must be an RFC3339 timestamp with an explicit offset")
+def _parse_rfc3339(value: str, *, field: str) -> Fraction:
+    match = _RFC3339_PATTERN.fullmatch(value)
+    if match is None:
+        raise ValidationError(f"{field} must be an RFC3339 timestamp with an explicit known offset")
+
+    year = int(match.group("year"))
+    month = int(match.group("month"))
+    day = int(match.group("day"))
+    hour = int(match.group("hour"))
+    minute = int(match.group("minute"))
+    second = int(match.group("second"))
+    fraction = match.group("fraction")
+    zone = match.group("zone")
+
+    if hour > 23 or minute > 59:
+        raise ValidationError(f"{field} has an invalid clock time")
+    if second > 59:
+        raise ValidationError(f"{field} leap-second notation is not supported by M1.4 v1")
     try:
-        parsed = datetime.fromisoformat(value[:-1] + "+00:00" if value.endswith("Z") else value)
+        calendar_day = date(year, month, day)
     except ValueError as exc:
-        raise ValidationError(f"{field} must be a valid RFC3339 timestamp") from exc
-    if parsed.tzinfo is None:
-        raise ValidationError(f"{field} must include an explicit timezone offset")
-    return parsed
+        raise ValidationError(f"{field} has an invalid calendar date") from exc
+
+    if zone == "-00:00":
+        raise ValidationError(f"{field} uses RFC3339 unknown-offset form -00:00")
+    if zone == "Z":
+        offset_seconds = 0
+    else:
+        sign = 1 if zone[0] == "+" else -1
+        offset_hour = int(zone[1:3])
+        offset_minute = int(zone[4:6])
+        if offset_hour > 23 or offset_minute > 59:
+            raise ValidationError(f"{field} has an invalid timezone offset")
+        offset_seconds = sign * (offset_hour * 3600 + offset_minute * 60)
+
+    whole_seconds = (
+        calendar_day.toordinal() * 86400
+        + hour * 3600
+        + minute * 60
+        + second
+        - offset_seconds
+    )
+    instant = Fraction(whole_seconds, 1)
+    if fraction is not None:
+        digits = fraction[1:]
+        instant += Fraction(int(digits), 10 ** len(digits))
+    return instant
 
 
 class _CanonicalBindingRecord:
@@ -613,6 +667,7 @@ class BindingRule(_CanonicalBindingRecord):
     rule_ref: StableRef
     symbolic_reference: SymbolicReference
     allowed_input_roles: tuple[BindingInputRole, ...]
+    allowed_source_refs: tuple[StableRef, ...]
     allowed_source_identities: tuple[RecordIdentity, ...]
     input_semantic_type: str
     required_selection_scope: str
@@ -644,6 +699,15 @@ class BindingRule(_CanonicalBindingRecord):
             self,
             "allowed_input_roles",
             tuple(sorted(self.allowed_input_roles, key=lambda item: item.value)),
+        )
+        object.__setattr__(
+            self,
+            "allowed_source_refs",
+            _normalize_ref_tuple(
+                self.allowed_source_refs,
+                field="BindingRule.allowed_source_refs",
+                nonempty=True,
+            ),
         )
         object.__setattr__(
             self,
@@ -723,6 +787,7 @@ class BindingRule(_CanonicalBindingRecord):
             "allowed_source_identities": [
                 identity.to_primitive() for identity in self.allowed_source_identities
             ],
+            "allowed_source_refs": [ref.to_primitive() for ref in self.allowed_source_refs],
             "constraints": [constraint.to_primitive() for constraint in self.constraints],
             "description": self.description,
             "input_semantic_type": self.input_semantic_type,
@@ -754,6 +819,7 @@ class BindingRule(_CanonicalBindingRecord):
                 "rule_ref",
                 "symbolic_reference",
                 "allowed_input_roles",
+                "allowed_source_refs",
                 "allowed_source_identities",
                 "input_semantic_type",
                 "required_selection_scope",
@@ -769,6 +835,7 @@ class BindingRule(_CanonicalBindingRecord):
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported BindingRule schema: {obj['schema']!r}")
         roles = _expect_array(obj["allowed_input_roles"], field="BindingRule.allowed_input_roles")
+        source_refs = _expect_array(obj["allowed_source_refs"], field="BindingRule.allowed_source_refs")
         sources = _expect_array(
             obj["allowed_source_identities"], field="BindingRule.allowed_source_identities"
         )
@@ -795,6 +862,12 @@ class BindingRule(_CanonicalBindingRecord):
                 rule_ref=StableRef.from_primitive(obj["rule_ref"], field="BindingRule.rule_ref"),
                 symbolic_reference=SymbolicReference.from_primitive(obj["symbolic_reference"]),
                 allowed_input_roles=parsed_roles,
+                allowed_source_refs=tuple(
+                    StableRef.from_primitive(
+                        item, field=f"BindingRule.allowed_source_refs[{index}]"
+                    )
+                    for index, item in enumerate(source_refs)
+                ),
                 allowed_source_identities=tuple(
                     RecordIdentity.from_primitive(
                         item, field=f"BindingRule.allowed_source_identities[{index}]"
@@ -858,15 +931,29 @@ def _normalize_binding_inputs(
 @dataclass(frozen=True, slots=True)
 class _SelectionDecision:
     issue_kind: BindingIssueKind | None
-    issue_description: str
     selected_input: BindingInput | None
 
 
-def _compare_attribute(attribute: BindingAttribute) -> str | datetime:
+def _compare_attribute(attribute: BindingAttribute) -> str | Fraction:
     if attribute.kind is BindingAttributeKind.TEXT:
         return attribute.value
     if attribute.kind is BindingAttributeKind.RFC3339_TIMESTAMP:
         return _parse_rfc3339(attribute.value, field=f"BindingAttribute[{attribute.name}]")
+    raise AssertionError("unsupported BindingAttributeKind")
+
+
+def _attribute_equals_constraint(
+    attribute: BindingAttribute, constraint: BindingConstraint
+) -> bool:
+    if attribute.kind is BindingAttributeKind.TEXT:
+        return attribute.value == constraint.expected_value
+    if attribute.kind is BindingAttributeKind.RFC3339_TIMESTAMP:
+        return _parse_rfc3339(
+            attribute.value, field=f"BindingAttribute[{attribute.name}]"
+        ) == _parse_rfc3339(
+            constraint.expected_value,
+            field=f"BindingConstraint[{constraint.attribute_name}].expected_value",
+        )
     raise AssertionError("unsupported BindingAttributeKind")
 
 
@@ -876,15 +963,17 @@ def _structural_incompatibilities(
     reasons: set[str] = set()
     for binding_input in binding_inputs:
         if binding_input.resolved_intent_identity != rule.resolved_intent_identity:
-            reasons.add("foreign ResolvedIntent lineage")
+            reasons.add("foreign_resolved_intent")
         if binding_input.role not in rule.allowed_input_roles:
-            reasons.add("unadmitted BindingInput role")
+            reasons.add("unadmitted_input_role")
+        if binding_input.attribution.source_ref not in rule.allowed_source_refs:
+            reasons.add("unadmitted_source_ref")
         if binding_input.source_identity not in rule.allowed_source_identities:
-            reasons.add("unadmitted source identity")
+            reasons.add("unadmitted_source_identity")
         if binding_input.semantic_type != rule.input_semantic_type:
-            reasons.add("incompatible semantic type")
+            reasons.add("incompatible_semantic_type")
         if binding_input.selection_scope != rule.required_selection_scope:
-            reasons.add("incompatible selection scope")
+            reasons.add("incompatible_selection_scope")
     return tuple(sorted(reasons))
 
 
@@ -897,19 +986,19 @@ def _missing_provenance(
     required_evidence = set(rule.required_evidence_refs)
     for binding_input in binding_inputs:
         if not required_temporal.issubset(binding_input.temporal_basis_refs):
-            reasons.add("temporal-basis provenance")
+            reasons.add("missing_temporal_basis")
         if not required_completeness.issubset(binding_input.completeness_refs):
-            reasons.add("completeness provenance")
+            reasons.add("missing_completeness")
         if not required_evidence.issubset(binding_input.evidence_refs):
-            reasons.add("evidence provenance")
+            reasons.add("missing_evidence")
     return tuple(sorted(reasons))
 
 
 def _apply_constraints(
     rule: BindingRule, binding_inputs: tuple[BindingInput, ...]
-) -> tuple[_SelectionDecision | None, tuple[BindingInput, ...]]:
-    missing_attributes: set[str] = set()
-    wrong_kind_attributes: set[str] = set()
+) -> tuple[BindingIssueKind | None, tuple[BindingInput, ...]]:
+    missing_attributes = False
+    wrong_kind_attributes = False
     compatible: list[BindingInput] = []
 
     for binding_input in binding_inputs:
@@ -918,13 +1007,13 @@ def _apply_constraints(
         for constraint in rule.constraints:
             attribute = attributes.get(constraint.attribute_name)
             if attribute is None:
-                missing_attributes.add(constraint.attribute_name)
+                missing_attributes = True
                 continue
             if attribute.kind is not constraint.expected_kind:
-                wrong_kind_attributes.add(constraint.attribute_name)
+                wrong_kind_attributes = True
                 continue
             if constraint.operator is BindingConstraintOperator.EQUALS:
-                if attribute.value != constraint.expected_value:
+                if not _attribute_equals_constraint(attribute, constraint):
                     excluded = True
             else:
                 raise AssertionError("unsupported BindingConstraintOperator")
@@ -932,25 +1021,9 @@ def _apply_constraints(
             compatible.append(binding_input)
 
     if wrong_kind_attributes:
-        return (
-            _SelectionDecision(
-                BindingIssueKind.INCOMPATIBLE_INPUT,
-                "constraint attributes have incompatible semantic kinds: "
-                + ", ".join(sorted(wrong_kind_attributes)),
-                None,
-            ),
-            (),
-        )
+        return BindingIssueKind.INCOMPATIBLE_INPUT, ()
     if missing_attributes:
-        return (
-            _SelectionDecision(
-                BindingIssueKind.MISSING_REQUIRED_DATA,
-                "binding inputs lack required constraint attributes: "
-                + ", ".join(sorted(missing_attributes)),
-                None,
-            ),
-            (),
-        )
+        return BindingIssueKind.MISSING_REQUIRED_DATA, ()
     return None, tuple(compatible)
 
 
@@ -958,56 +1031,33 @@ def _determine_selection(
     rule: BindingRule, binding_inputs: tuple[BindingInput, ...]
 ) -> _SelectionDecision:
     if not binding_inputs:
-        return _SelectionDecision(
-            BindingIssueKind.ZERO_MATCHES,
-            "no BindingInput was supplied to the explicit bounded BindingRule",
-            None,
-        )
+        return _SelectionDecision(BindingIssueKind.ZERO_MATCHES, None)
 
-    structural = _structural_incompatibilities(rule, binding_inputs)
-    if structural:
-        return _SelectionDecision(
-            BindingIssueKind.INCOMPATIBLE_INPUT,
-            "binding input set is semantically incompatible: " + ", ".join(structural),
-            None,
-        )
+    if _structural_incompatibilities(rule, binding_inputs):
+        return _SelectionDecision(BindingIssueKind.INCOMPATIBLE_INPUT, None)
 
-    missing_provenance = _missing_provenance(rule, binding_inputs)
-    if missing_provenance:
-        return _SelectionDecision(
-            BindingIssueKind.MISSING_REQUIRED_DATA,
-            "binding input set lacks required material provenance: "
-            + ", ".join(missing_provenance),
-            None,
-        )
+    if _missing_provenance(rule, binding_inputs):
+        return _SelectionDecision(BindingIssueKind.MISSING_REQUIRED_DATA, None)
 
     constraint_issue, compatible = _apply_constraints(rule, binding_inputs)
     if constraint_issue is not None:
-        return constraint_issue
+        return _SelectionDecision(constraint_issue, None)
 
     if not compatible:
-        return _SelectionDecision(
-            BindingIssueKind.ZERO_MATCHES,
-            "no BindingInput satisfies the explicit bounded BindingRule constraints",
-            None,
-        )
+        return _SelectionDecision(BindingIssueKind.ZERO_MATCHES, None)
 
     policy = rule.selection_policy
     if policy.mode is BindingSelectionMode.REQUIRE_UNIQUE:
         if len(compatible) != 1:
-            return _SelectionDecision(
-                BindingIssueKind.MULTIPLE_MATCHES,
-                "multiple compatible BindingInputs remain under require_unique",
-                None,
-            )
-        return _SelectionDecision(None, "", compatible[0])
+            return _SelectionDecision(BindingIssueKind.MULTIPLE_MATCHES, None)
+        return _SelectionDecision(None, compatible[0])
 
     if policy.mode in (BindingSelectionMode.MAX_ATTRIBUTE, BindingSelectionMode.MIN_ATTRIBUTE):
         selector_name = policy.selector_attributes[0]
         selector_kind = policy.selector_kinds[0]
         missing_selector = False
         wrong_selector_kind = False
-        ranked: list[tuple[str | datetime, BindingInput]] = []
+        ranked: list[tuple[str | Fraction, BindingInput]] = []
 
         for binding_input in compatible:
             attribute = binding_input.attribute_map().get(selector_name)
@@ -1020,17 +1070,9 @@ def _determine_selection(
             ranked.append((_compare_attribute(attribute), binding_input))
 
         if wrong_selector_kind:
-            return _SelectionDecision(
-                BindingIssueKind.INCOMPATIBLE_INPUT,
-                f"selector attribute {selector_name!r} has an incompatible semantic kind",
-                None,
-            )
+            return _SelectionDecision(BindingIssueKind.INCOMPATIBLE_INPUT, None)
         if missing_selector:
-            return _SelectionDecision(
-                BindingIssueKind.MISSING_REQUIRED_DATA,
-                f"binding input set lacks selector attribute {selector_name!r}",
-                None,
-            )
+            return _SelectionDecision(BindingIssueKind.MISSING_REQUIRED_DATA, None)
 
         values = [item[0] for item in ranked]
         winning_value = (
@@ -1040,16 +1082,12 @@ def _determine_selection(
         )
         winners = [item[1] for item in ranked if item[0] == winning_value]
         if len(winners) != 1:
-            return _SelectionDecision(
-                BindingIssueKind.TIE,
-                "the admitted extremum rule has no unique winner and no admitted tie policy",
-                None,
-            )
-        return _SelectionDecision(None, "", winners[0])
+            return _SelectionDecision(BindingIssueKind.TIE, None)
+        return _SelectionDecision(None, winners[0])
 
     if policy.mode is BindingSelectionMode.ANY_INTERCHANGEABLE:
         selected = min(compatible, key=lambda item: str(item.identity))
-        return _SelectionDecision(None, "", selected)
+        return _SelectionDecision(None, selected)
 
     raise AssertionError("unsupported BindingSelectionMode")
 
@@ -1174,7 +1212,6 @@ class BindingIssue(_CanonicalBindingRecord):
     binding_inputs: tuple[BindingInput, ...]
     kind: BindingIssueKind
     selection_scope: str
-    description: str
 
     def __post_init__(self) -> None:
         if type(self.binding_attribution) is not BindingAttribution:
@@ -1189,7 +1226,6 @@ class BindingIssue(_CanonicalBindingRecord):
         if type(self.kind) is not BindingIssueKind:
             raise ValidationError("BindingIssue.kind must be a BindingIssueKind")
         _require_text(self.selection_scope, field="BindingIssue.selection_scope")
-        _require_text(self.description, field="BindingIssue.description")
         if self.selection_scope != self.rule.symbolic_reference.selection_scope:
             raise ValidationError(
                 "BindingIssue.selection_scope must match the SymbolicReference selection scope"
@@ -1199,16 +1235,11 @@ class BindingIssue(_CanonicalBindingRecord):
             raise ValidationError(
                 "BindingIssue.kind does not match mechanical BindingRule evaluation"
             )
-        if self.description != decision.issue_description:
-            raise ValidationError(
-                "BindingIssue.description must match mechanical BindingRule evaluation"
-            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
             "binding_attribution": self.binding_attribution.to_primitive(),
             "binding_inputs": [binding_input.to_primitive() for binding_input in self.binding_inputs],
-            "description": self.description,
             "kind": self.kind.value,
             "rule": self.rule.to_primitive(),
             "schema": self.SCHEMA,
@@ -1227,7 +1258,6 @@ class BindingIssue(_CanonicalBindingRecord):
                 "binding_inputs",
                 "kind",
                 "selection_scope",
-                "description",
             },
             field="BindingIssue",
         )
@@ -1249,7 +1279,6 @@ class BindingIssue(_CanonicalBindingRecord):
                 binding_inputs=tuple(BindingInput.from_primitive(item) for item in inputs),
                 kind=kind,
                 selection_scope=obj["selection_scope"],
-                description=obj["description"],
             )
         except ValidationError as exc:
             raise SerializationError("invalid BindingIssue") from exc
@@ -1290,7 +1319,6 @@ def evaluate_binding(
             binding_inputs=normalized_inputs,
             kind=decision.issue_kind,
             selection_scope=rule.symbolic_reference.selection_scope,
-            description=decision.issue_description,
         )
     selected = cast(BindingInput, decision.selected_input)
     return BoundValue(
