@@ -68,11 +68,16 @@ def _step(
     )
 
 
-def _plan(*steps: WorkStep, description: str = "Bounded test plan.") -> WorkPlan:
+def _plan(
+    *steps: WorkStep,
+    completion_contract: str = "All declared bounded work reaches the plan's admitted completion condition.",
+    description: str = "Bounded test plan.",
+) -> WorkPlan:
     return WorkPlan(
         resolved_intent_identity=RESOLVED,
         plan_ref=PLAN_REF,
         steps=steps,
+        completion_contract=completion_contract,
         description=description,
     )
 
@@ -105,11 +110,13 @@ def test_work_plan_round_trip_and_step_order_are_canonical() -> None:
     first = _plan(
         inspect,
         search,
+        completion_contract="A candidate has been inspected and its metadata is ready for IRR.",
         description="Find one candidate and inspect it before returning to IRR.",
     )
     second = _plan(
         search,
         inspect,
+        completion_contract=first.completion_contract,
         description=first.description,
     )
 
@@ -117,6 +124,15 @@ def test_work_plan_round_trip_and_step_order_are_canonical() -> None:
     assert first.canonical_bytes() == second.canonical_bytes()
     assert first.identity == second.identity
     assert WorkPlan.from_json_bytes(first.canonical_bytes()) == first
+
+
+def test_work_plan_completion_contract_is_distinct_identity_covered_semantics() -> None:
+    step = _step("one")
+    first = _plan(step, completion_contract="The bounded inspection result exists.")
+    second = _plan(step, completion_contract="The bounded inspection result has been reviewed by IRR.")
+
+    assert first != second
+    assert first.identity != second.identity
 
 
 def test_work_step_is_bound_to_parent_work_plan_ref() -> None:

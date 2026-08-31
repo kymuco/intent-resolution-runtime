@@ -36,6 +36,8 @@ Core invariants:
 work description != execution
 work description != authorization
 WorkStep lineage includes parent WorkPlan ref
+step completion != plan completion
+plan completion != intent satisfaction by default
 ```
 
 Part A deliberately does **not** introduce `DelegatedWork`, `WorkerResult`, Capability/Governance references, execution handoffs, Observation/Outcome, retry/recovery, transport, persistence, or arbitrary plan control flow. Those remain later sub-slices/milestones.
@@ -48,6 +50,7 @@ WorkPlan
 ├─ resolved_intent_identity
 ├─ plan_ref
 ├─ steps[]
+├─ completion_contract
 └─ description
 ```
 
@@ -68,6 +71,16 @@ valid WorkPlan != authorized WorkPlan
 ```
 
 The complete WorkPlan content still determines its own canonical record identity. Reusing a Host-supplied `plan_ref` does not make two different WorkPlan records identical.
+
+`completion_contract` is a required non-empty semantic statement of the bounded completion meaning for the **operational plan as a whole**. It is distinct from every child WorkStep completion contract and from satisfaction of the parent intent.
+
+```text
+step completion != plan completion
+all steps completed != plan completion proof by default
+plan completion != parent intent satisfaction by default
+```
+
+M1.5 only preserves that semantic distinction. M1.7 owns Attempt / Outcome / Continuation evidence and later runtime determination of whether a completion contract has actually been met.
 
 M1.5 Part A does not manufacture a WorkPlan for non-operational resolution paths. It only defines the work representation once operational work has already been admitted by the upstream resolution boundary.
 
@@ -146,19 +159,17 @@ scope != capability availability
 
 Concrete Capability and Governance compatibility belong to M1.6.
 
-## 5. Explicit completion contract
+## 5. Step completion contract
 
-Every WorkStep carries a non-empty `completion_contract`.
+Every WorkStep carries a non-empty `completion_contract` describing the bounded semantic condition that would make that **step** complete.
 
-The completion contract states the bounded semantic condition that would make this planned unit complete. It is data for later lifecycle/evaluation boundaries; it is not executable code or a hidden predicate language.
+It is data for later lifecycle/evaluation boundaries; it is not executable code or a hidden predicate language.
 
 ```text
-completion contract != loop condition
-completion contract != executor code
-completion contract != proof of completion
+step completion contract != loop condition
+step completion contract != executor code
+step completion contract != proof of completion
 ```
-
-M1.7 owns Attempt / Outcome / Continuation semantics and therefore owns later runtime treatment of actual completion evidence.
 
 The field exists because an ordinary WorkStep must not mean only:
 
@@ -167,6 +178,8 @@ keep working until the goal is achieved
 ```
 
 without an inspectable bounded completion meaning.
+
+The WorkPlan's separate completion contract prevents child step completion from silently becoming plan completion semantics.
 
 ## 6. Literal input
 
@@ -213,12 +226,7 @@ symbolic input != Observation by default
 symbolic input != authority
 ```
 
-A symbolic input may be:
-
-- produced by another WorkStep in the same WorkPlan; or
-- supplied/bound outside that plan under the already frozen M1.4 Binding boundary.
-
-M1.5 does not duplicate or weaken BindingRule semantics.
+A symbolic input may be produced by another WorkStep in the same WorkPlan or supplied/bound outside that plan under the already frozen M1.4 Binding boundary. M1.5 does not duplicate or weaken BindingRule semantics.
 
 ## 8. WorkOutput
 
@@ -229,9 +237,7 @@ WorkOutput
 └─ reference -> SymbolicReference
 ```
 
-A WorkOutput declares the semantic slot expected from one WorkStep.
-
-The SymbolicReference MUST belong to the same ResolvedIntent identity. Within one WorkPlan, one symbolic output slot has exactly one producer.
+A WorkOutput declares the semantic slot expected from one WorkStep. The SymbolicReference MUST belong to the same ResolvedIntent identity. Within one WorkPlan, one symbolic output slot has exactly one producer.
 
 ```text
 same output slot + two producers != implicit merge
@@ -242,8 +248,6 @@ M1.5 v1 does not invent value merging, conflict resolution, or hidden precedence
 ## 9. Symbol semantics are stable inside one plan
 
 If the same `slot_ref` appears multiple times in a WorkPlan, every occurrence MUST carry the same complete `SymbolicReference` identity.
-
-Therefore:
 
 ```text
 same slot_ref + different semantic_type != same symbol
@@ -288,9 +292,7 @@ dependency path
 consumer
 ```
 
-A transitive dependency is sufficient; a redundant direct edge is not required.
-
-Reachability validation is iterative and does not use Python call-stack recursion as part of the IR semantic domain.
+A transitive dependency is sufficient; a redundant direct edge is not required. Reachability validation is iterative and does not use Python call-stack recursion as part of the IR semantic domain.
 
 An external SymbolicReference that is not produced by the plan does not require an internal dependency. Its eventual value remains subject to M1.4 Binding semantics.
 
@@ -303,7 +305,7 @@ none
 return_to_irr
 ```
 
-`return_to_irr` means the plan identifies a bounded point after which later attributable information/semantics must return to IRR before further dependent semantic work is admitted.
+`return_to_irr` means the plan identifies a bounded point after which later attributable information/semantics must return to IRR before further **dependent** semantic work is admitted.
 
 A `return_to_irr` WorkStep therefore MUST be terminal with respect to the WorkPlan dependency graph: no other WorkStep may depend on it. Independent work with no dependency path from that continuation step may coexist in the same finite plan because no semantic successor relation is asserted.
 
@@ -318,16 +320,7 @@ Generic Continuation and successor lifecycle belong to M1.7.
 
 ## 13. No scripting language
 
-The M1.5 v1 schema contains no representation for:
-
-- arbitrary loops;
-- runtime `if` / `else`;
-- exception handlers;
-- hidden retries;
-- eval / exec;
-- embedded shell control flow;
-- self-modifying plans;
-- arbitrary recursive WorkPlan generation.
+The M1.5 v1 schema contains no representation for arbitrary loops, runtime `if` / `else`, exception handlers, hidden retries, eval / exec, embedded shell control flow, self-modifying plans, or arbitrary recursive WorkPlan generation.
 
 A finite tuple plus DAG dependencies is the entire structural control surface of ordinary WorkPlan v1.
 
@@ -367,13 +360,7 @@ return_to_irr != Authorization
 
 M1.6 owns Capability / Governance references.
 
-M1.5 does not claim that a semantic operation:
-
-- has a matching Capability;
-- is currently available;
-- is invocation-ready;
-- is authorized;
-- will succeed.
+M1.5 does not claim that a semantic operation has a matching Capability, is currently available, is invocation-ready, is authorized, or will succeed.
 
 ## 16. Canonical serialization and identity
 
@@ -387,15 +374,15 @@ sha256(canonical_json_bytes(record))
 
 Work inputs, outputs, dependencies, and plan steps are normalized into deterministic canonical order where their order is not itself semantic.
 
-`WorkStep.identity` includes `work_plan_ref`, so changing the parent plan reference is a material identity change. `WorkPlan.identity` includes the complete canonicalized WorkStep records.
+`WorkStep.identity` includes `work_plan_ref`, so changing the parent plan reference is a material identity change. `WorkPlan.identity` includes its plan completion contract and the complete canonicalized WorkStep records.
 
 Material semantic changes therefore change identity while presentation-only tuple order does not.
 
+Representative v1 identities are frozen by executable golden tests before Part A merge.
+
 ## 17. Closed public IR types
 
-Public M1.5 records are immutable frozen slot dataclasses and are sealed from subclass extension through the public package surface.
-
-Unknown wire fields are rejected.
+Public M1.5 records are immutable frozen slot dataclasses and are sealed from subclass extension through the public package surface. Unknown wire fields are rejected.
 
 A producer therefore cannot smuggle fields such as:
 
@@ -439,6 +426,7 @@ M1.5 Part A is correct when executable tests prove at least:
 ```text
 WorkPlan and WorkStep are immutable and round-trippable
 WorkPlan is bound to one ResolvedIntent identity
+WorkPlan carries an explicit identity-covered plan completion contract
 WorkStep carries and revalidates parent WorkPlan ref lineage
 WorkStep symbolic inputs/outputs preserve the same ResolvedIntent lineage
 WorkStep tuple presentation order does not create precedence
@@ -455,6 +443,9 @@ independent work may coexist with a terminal return_to_irr step
 operation is a lowercase dotted semantic identifier rather than command text
 literal executable-looking text remains inert data
 empty/whitespace literal string values remain representable data
+step completion != plan completion remains representable
+plan completion != intent satisfaction remains explicit
+representative v1 canonical identities are frozen
 unknown wire fields fail closed
 public M1.5 records are closed against subclass state
 no authority fields are introduced
