@@ -2,7 +2,7 @@
 
 Status: **implementation slice**.
 
-M1.3 encodes the frozen M0.2 and M0.7 boundary between provider-produced candidate semantics, IRR-owned admission, blocking ambiguity/conflict/missing information, clarification, information needs, explicit non-material assumptions, and admitted `ResolvedIntent`.
+M1.3 encodes the frozen M0.2 and M0.7 boundary between provider-produced candidate semantics, IRR-owned admission, blocking ambiguity/conflict/missing information/uncertainty, clarification, information needs, explicit non-material assumptions, and admitted `ResolvedIntent`.
 
 It does not introduce WorkPlan, Binding, Observation, Capability, Governance, Authorization, execution, provider transport, trust scores, or retry semantics.
 
@@ -239,7 +239,7 @@ ClarificationNeed
 
 A ClarificationNeed is an IRR-owned pause requesting attributable continuation input. It is not a `ResolvedIntent` and does not terminate the parent intent lifecycle.
 
-Every ClarificationNeed must preserve at least one blocking issue. The issue may be Material Ambiguity, Conflict, or Missing Information. M1.3 deliberately does not hard-code that all missing information must be acquired externally; asking the caller to clarify a missing detail is valid when semantically appropriate.
+Every ClarificationNeed must preserve at least one blocking issue. The issue may be Material Ambiguity, Conflict, Missing Information, or Uncertainty. M1.3 deliberately does not hard-code one acquisition path for blocking uncertainty or missing information; asking the caller to clarify is valid when semantically appropriate.
 
 ## InformationNeed
 
