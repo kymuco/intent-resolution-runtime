@@ -163,7 +163,7 @@ text
 rfc3339_timestamp
 ```
 
-For `rfc3339_timestamp`, comparison preserves **all supplied fractional-second digits**. It does not round/truncate to Python microseconds.
+For `rfc3339_timestamp`, comparison preserves **all supplied fractional-second digits** without converting the complete fractional field to a bounded implementation integer. It does not round/truncate to Python microseconds and does not impose an implementation-specific fractional digit ceiling.
 
 Offset-equivalent lexical representations compare as the same instant:
 
@@ -184,6 +184,8 @@ This is an explicit v1 comparator boundary, not permission to reinterpret those 
 unknown offset != known instant
 unsupported leap-second comparison != lexical fallback
 ```
+
+RFC3339's lowercase `t` and `z` forms are accepted as equivalent syntax. The four-digit RFC3339 year domain includes year `0000`; instant comparison therefore uses explicit proleptic-Gregorian civil-date arithmetic rather than a host datetime type whose year domain starts at 1.
 
 No ambient timezone or wall clock is consulted.
 
@@ -218,7 +220,7 @@ min_attribute
 any_interchangeable
 ```
 
-For `max_attribute` / `min_attribute`, both selector name and selector semantic kind are frozen before BindingInput arrives.
+For `max_attribute` / `min_attribute`, both selector name and selector semantic kind are frozen before BindingInput arrives. M1.4 v1 admits extrema only for `rfc3339_timestamp`; `text` remains equality-comparable but has no implicit cross-language ordering contract. A future text-order comparator must be named and frozen explicitly rather than inheriting a host language's string ordering.
 
 ```text
 unknown future value != unknown future comparison semantics
@@ -461,7 +463,9 @@ source_ref and source_identity are separately admitted dimensions
 selection_scope and concrete value_scope remain distinct
 BindingRule source / role / type / selection-scope boundaries fail closed
 selector comparison kind is admitted before runtime input
-RFC3339 comparison preserves arbitrary fractional precision
+RFC3339 comparison preserves arbitrary fractional precision without host integer conversion limits
+RFC3339 year 0000 and lowercase t/z forms remain inside the admitted comparator domain
+text extrema fail closed until an explicit text-order comparator is admitted
 offset-equivalent RFC3339 values compare as one instant
 unknown RFC3339 offset and leap-second forms fail closed in v1
 whole-input-set diagnostic classification is presentation-order independent

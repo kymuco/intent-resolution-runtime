@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import date
 from enum import Enum
-from fractions import Fraction
 from typing import Any, ClassVar, TypeAlias, cast
 
 from .canonical import canonical_json_bytes, parse_json_object
@@ -15,9 +13,9 @@ from .intent import StableRef
 
 
 _RFC3339_PATTERN = re.compile(
-    r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T"
+    r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})[Tt]"
     r"(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})"
-    r"(?P<fraction>\.\d+)?(?P<zone>Z|[+-]\d{2}:\d{2})$"
+    r"(?P<fraction>\.\d+)?(?P<zone>[Zz]|[+-]\d{2}:\d{2})$"
 )
 
 
@@ -115,7 +113,40 @@ def _normalize_text_tuple(
     return tuple(sorted(value))
 
 
-def _parse_rfc3339(value: str, *, field: str) -> Fraction:
+def _is_gregorian_leap_year(year: int) -> bool:
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
+def _days_from_civil(year: int, month: int, day: int) -> int:
+    if not 1 <= month <= 12:
+        raise ValueError("invalid month")
+    month_lengths = (
+        31,
+        29 if _is_gregorian_leap_year(year) else 28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    )
+    if not 1 <= day <= month_lengths[month - 1]:
+        raise ValueError("invalid day")
+
+    adjusted_year = year - (1 if month <= 2 else 0)
+    era = adjusted_year // 400
+    year_of_era = adjusted_year - era * 400
+    adjusted_month = month + (-3 if month > 2 else 9)
+    day_of_year = (153 * adjusted_month + 2) // 5 + day - 1
+    day_of_era = year_of_era * 365 + year_of_era // 4 - year_of_era // 100 + day_of_year
+    return era * 146097 + day_of_era
+
+
+def _parse_rfc3339(value: str, *, field: str) -> tuple[int, str]:
     match = _RFC3339_PATTERN.fullmatch(value)
     if match is None:
         raise ValidationError(f"{field} must be an RFC3339 timestamp with an explicit known offset")
@@ -134,13 +165,13 @@ def _parse_rfc3339(value: str, *, field: str) -> Fraction:
     if second > 59:
         raise ValidationError(f"{field} leap-second notation is not supported by M1.4 v1")
     try:
-        calendar_day = date(year, month, day)
+        civil_day = _days_from_civil(year, month, day)
     except ValueError as exc:
         raise ValidationError(f"{field} has an invalid calendar date") from exc
 
     if zone == "-00:00":
         raise ValidationError(f"{field} uses RFC3339 unknown-offset form -00:00")
-    if zone == "Z":
+    if zone in ("Z", "z"):
         offset_seconds = 0
     else:
         sign = 1 if zone[0] == "+" else -1
@@ -150,18 +181,9 @@ def _parse_rfc3339(value: str, *, field: str) -> Fraction:
             raise ValidationError(f"{field} has an invalid timezone offset")
         offset_seconds = sign * (offset_hour * 3600 + offset_minute * 60)
 
-    whole_seconds = (
-        calendar_day.toordinal() * 86400
-        + hour * 3600
-        + minute * 60
-        + second
-        - offset_seconds
-    )
-    instant = Fraction(whole_seconds, 1)
-    if fraction is not None:
-        digits = fraction[1:]
-        instant += Fraction(int(digits), 10 ** len(digits))
-    return instant
+    whole_seconds = civil_day * 86400 + hour * 3600 + minute * 60 + second - offset_seconds
+    fraction_digits = "" if fraction is None else fraction[1:].rstrip("0")
+    return whole_seconds, fraction_digits
 
 
 class _CanonicalBindingRecord:
@@ -331,6 +353,10 @@ class BindingSelectionPolicy:
             if len(self.selector_attributes) != 1 or len(self.selector_kinds) != 1:
                 raise ValidationError(
                     "max_attribute/min_attribute selection requires exactly one selector attribute and kind"
+                )
+            if self.selector_kinds[0] is not BindingAttributeKind.RFC3339_TIMESTAMP:
+                raise ValidationError(
+                    "max_attribute/min_attribute selection requires rfc3339_timestamp selector kind in M1.4 v1"
                 )
             if self.interchangeable_choice is not InterchangeableChoicePolicy.NONE:
                 raise ValidationError("extremum selection cannot define an interchangeable choice policy")
@@ -934,12 +960,10 @@ class _SelectionDecision:
     selected_input: BindingInput | None
 
 
-def _compare_attribute(attribute: BindingAttribute) -> str | Fraction:
-    if attribute.kind is BindingAttributeKind.TEXT:
-        return attribute.value
+def _compare_attribute(attribute: BindingAttribute) -> tuple[int, str]:
     if attribute.kind is BindingAttributeKind.RFC3339_TIMESTAMP:
         return _parse_rfc3339(attribute.value, field=f"BindingAttribute[{attribute.name}]")
-    raise AssertionError("unsupported BindingAttributeKind")
+    raise AssertionError("M1.4 v1 extremum comparison supports RFC3339 timestamps only")
 
 
 def _attribute_equals_constraint(
@@ -1057,7 +1081,7 @@ def _determine_selection(
         selector_kind = policy.selector_kinds[0]
         missing_selector = False
         wrong_selector_kind = False
-        ranked: list[tuple[str | Fraction, BindingInput]] = []
+        ranked: list[tuple[tuple[int, str], BindingInput]] = []
 
         for binding_input in compatible:
             attribute = binding_input.attribute_map().get(selector_name)
