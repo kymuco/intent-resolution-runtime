@@ -38,6 +38,7 @@ SOURCE = _id("2")
 TEMPORAL = _id("3")
 COMPLETE = _id("4")
 EVIDENCE = _id("5")
+SELECTION_SCOPE = r"D:\Backups"
 
 
 def _ref(namespace: str, value: str) -> StableRef:
@@ -63,7 +64,7 @@ def _symbolic() -> SymbolicReference:
         resolved_intent_identity=RESOLVED,
         slot_ref=_ref("irr.slot", "selected-backup"),
         semantic_type="artifact.path",
-        scope=r"D:\Backups",
+        selection_scope=SELECTION_SCOPE,
         description="Newest organism_lab backup selected by admitted modification time.",
     )
 
@@ -76,8 +77,11 @@ def _input(
     source_identity: RecordIdentity = SOURCE,
     role: BindingInputRole = BindingInputRole.PLAN_LOCAL_OUTPUT,
     semantic_type: str = "artifact.path",
-    scope: str = r"D:\Backups",
+    selection_scope: str = SELECTION_SCOPE,
+    value_scope: str | None = None,
     completeness: tuple[RecordIdentity, ...] = (COMPLETE,),
+    temporal: tuple[RecordIdentity, ...] = (TEMPORAL,),
+    evidence: tuple[RecordIdentity, ...] = (EVIDENCE,),
 ) -> BindingInput:
     attributes = [
         BindingAttribute(
@@ -102,11 +106,12 @@ def _input(
         source_identity=source_identity,
         semantic_type=semantic_type,
         value=value,
-        scope=scope,
+        selection_scope=selection_scope,
+        value_scope=value if value_scope is None else value_scope,
         attributes=tuple(reversed(attributes)),
-        temporal_basis_refs=(TEMPORAL,),
+        temporal_basis_refs=temporal,
         completeness_refs=completeness,
-        evidence_refs=(EVIDENCE,),
+        evidence_refs=evidence,
     )
 
 
@@ -138,7 +143,7 @@ def _rule(
         allowed_input_roles=(BindingInputRole.PLAN_LOCAL_OUTPUT,),
         allowed_source_identities=allowed_sources,
         input_semantic_type="artifact.path",
-        required_scope=r"D:\Backups",
+        required_selection_scope=SELECTION_SCOPE,
         constraints=constraints,
         selection_policy=selection_policy,
         description="Select the unique newest compatible backup by modification_time.",
@@ -167,7 +172,7 @@ def test_symbolic_reference_round_trip_and_immutability() -> None:
     reference = _symbolic()
     assert SymbolicReference.from_json_bytes(reference.canonical_bytes()) == reference
     with pytest.raises(FrozenInstanceError):
-        reference.scope = "elsewhere"  # type: ignore[misc]
+        reference.selection_scope = "elsewhere"  # type: ignore[misc]
 
 
 def test_binding_input_normalizes_attribute_and_reference_order() -> None:
@@ -184,7 +189,8 @@ def test_binding_input_normalizes_attribute_and_reference_order() -> None:
         source_identity=first.source_identity,
         semantic_type=first.semantic_type,
         value=first.value,
-        scope=first.scope,
+        selection_scope=first.selection_scope,
+        value_scope=first.value_scope,
         attributes=tuple(reversed(first.attributes)),
         temporal_basis_refs=tuple(reversed(first.temporal_basis_refs)),
         completeness_refs=tuple(reversed(first.completeness_refs)),
@@ -199,7 +205,7 @@ def test_binding_rule_rejects_foreign_symbolic_lineage() -> None:
         resolved_intent_identity=_id("a"),
         slot_ref=_ref("irr.slot", "selected-backup"),
         semantic_type="artifact.path",
-        scope=r"D:\Backups",
+        selection_scope=SELECTION_SCOPE,
         description="Foreign slot.",
     )
     with pytest.raises(ValidationError, match="same ResolvedIntent"):
@@ -210,7 +216,7 @@ def test_binding_rule_rejects_foreign_symbolic_lineage() -> None:
             allowed_input_roles=(BindingInputRole.PLAN_LOCAL_OUTPUT,),
             allowed_source_identities=(SOURCE,),
             input_semantic_type="artifact.path",
-            required_scope=r"D:\Backups",
+            required_selection_scope=SELECTION_SCOPE,
             constraints=(),
             selection_policy=BindingSelectionPolicy(
                 mode=BindingSelectionMode.REQUIRE_UNIQUE
@@ -232,11 +238,27 @@ def test_newest_timestamp_binds_unique_winner_and_retains_full_input_set() -> No
     result = evaluate_binding(_rule(), tuple(reversed(inputs)), attribution=_binding_attribution())
     assert type(result) is BoundValue
     assert result.value == r"D:\Backups\backup-b.zip"
+    assert result.selection_scope == SELECTION_SCOPE
+    assert result.value_scope == r"D:\Backups\backup-b.zip"
     assert result.selected_input_identity == inputs[1].identity
     assert set(item.identity for item in result.binding_inputs) == set(
         item.identity for item in inputs
     )
     assert BoundValue.from_json_bytes(result.canonical_bytes()) == result
+
+
+def test_selection_scope_and_concrete_value_scope_are_distinct() -> None:
+    selected = _input(
+        input_name="backup-a.zip",
+        value=r"D:\Backups\backup-a.zip",
+        mtime="2026-08-30T10:00:00+06:00",
+        value_scope=r"D:\Backups\backup-a.zip#sha256=abc",
+    )
+    result = evaluate_binding(_rule(), (selected,), attribution=_binding_attribution())
+    assert type(result) is BoundValue
+    assert result.selection_scope == SELECTION_SCOPE
+    assert result.value_scope == r"D:\Backups\backup-a.zip#sha256=abc"
+    assert result.selection_scope != result.value_scope
 
 
 def test_binding_result_is_independent_of_input_presentation_order() -> None:
@@ -247,6 +269,31 @@ def test_binding_result_is_independent_of_input_presentation_order() -> None:
     )
     assert type(first) is BoundValue
     assert type(second) is BoundValue
+    assert first.canonical_bytes() == second.canonical_bytes()
+
+
+def test_diagnostic_classification_is_independent_of_input_presentation_order() -> None:
+    incompatible = _input(
+        input_name="bad-role.zip",
+        value=r"D:\Backups\bad-role.zip",
+        mtime="2026-08-30T10:00:00+06:00",
+        role=BindingInputRole.OBSERVATION,
+    )
+    incomplete = _input(
+        input_name="incomplete.zip",
+        value=r"D:\Backups\incomplete.zip",
+        mtime="2026-08-30T11:00:00+06:00",
+        completeness=(),
+    )
+    first = evaluate_binding(
+        _rule(), (incompatible, incomplete), attribution=_binding_attribution()
+    )
+    second = evaluate_binding(
+        _rule(), (incomplete, incompatible), attribution=_binding_attribution()
+    )
+    assert type(first) is BindingIssue
+    assert type(second) is BindingIssue
+    assert first.kind is BindingIssueKind.INCOMPATIBLE_INPUT
     assert first.canonical_bytes() == second.canonical_bytes()
 
 
@@ -302,6 +349,12 @@ def test_zero_matches_does_not_guess() -> None:
     assert result.kind is BindingIssueKind.ZERO_MATCHES
 
 
+def test_empty_input_set_is_zero_matches_without_ambient_lookup() -> None:
+    result = evaluate_binding(_rule(), (), attribution=_binding_attribution())
+    assert type(result) is BindingIssue
+    assert result.kind is BindingIssueKind.ZERO_MATCHES
+
+
 def test_missing_selector_data_is_not_replaced_with_another_rule() -> None:
     missing = _input(
         input_name="backup-a.zip",
@@ -345,12 +398,13 @@ def test_missing_material_completeness_provenance_blocks_binding() -> None:
             value="1234",
             mtime="2026-08-30T10:00:00+06:00",
             semantic_type="process.id",
+            value_scope="process:1234",
         ),
         _input(
             input_name="backup-a.zip",
             value=r"W:\Elsewhere\backup-a.zip",
             mtime="2026-08-30T10:00:00+06:00",
-            scope=r"W:\Elsewhere",
+            selection_scope=r"W:\Elsewhere",
         ),
     ],
 )
@@ -362,6 +416,18 @@ def test_structurally_plausible_but_semantically_incompatible_input_is_rejected(
     assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
 
 
+def test_different_value_scope_is_not_selection_scope_incompatibility() -> None:
+    input_value = _input(
+        input_name="backup-a.zip",
+        value=r"D:\Backups\backup-a.zip",
+        mtime="2026-08-30T10:00:00+06:00",
+        value_scope="artifact:backup-a@digest-123",
+    )
+    result = evaluate_binding(_rule(), (input_value,), attribution=_binding_attribution())
+    assert type(result) is BoundValue
+    assert result.value_scope == "artifact:backup-a@digest-123"
+
+
 def test_selector_kind_is_rule_semantics_not_input_discretion() -> None:
     wrong_kind = BindingInput(
         resolved_intent_identity=RESOLVED,
@@ -371,7 +437,8 @@ def test_selector_kind_is_rule_semantics_not_input_discretion() -> None:
         source_identity=SOURCE,
         semantic_type="artifact.path",
         value=r"D:\Backups\backup-a.zip",
-        scope=r"D:\Backups",
+        selection_scope=SELECTION_SCOPE,
+        value_scope=r"D:\Backups\backup-a.zip",
         attributes=(
             BindingAttribute(
                 name="modification_time",
@@ -384,6 +451,22 @@ def test_selector_kind_is_rule_semantics_not_input_discretion() -> None:
         evidence_refs=(EVIDENCE,),
     )
     result = evaluate_binding(_rule(), (wrong_kind,), attribution=_binding_attribution())
+    assert type(result) is BindingIssue
+    assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
+
+
+def test_constraint_attribute_wrong_semantic_kind_is_incompatible_not_zero_match() -> None:
+    constraint = BindingConstraint(
+        attribute_name="name",
+        operator=BindingConstraintOperator.EQUALS,
+        expected_kind=BindingAttributeKind.RFC3339_TIMESTAMP,
+        expected_value="2026-08-30T10:00:00+06:00",
+    )
+    result = evaluate_binding(
+        _rule(constraints=(constraint,)),
+        (_inputs()[0],),
+        attribution=_binding_attribution(),
+    )
     assert type(result) is BindingIssue
     assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
 
@@ -423,8 +506,22 @@ def test_binding_issue_cannot_lie_about_mechanical_result() -> None:
             rule=_rule(),
             binding_inputs=_inputs(),
             kind=BindingIssueKind.ZERO_MATCHES,
-            scope=r"D:\Backups",
+            selection_scope=SELECTION_SCOPE,
             description="False issue assertion.",
+        )
+
+
+def test_binding_issue_description_is_mechanically_reproducible() -> None:
+    result = evaluate_binding(_rule(), (), attribution=_binding_attribution())
+    assert type(result) is BindingIssue
+    with pytest.raises(ValidationError, match="description"):
+        BindingIssue(
+            binding_attribution=result.binding_attribution,
+            rule=result.rule,
+            binding_inputs=result.binding_inputs,
+            kind=result.kind,
+            selection_scope=result.selection_scope,
+            description="A different story.",
         )
 
 
@@ -440,7 +537,24 @@ def test_bound_value_cannot_override_selected_concrete_value() -> None:
             selected_input_identity=valid.selected_input_identity,
             semantic_type=valid.semantic_type,
             value=r"D:\Backups\invented.zip",
-            scope=valid.scope,
+            selection_scope=valid.selection_scope,
+            value_scope=valid.value_scope,
+        )
+
+
+def test_bound_value_cannot_override_concrete_value_scope() -> None:
+    valid = evaluate_binding(_rule(), _inputs(), attribution=_binding_attribution())
+    assert type(valid) is BoundValue
+    with pytest.raises(ValidationError, match="value_scope"):
+        BoundValue(
+            binding_attribution=valid.binding_attribution,
+            rule=valid.rule,
+            binding_inputs=valid.binding_inputs,
+            selected_input_identity=valid.selected_input_identity,
+            semantic_type=valid.semantic_type,
+            value=valid.value,
+            selection_scope=valid.selection_scope,
+            value_scope="broader:scope",
         )
 
 
