@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, ClassVar, TypeAlias, cast
@@ -11,28 +12,43 @@ from .identity import RecordIdentity, identity_for_bytes
 from .intent import StableRef
 
 
+_OPERATION_PATTERN = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$")
+
+
 def _reject_surrogates(value: str, *, field: str) -> None:
     if any(0xD800 <= ord(character) <= 0xDFFF for character in value):
         raise ValidationError(f"{field} must contain only Unicode scalar values")
 
 
-def _require_text(value: object, *, field: str) -> str:
+def _require_string(value: object, *, field: str) -> str:
     if type(value) is not str:
         raise ValidationError(f"{field} must be a string")
-    if not value.strip():
-        raise ValidationError(f"{field} must contain non-whitespace text")
     _reject_surrogates(value, field=field)
     return value
 
 
+def _require_text(value: object, *, field: str) -> str:
+    value = _require_string(value, field=field)
+    if not value.strip():
+        raise ValidationError(f"{field} must contain non-whitespace text")
+    return value
+
+
 def _require_token(value: object, *, field: str) -> str:
-    if type(value) is not str:
-        raise ValidationError(f"{field} must be a string")
+    value = _require_string(value, field=field)
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
         raise ValidationError(f"{field} must not contain leading or trailing whitespace")
-    _reject_surrogates(value, field=field)
+    return value
+
+
+def _require_operation(value: object, *, field: str) -> str:
+    value = _require_token(value, field=field)
+    if _OPERATION_PATTERN.fullmatch(value) is None:
+        raise ValidationError(
+            f"{field} must be a lowercase dotted semantic operation identifier"
+        )
     return value
 
 
@@ -75,6 +91,10 @@ def _normalize_ref_tuple(
     return tuple(sorted(value, key=lambda item: (item.namespace, item.value)))
 
 
+def _ref_key(value: StableRef) -> tuple[str, str]:
+    return value.namespace, value.value
+
+
 class _CanonicalWorkRecord:
     __slots__ = ()
 
@@ -105,7 +125,7 @@ class WorkLiteralInput(_CanonicalWorkRecord):
     def __post_init__(self) -> None:
         _require_token(self.name, field="WorkLiteralInput.name")
         _require_token(self.semantic_type, field="WorkLiteralInput.semantic_type")
-        _require_text(self.value, field="WorkLiteralInput.value")
+        _require_string(self.value, field="WorkLiteralInput.value")
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -262,6 +282,7 @@ class WorkStep(_CanonicalWorkRecord):
     SCHEMA: ClassVar[str] = "irr.work_step.v1"
 
     resolved_intent_identity: RecordIdentity
+    work_plan_ref: StableRef
     step_ref: StableRef
     operation: str
     scope: str
@@ -275,9 +296,11 @@ class WorkStep(_CanonicalWorkRecord):
     def __post_init__(self) -> None:
         if type(self.resolved_intent_identity) is not RecordIdentity:
             raise ValidationError("WorkStep.resolved_intent_identity must be a RecordIdentity")
+        if type(self.work_plan_ref) is not StableRef:
+            raise ValidationError("WorkStep.work_plan_ref must be a StableRef")
         if type(self.step_ref) is not StableRef:
             raise ValidationError("WorkStep.step_ref must be a StableRef")
-        _require_token(self.operation, field="WorkStep.operation")
+        _require_operation(self.operation, field="WorkStep.operation")
         _require_text(self.scope, field="WorkStep.scope")
         object.__setattr__(
             self,
@@ -326,6 +349,7 @@ class WorkStep(_CanonicalWorkRecord):
             "schema": self.SCHEMA,
             "scope": self.scope,
             "step_ref": self.step_ref.to_primitive(),
+            "work_plan_ref": self.work_plan_ref.to_primitive(),
         }
 
     @classmethod
@@ -336,6 +360,7 @@ class WorkStep(_CanonicalWorkRecord):
             {
                 "schema",
                 "resolved_intent_identity",
+                "work_plan_ref",
                 "step_ref",
                 "operation",
                 "scope",
@@ -366,6 +391,9 @@ class WorkStep(_CanonicalWorkRecord):
                     obj["resolved_intent_identity"],
                     field=f"{field}.resolved_intent_identity",
                 ),
+                work_plan_ref=StableRef.from_primitive(
+                    obj["work_plan_ref"], field=f"{field}.work_plan_ref"
+                ),
                 step_ref=StableRef.from_primitive(obj["step_ref"], field=f"{field}.step_ref"),
                 operation=obj["operation"],
                 scope=obj["scope"],
@@ -393,8 +421,52 @@ class WorkStep(_CanonicalWorkRecord):
         return cls.from_primitive(parse_json_object(data))
 
 
-def _ref_key(value: StableRef) -> tuple[str, str]:
-    return value.namespace, value.value
+def _topological_order(
+    step_map: dict[StableRef, WorkStep],
+) -> tuple[tuple[StableRef, ...], dict[StableRef, set[StableRef]]]:
+    remaining = {step_ref: len(step.depends_on) for step_ref, step in step_map.items()}
+    dependents: dict[StableRef, set[StableRef]] = {step_ref: set() for step_ref in step_map}
+    for step_ref, step in step_map.items():
+        for dependency in step.depends_on:
+            dependents[dependency].add(step_ref)
+
+    ready = sorted(
+        (step_ref for step_ref, count in remaining.items() if count == 0),
+        key=_ref_key,
+        reverse=True,
+    )
+    ordered: list[StableRef] = []
+    while ready:
+        step_ref = ready.pop()
+        ordered.append(step_ref)
+        for dependent in sorted(dependents[step_ref], key=_ref_key, reverse=True):
+            remaining[dependent] -= 1
+            if remaining[dependent] == 0:
+                ready.append(dependent)
+        ready.sort(key=_ref_key, reverse=True)
+
+    if len(ordered) != len(step_map):
+        raise ValidationError("WorkPlan dependency graph must be acyclic")
+    return tuple(ordered), dependents
+
+
+def _depends_on_transitively(
+    step_map: dict[StableRef, WorkStep],
+    *,
+    consumer: StableRef,
+    producer: StableRef,
+) -> bool:
+    pending = list(step_map[consumer].depends_on)
+    visited: set[StableRef] = set()
+    while pending:
+        candidate = pending.pop()
+        if candidate == producer:
+            return True
+        if candidate in visited:
+            continue
+        visited.add(candidate)
+        pending.extend(step_map[candidate].depends_on)
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -421,6 +493,8 @@ class WorkPlan(_CanonicalWorkRecord):
         steps = cast(tuple[WorkStep, ...], self.steps)
         if any(step.resolved_intent_identity != self.resolved_intent_identity for step in steps):
             raise ValidationError("WorkPlan steps must belong to the same ResolvedIntent")
+        if any(step.work_plan_ref != self.plan_ref for step in steps):
+            raise ValidationError("WorkPlan steps must belong to the same WorkPlan ref")
 
         refs = [step.step_ref for step in steps]
         if len(set(refs)) != len(refs):
@@ -434,22 +508,15 @@ class WorkPlan(_CanonicalWorkRecord):
                     "WorkPlan dependency must reference another step in the same plan"
                 )
 
-        visiting: set[StableRef] = set()
-        visited: set[StableRef] = set()
-
-        def visit(step_ref: StableRef) -> None:
-            if step_ref in visiting:
-                raise ValidationError("WorkPlan dependency graph must be acyclic")
-            if step_ref in visited:
-                return
-            visiting.add(step_ref)
-            for dependency in step_map[step_ref].depends_on:
-                visit(dependency)
-            visiting.remove(step_ref)
-            visited.add(step_ref)
-
-        for step_ref in step_map:
-            visit(step_ref)
+        _, dependents = _topological_order(step_map)
+        for step in steps:
+            if (
+                step.continuation is WorkContinuationMode.RETURN_TO_IRR
+                and dependents[step.step_ref]
+            ):
+                raise ValidationError(
+                    "return_to_irr WorkStep must be terminal in the WorkPlan dependency graph"
+                )
 
         symbolic_definitions: dict[StableRef, RecordIdentity] = {}
         output_producers: dict[StableRef, StableRef] = {}
@@ -474,28 +541,24 @@ class WorkPlan(_CanonicalWorkRecord):
                     )
                 output_producers[output.reference.slot_ref] = step.step_ref
 
-        ancestor_cache: dict[StableRef, set[StableRef]] = {}
-
-        def ancestors(step_ref: StableRef) -> set[StableRef]:
-            cached = ancestor_cache.get(step_ref)
-            if cached is not None:
-                return cached
-            result: set[StableRef] = set()
-            for dependency in step_map[step_ref].depends_on:
-                result.add(dependency)
-                result.update(ancestors(dependency))
-            ancestor_cache[step_ref] = result
-            return result
-
+        dependency_cache: dict[tuple[StableRef, StableRef], bool] = {}
         for step in steps:
-            valid_ancestors = ancestors(step.step_ref)
             for work_input in step.inputs:
                 if type(work_input) is not WorkSymbolicInput:
                     continue
                 producer = output_producers.get(work_input.reference.slot_ref)
                 if producer is None:
                     continue
-                if producer not in valid_ancestors:
+                cache_key = (step.step_ref, producer)
+                has_dependency = dependency_cache.get(cache_key)
+                if has_dependency is None:
+                    has_dependency = _depends_on_transitively(
+                        step_map,
+                        consumer=step.step_ref,
+                        producer=producer,
+                    )
+                    dependency_cache[cache_key] = has_dependency
+                if not has_dependency:
                     raise ValidationError(
                         "WorkStep internal symbolic input must depend on its producing step"
                     )

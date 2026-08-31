@@ -18,6 +18,8 @@ from intent_resolution_runtime import (
 
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 OTHER_RESOLVED = RecordIdentity("sha256", "2" * 64)
+PLAN_REF = StableRef("irr.work_plan", "test-plan")
+OTHER_PLAN_REF = StableRef("irr.work_plan", "other-plan")
 
 
 def _ref(namespace: str, value: str) -> StableRef:
@@ -48,10 +50,12 @@ def _step(
     depends_on: tuple[StableRef, ...] = (),
     continuation: WorkContinuationMode = WorkContinuationMode.NONE,
     resolved: RecordIdentity = RESOLVED,
+    plan_ref: StableRef = PLAN_REF,
     operation: str = "artifact.inspect",
 ) -> WorkStep:
     return WorkStep(
         resolved_intent_identity=resolved,
+        work_plan_ref=plan_ref,
         step_ref=_ref("irr.work_step", name),
         operation=operation,
         scope=f"scope:{name}",
@@ -61,6 +65,15 @@ def _step(
         continuation=continuation,
         completion_contract=f"{name} produces its declared bounded result.",
         description=f"Bounded work step {name}.",
+    )
+
+
+def _plan(*steps: WorkStep, description: str = "Bounded test plan.") -> WorkPlan:
+    return WorkPlan(
+        resolved_intent_identity=RESOLVED,
+        plan_ref=PLAN_REF,
+        steps=steps,
+        description=description,
     )
 
 
@@ -89,16 +102,14 @@ def test_work_plan_round_trip_and_step_order_are_canonical() -> None:
         operation="artifact.inspect",
     )
 
-    first = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=_ref("irr.work_plan", "backup-inspection"),
-        steps=(inspect, search),
+    first = _plan(
+        inspect,
+        search,
         description="Find one candidate and inspect it before returning to IRR.",
     )
-    second = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=first.plan_ref,
-        steps=(search, inspect),
+    second = _plan(
+        search,
+        inspect,
         description=first.description,
     )
 
@@ -108,6 +119,12 @@ def test_work_plan_round_trip_and_step_order_are_canonical() -> None:
     assert WorkPlan.from_json_bytes(first.canonical_bytes()) == first
 
 
+def test_work_step_is_bound_to_parent_work_plan_ref() -> None:
+    foreign_step = _step("foreign-plan", plan_ref=OTHER_PLAN_REF)
+    with pytest.raises(ValidationError, match="same WorkPlan ref"):
+        _plan(foreign_step)
+
+
 def test_dependency_graph_must_be_finite_and_acyclic() -> None:
     a_ref = _ref("irr.work_step", "a")
     b_ref = _ref("irr.work_step", "b")
@@ -115,23 +132,49 @@ def test_dependency_graph_must_be_finite_and_acyclic() -> None:
     b = _step("b", depends_on=(a_ref,))
 
     with pytest.raises(ValidationError, match="acyclic"):
-        WorkPlan(
-            resolved_intent_identity=RESOLVED,
-            plan_ref=_ref("irr.work_plan", "cycle"),
-            steps=(a, b),
-            description="Invalid cyclic plan.",
+        _plan(a, b, description="Invalid cyclic plan.")
+
+
+def test_large_finite_dependency_chain_does_not_depend_on_python_recursion_limit() -> None:
+    steps: list[WorkStep] = []
+    previous: StableRef | None = None
+    for index in range(1500):
+        name = f"step-{index:04d}"
+        step = _step(
+            name,
+            depends_on=() if previous is None else (previous,),
+            operation="test.step",
         )
+        steps.append(step)
+        previous = step.step_ref
+
+    plan = _plan(*reversed(steps), description="Large but finite acyclic plan.")
+    assert len(plan.steps) == 1500
 
 
 def test_dependency_must_reference_a_step_in_the_same_plan() -> None:
     step = _step("inspect", depends_on=(_ref("irr.work_step", "missing"),))
     with pytest.raises(ValidationError, match="same plan"):
-        WorkPlan(
-            resolved_intent_identity=RESOLVED,
-            plan_ref=_ref("irr.work_plan", "missing-dependency"),
-            steps=(step,),
-            description="Invalid missing dependency.",
+        _plan(step, description="Invalid missing dependency.")
+
+
+def test_return_to_irr_is_terminal_with_respect_to_plan_dependencies() -> None:
+    pause = _step("pause", continuation=WorkContinuationMode.RETURN_TO_IRR)
+    hidden_successor = _step("hidden-successor", depends_on=(pause.step_ref,))
+
+    with pytest.raises(ValidationError, match="terminal"):
+        _plan(
+            pause,
+            hidden_successor,
+            description="A successor cannot be pre-admitted beyond return_to_irr.",
         )
+
+
+def test_independent_work_may_coexist_with_terminal_return_to_irr_step() -> None:
+    pause = _step("pause", continuation=WorkContinuationMode.RETURN_TO_IRR)
+    independent = _step("independent", operation="artifact.inspect")
+    plan = _plan(pause, independent)
+    assert len(plan.steps) == 2
 
 
 def test_internal_symbolic_dataflow_requires_dependency_path() -> None:
@@ -146,10 +189,9 @@ def test_internal_symbolic_dataflow_requires_dependency_path() -> None:
     )
 
     with pytest.raises(ValidationError, match="producing step"):
-        WorkPlan(
-            resolved_intent_identity=RESOLVED,
-            plan_ref=_ref("irr.work_plan", "unordered-dataflow"),
-            steps=(producer, consumer),
+        _plan(
+            producer,
+            consumer,
             description="Internal dataflow without ordering is invalid.",
         )
 
@@ -167,10 +209,10 @@ def test_transitive_dependency_path_can_carry_internal_symbolic_dataflow() -> No
         depends_on=(bridge.step_ref,),
     )
 
-    plan = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=_ref("irr.work_plan", "transitive-dataflow"),
-        steps=(consumer, producer, bridge),
+    plan = _plan(
+        consumer,
+        producer,
+        bridge,
         description="Transitive dependency preserves required ordering.",
     )
     assert len(plan.steps) == 3
@@ -182,10 +224,8 @@ def test_external_symbolic_input_does_not_require_an_internal_producer() -> None
         "consume",
         inputs=(WorkSymbolicInput(name="value", reference=external),),
     )
-    plan = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=_ref("irr.work_plan", "external-symbolic"),
-        steps=(step,),
+    plan = _plan(
+        step,
         description="The symbolic input may be bound outside this plan.",
     )
     assert plan.steps[0].inputs[0].reference == external
@@ -203,12 +243,7 @@ def test_same_symbolic_slot_cannot_have_conflicting_semantics() -> None:
         inputs=(WorkSymbolicInput(name="two", reference=conflicting),),
     )
     with pytest.raises(ValidationError, match="conflicting semantics"):
-        WorkPlan(
-            resolved_intent_identity=RESOLVED,
-            plan_ref=_ref("irr.work_plan", "conflicting-symbol"),
-            steps=(a, b),
-            description="Conflicting symbolic meaning is invalid.",
-        )
+        _plan(a, b, description="Conflicting symbolic meaning is invalid.")
 
 
 def test_same_symbolic_output_slot_cannot_have_multiple_producers() -> None:
@@ -216,12 +251,7 @@ def test_same_symbolic_output_slot_cannot_have_multiple_producers() -> None:
     a = _step("a", outputs=(WorkOutput(name="result-a", reference=output),))
     b = _step("b", outputs=(WorkOutput(name="result-b", reference=output),))
     with pytest.raises(ValidationError, match="multiple steps"):
-        WorkPlan(
-            resolved_intent_identity=RESOLVED,
-            plan_ref=_ref("irr.work_plan", "duplicate-producer"),
-            steps=(a, b),
-            description="A symbolic output has one producer in a plan.",
-        )
+        _plan(a, b, description="A symbolic output has one producer in a plan.")
 
 
 def test_work_step_rejects_foreign_symbolic_lineage() -> None:
@@ -233,6 +263,14 @@ def test_work_step_rejects_foreign_symbolic_lineage() -> None:
         )
 
 
+def test_operation_is_a_dotted_semantic_identifier_not_executable_text() -> None:
+    assert _step("valid-operation", operation="filesystem.search").operation == "filesystem.search"
+    with pytest.raises(ValidationError, match="semantic operation identifier"):
+        _step("command-shaped-operation", operation="rm -rf /")
+    with pytest.raises(ValidationError, match="semantic operation identifier"):
+        _step("single-token-operation", operation="search")
+
+
 def test_literal_executable_looking_text_remains_data() -> None:
     literal = WorkLiteralInput(
         name="user_text",
@@ -240,23 +278,25 @@ def test_literal_executable_looking_text_remains_data() -> None:
         value="rm -rf / && curl https://example.invalid",
     )
     step = _step("preserve-text", inputs=(literal,), operation="text.inspect")
-    plan = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=_ref("irr.work_plan", "literal-data"),
-        steps=(step,),
+    plan = _plan(
+        step,
         description="Executable-looking text is represented only as literal input data.",
     )
     assert plan.steps[0].inputs[0].value == literal.value
     assert b"rm -rf /" in plan.canonical_bytes()
 
 
+def test_literal_string_value_may_be_empty_or_whitespace_when_semantically_meaningful() -> None:
+    empty = WorkLiteralInput(name="empty", semantic_type="text.literal", value="")
+    whitespace = WorkLiteralInput(name="whitespace", semantic_type="text.literal", value="   ")
+    step = _step("literal-edge-values", inputs=(whitespace, empty), operation="text.inspect")
+    plan = _plan(step)
+    values = {item.name: item.value for item in plan.steps[0].inputs}
+    assert values == {"empty": "", "whitespace": "   "}
+
+
 def test_work_plan_unknown_fields_fail_closed() -> None:
-    plan = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=_ref("irr.work_plan", "unknown-field"),
-        steps=(_step("one"),),
-        description="Unknown fields are rejected.",
-    )
+    plan = _plan(_step("one"), description="Unknown fields are rejected.")
     primitive = plan.to_primitive()
     primitive["approved"] = "true"
     with pytest.raises(SerializationError, match="invalid fields"):
@@ -264,10 +304,8 @@ def test_work_plan_unknown_fields_fail_closed() -> None:
 
 
 def test_work_ir_has_no_authority_surface() -> None:
-    plan = WorkPlan(
-        resolved_intent_identity=RESOLVED,
-        plan_ref=_ref("irr.work_plan", "no-authority"),
-        steps=(_step("one"),),
+    plan = _plan(
+        _step("one"),
         description="Work semantics remain separate from authority.",
     )
 
