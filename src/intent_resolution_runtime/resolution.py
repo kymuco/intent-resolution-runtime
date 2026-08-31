@@ -86,6 +86,7 @@ class ResolutionIssueKind(str, Enum):
     MATERIAL_AMBIGUITY = "material_ambiguity"
     CONFLICT = "conflict"
     MISSING_INFORMATION = "missing_information"
+    UNCERTAINTY = "uncertainty"
 
 
 class ResolutionIssueImpact(str, Enum):
@@ -242,7 +243,9 @@ class ResolutionIssue(_CanonicalResolutionRecord):
             if len(self.alternatives) < 2:
                 raise ValidationError("Conflict must preserve at least two alternatives")
         elif self.alternatives:
-            raise ValidationError("Missing Information must not invent competing alternatives")
+            raise ValidationError(
+                "Missing Information or Uncertainty must not invent competing alternatives"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
