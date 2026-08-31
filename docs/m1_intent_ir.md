@@ -195,3 +195,32 @@ record order != source precedence
 ```
 
 M1.2 extends canonical IR values only with arrays while preserving M1.1 object/string encoding byte-for-byte. Resolution, Clarification, Observation, Binding, Work, Governance, Attempt/Outcome, trust algorithms, retrieval, disclosure policy, and persistence remain later slices.
+
+---
+
+# M1.3 — Resolution / Clarification IR
+
+M1.3 encodes the M0.2/M0.7 boundary between provider-produced candidate semantics and IRR-owned admitted resolution or pause semantics.
+
+The detailed normative implementation contract is maintained in [M1.3 Resolution / Clarification IR](m1_3_resolution_ir.md).
+
+Core executable distinctions:
+
+```text
+provider proposes != IRR admits
+CandidateResolution != ResolvedIntent
+ClarificationNeed != ResolvedIntent
+InformationNeed != retrieval authority
+Material Ambiguity -> blocking
+unresolved blocking issue -> no ResolvedIntent
+non-blocking uncertainty may remain explicit
+Assumption != established fact
+resolution admission != Authorization
+resolution admission != Effect
+```
+
+`CandidateResolution` is bound to exact IntentRequest and ContextEnvelope identities plus provider invocation attribution. Any candidate retained as provenance by `ResolvedIntent`, `ClarificationNeed`, or `InformationNeed` must belong to that same request/context lineage.
+
+M1.3 preserves ordinary epistemic `uncertainty` separately from `conflict` and `missing_information`; uncertainty may be blocking or non-blocking, does not invent competing alternatives, and is not a confidence or trust score.
+
+M1.3 does not introduce WorkPlan, Binding, Observation, Capability/Governance, Attempt/Outcome, provider transport, trust scoring, retrieval authority, or persistence. Those remain later M1 slices.
