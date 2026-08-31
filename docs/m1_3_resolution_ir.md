@@ -113,7 +113,8 @@ ResolutionIssue
 ├─ kind
 │  ├─ material_ambiguity
 │  ├─ conflict
-│  └─ missing_information
+│  ├─ missing_information
+│  └─ uncertainty
 ├─ impact = blocking | non_blocking
 ├─ scope
 ├─ description
@@ -128,6 +129,7 @@ Rules frozen by executable validation:
 - Material Ambiguity preserves at least two alternatives.
 - Conflict preserves at least two conflicting alternatives.
 - Missing Information does not invent alternatives that are not known.
+- Uncertainty preserves epistemic limits without implying a Conflict or a missing-information acquisition requirement, and it does not invent competing alternatives.
 - a `ResolvedIntent` cannot contain a blocking issue;
 - a `ResolvedIntent` cannot contain Material Ambiguity even if a malformed producer labels it non-blocking.
 
@@ -210,7 +212,7 @@ Admission validation enforced by this slice:
 ```text
 unresolved blocking issue -> rejected
 Material Ambiguity -> rejected
-non-blocking Conflict/Missing Information -> may remain explicit
+non-blocking Conflict/Missing Information/Uncertainty -> may remain explicit
 ```
 
 M1.3 has no `WorkPlan` field and no authority/effect fields.
@@ -326,7 +328,7 @@ M1.3 rejects at least:
 - duplicate candidate inputs;
 - non-blocking Material Ambiguity;
 - ambiguity/conflict records that erase their alternatives;
-- Missing Information records that invent alternatives;
+- Missing Information or Uncertainty records that invent alternatives;
 - `ResolvedIntent` with any unresolved blocking issue;
 - clarification/information pause records without a blocking issue;
 - arbitrary `RecordIdentity` values masquerading as exact candidate provenance;
@@ -361,6 +363,8 @@ candidate identity binds request + context + provider invocation
 candidate collection order != implicit precedence
 Material Ambiguity always blocks
 conflict alternatives are preserved without precedence
+non-blocking uncertainty can remain explicit in ResolvedIntent
+blocking uncertainty prevents ResolvedIntent admission
 assumptions are explicit and identity-material
 ResolvedIntent rejects blocking issues
 non-operational ResolvedIntent requires no WorkPlan
