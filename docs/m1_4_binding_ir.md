@@ -47,7 +47,34 @@ BoundValue  BindingIssue
 
 It does not read files, query services, inspect ambient process/UI state, consult a wall clock, retrieve Context, invoke a model, widen scope, mutate external state, or perform fallback.
 
-## 2. SymbolicReference
+## 2. Two scope roles
+
+M1.4 explicitly separates the domain over which a value is selected from the concrete resource/surface represented by an individual candidate.
+
+```text
+selection_scope != value_scope
+```
+
+Example:
+
+```text
+selection_scope = D:\Backups
+value_scope     = D:\Backups\backup-b.zip
+```
+
+The first is part of the admitted selection semantics. The second is material concrete scope that becomes known only when the value is bound.
+
+This distinction matters to later Capability/Governance contracts:
+
+```text
+concrete value scope becoming known
+    !=
+Authorization over that scope
+```
+
+M1.4 therefore never requires a candidate's `value_scope` to equal the enclosing `selection_scope`.
+
+## 3. SymbolicReference
 
 ```text
 SymbolicReference
@@ -55,13 +82,11 @@ SymbolicReference
 ├─ resolved_intent_identity
 ├─ slot_ref
 ├─ semantic_type
-├─ scope
+├─ selection_scope
 └─ description
 ```
 
-A SymbolicReference is a concrete IR record for a future slot whose **meaning is already fixed** but whose concrete value is not yet known.
-
-It is explicitly bound to one admitted `ResolvedIntent` lineage.
+A SymbolicReference denotes a future value whose meaning and selection domain are already fixed but whose concrete value is not yet known.
 
 ```text
 symbolic reference != observed value
@@ -72,7 +97,7 @@ symbolic reference != general-purpose scripting variable
 
 `slot_ref` is an opaque `StableRef`. Its namespace does not confer trust or authority.
 
-## 3. BindingInput
+## 4. BindingInput
 
 ```text
 BindingInput
@@ -86,7 +111,8 @@ BindingInput
 ├─ source_identity
 ├─ semantic_type
 ├─ value
-├─ scope
+├─ selection_scope
+├─ value_scope
 ├─ attributes[]
 ├─ temporal_basis_refs[]
 ├─ completeness_refs[]
@@ -105,23 +131,7 @@ outcome
 other_explicit
 ```
 
-These are **classification labels at the binding boundary**, not implementations of the later Observation or Outcome schemas.
-
-In particular:
-
-```text
-BindingInput.role = observation
-    !=
-M1.4 defines Observation schema
-
-BindingInput.role = outcome
-    !=
-M1.4 defines Outcome schema
-```
-
-The same bytes may later participate in more than one explicit role, but M1.4 does not collapse those roles.
-
-Core distinction:
+These are classification labels at the binding boundary, not implementations of later Observation or Outcome schemas.
 
 ```text
 Binding Input != Observation by default
@@ -129,15 +139,13 @@ Binding Input != Context by default
 Binding Input != Outcome by default
 ```
 
-`source_identity` is the exact admitted source-record/source-contract identity that the BindingRule is allowed to consume. It is lineage, not proof of truth, availability, or authority.
+`source_identity` is an exact admitted source-record/source-contract identity. It is lineage, not Capability identity, truth, availability, or authority.
 
-`input_ref` identifies the attributable input occurrence. It is not a permission token.
+`selection_scope` must match the rule's admitted selection domain. `value_scope` describes the concrete candidate and is retained independently.
 
-## 4. Binding attributes
+## 5. Binding attributes and constraints
 
-BindingInput may carry a closed tuple of named attributes.
-
-M1.4 v1 supports two attribute kinds:
+BindingInput may carry a closed tuple of named attributes. M1.4 v1 supports:
 
 ```text
 text
@@ -146,41 +154,21 @@ rfc3339_timestamp
 
 RFC3339 timestamp attributes require an explicit timezone offset (`Z` or `±HH:MM`). No ambient timezone or wall clock is consulted.
 
-```text
-timestamp value != "now"
-timestamp attribute != freshness proof by itself
-```
-
-Material freshness remains represented through the rule's required temporal-basis provenance.
-
-Duplicate attribute names are rejected and attribute order is canonicalized by name.
-
-## 5. BindingConstraint
-
 M1.4 v1 intentionally supports a minimal bounded predicate language:
 
 ```text
 attribute equals expected value
 ```
 
-Each constraint freezes:
-
-```text
-attribute_name
-operator = equals
-expected_kind
-expected_value
-```
+Each constraint freezes the attribute name, operator, expected semantic kind, and expected value.
 
 No shell, regex execution, Python expression, query language, model judgment, script fragment, or arbitrary comparator exists in the v1 rule schema.
-
-The small language is deliberate:
 
 ```text
 BindingRule != hidden program
 ```
 
-Future rule forms require an explicit versioned extension rather than smuggling executable semantics into strings.
+A required constraint attribute that is absent is `missing_required_data`. A present attribute with the wrong admitted semantic kind is `incompatible_input`; it is not silently treated as an ordinary constraint mismatch.
 
 ## 6. BindingSelectionPolicy
 
@@ -193,59 +181,21 @@ min_attribute
 any_interchangeable
 ```
 
-### require_unique
-
-After explicit compatibility checks and constraints, exactly one candidate must remain.
+For `max_attribute` / `min_attribute`, both selector name and selector semantic kind are frozen before BindingInput arrives.
 
 ```text
-0 candidates -> BindingIssue.zero_matches
->1 candidates -> BindingIssue.multiple_matches
+unknown future value != unknown future comparison semantics
 ```
 
-No implicit first-result or presentation-order preference exists.
+Equal extremum winners produce `BindingIssue.tie`; no filename/order/provider/model tie-break is invented.
 
-### max_attribute / min_attribute
-
-The admitted rule freezes both:
-
-```text
-selector attribute name
-selector attribute semantic kind
-```
-
-before BindingInput arrives.
-
-This is important:
-
-```text
-unknown future value
-    !=
-unknown future comparison semantics
-```
-
-A candidate cannot decide at runtime that `modification_time` should be compared as arbitrary text when the rule admitted an RFC3339 timestamp comparator.
-
-If the extremum has multiple equal winners:
-
-```text
-tie -> BindingIssue.tie
-```
-
-There is no hidden filename/order/provider/model tie-break.
-
-### any_interchangeable
-
-This mode is valid only when admitted semantics have already declared every compatible candidate materially interchangeable.
-
-M1.4 v1 makes the mechanical choice policy explicit:
+`any_interchangeable` is valid only when admitted semantics already declare every compatible candidate materially interchangeable. M1.4 v1 then makes the mechanical policy explicit as:
 
 ```text
 canonical_identity_min
 ```
 
-The canonical-identity ordering is **not semantic preference or presentation precedence**. It is an inspectable deterministic implementation policy that is permitted only after the rule already states that any compatible candidate is semantically interchangeable.
-
-If different candidates can materially change downstream work, `any_interchangeable` is not an admissible rule.
+This ordering is not semantic preference or presentation precedence. It is permitted only after semantic interchangeability is already fixed.
 
 ## 7. BindingRule
 
@@ -258,7 +208,7 @@ BindingRule
 ├─ allowed_input_roles[]
 ├─ allowed_source_identities[]
 ├─ input_semantic_type
-├─ required_scope
+├─ required_selection_scope
 ├─ constraints[]
 ├─ selection_policy
 ├─ description
@@ -267,20 +217,9 @@ BindingRule
 └─ required_evidence_refs[]
 ```
 
-A BindingRule is fully explicit before input values arrive.
+The input semantic type and required selection scope must exactly match the SymbolicReference.
 
-The v1 constructor requires at least one allowed input role and at least one exact allowed source identity.
-
-That closes an important substitution boundary:
-
-```text
-same primitive shape != semantic substitutability
-same path string != same admitted source
-```
-
-The input semantic type and required scope must equal the SymbolicReference semantic type and scope.
-
-The rule may also require exact Temporal Basis, Completeness, or Evidence record identities. Binding succeeds only when each supplied candidate carries the required material provenance.
+The rule may require exact Temporal Basis, Completeness, or Evidence identities. Binding succeeds only when supplied candidates carry that required material provenance.
 
 ```text
 binding does not amplify evidence
@@ -288,9 +227,9 @@ binding does not imply completeness
 binding does not imply freshness
 ```
 
-The rule is immutable and content-addressed.
+The rule does not constrain concrete `value_scope` unless a future version adds an explicit bounded value-scope predicate. M1.4 does not infer one from path-string shape.
 
-## 8. Mechanical evaluation
+## 8. Mechanical evaluation phases
 
 Public function:
 
@@ -299,30 +238,32 @@ evaluate_binding(rule, binding_inputs, attribution)
     -> BoundValue | BindingIssue
 ```
 
-The evaluator performs only the admitted mechanical checks.
+Evaluation is performed over the **complete normalized input set**, not candidate-by-candidate with early return based on identity/presentation order.
 
-For every supplied BindingInput it fail-closes on:
+The phases are explicit:
 
-- foreign ResolvedIntent lineage;
-- a role outside the rule's allowed roles;
-- a source identity outside the rule's admitted sources;
-- semantic type mismatch;
-- scope mismatch;
-- missing material temporal/completeness/evidence provenance;
-- missing required constraint data;
-- selector kind mismatch.
+```text
+1. structural / lineage compatibility across the whole input set
+2. required temporal / completeness / evidence provenance across the whole input set
+3. constraint attribute presence and semantic kinds
+4. declarative constraint filtering
+5. selector attribute presence and semantic kinds
+6. admitted selection policy
+```
 
-Constraint mismatch may exclude a candidate. Missing required constraint data does not silently behave like "not matched"; it is an unresolved-data issue.
+Thus:
 
-No evaluator path:
+```text
+input order != diagnostic precedence
+canonical identity order != failure classification
+presentation order != binding precedence
+```
 
-- retrieves missing data;
-- changes the rule;
-- substitutes another scope;
-- invents another source;
-- uses result/presentation order;
-- falls back to shell/browser/model judgment;
-- treats a failure as permission to try another semantic operation.
+A set containing an unadmitted role/source/type/selection-scope candidate is classified as `incompatible_input` independently of which input sorts first. Required provenance is checked only after structural compatibility of the complete set is established.
+
+Constraint and selector semantic-kind mismatches are `incompatible_input`; missing required data is `missing_required_data`.
+
+No evaluator path retrieves missing data, changes the rule, substitutes another selection scope, invents another source, falls back to shell/browser/model judgment, or treats failure as permission to try another semantic operation.
 
 ## 9. BindingAttribution
 
@@ -334,15 +275,7 @@ BindingAttribution
 
 This records which mechanical evaluator occurrence produced the binding result.
 
-It is not:
-
-```text
-authentication
-trust
-Governance authority
-Authorization
-Effect evidence
-```
+It is not authentication, trust, Governance authority, Authorization, or Effect evidence.
 
 ## 10. BoundValue
 
@@ -355,16 +288,15 @@ BoundValue
 ├─ selected_input_identity
 ├─ semantic_type
 ├─ value
-└─ scope
+├─ selection_scope
+└─ value_scope
 ```
 
-A BoundValue is constructible only when re-running the embedded immutable BindingRule over the embedded BindingInput set yields exactly the selected input.
+A BoundValue is constructible only when re-running the embedded BindingRule over the embedded full BindingInput set yields exactly the selected input.
 
-The concrete value, semantic type, and scope must exactly match that selected BindingInput and the SymbolicReference.
+The concrete `value`, `semantic_type`, `selection_scope`, and `value_scope` must match that selected input and the admitted symbolic/rule semantics.
 
-This prevents a producer from taking a valid selection lineage and replacing the concrete output with another value.
-
-The full material candidate set is retained so an extremum or unique-selection decision remains inspectable.
+The complete candidate set is retained so an extremum or unique-selection decision remains inspectable.
 
 ```text
 bound value != provenance-free value
@@ -372,7 +304,7 @@ bound value != authorization
 bound value != timeless fact
 ```
 
-M1.4 does not say that a successfully bound resource still exists at execution time. Drift/revalidation remains a later lifecycle concern.
+A concrete `value_scope` may be narrower or otherwise more specific than the selection domain. Later governance may need to review that concrete scope; M1.4 itself grants no authority over it.
 
 ## 11. BindingIssue
 
@@ -383,7 +315,7 @@ BindingIssue
 ├─ rule
 ├─ binding_inputs[]
 ├─ kind
-├─ scope
+├─ selection_scope
 └─ description
 ```
 
@@ -397,62 +329,40 @@ missing_required_data
 incompatible_input
 ```
 
-A BindingIssue cannot lie about these mechanical states: its constructor re-evaluates the rule and supplied inputs and requires the issue kind to match the actual mechanical result.
+A BindingIssue constructor re-evaluates the rule/input set and requires **both** kind and description to match the mechanical result. Diagnostic records therefore cannot tell a different story while preserving the same input provenance.
 
-A BindingIssue is **not** a generic IRR Continuation record and does not itself authorize more retrieval or fallback.
-
-```text
-BindingIssue != Continuation
-BindingIssue != InformationNeed
-BindingIssue != authorization
-```
-
-M1.7 will define generic Continuation/Attempt/Outcome records.
+A BindingIssue is not generic IRR Continuation, InformationNeed, authorization, or fallback permission.
 
 ## 12. Material new information
 
-M1.4 deliberately does not represent material new information as ordinary BindingInput merely to keep evaluation moving.
+M1.4 does not represent material new semantic decisions as ordinary BindingInput merely to keep evaluation moving.
 
-If returned data reveals a new material decision — for example a new disclosure surface, a different executable target, an unsupported tie policy, or a contradicted assumption — the fixed binding path stops.
+If returned data reveals a new disclosure surface, different executable target, unsupported tie policy, contradicted assumption, or another material choice, the fixed binding path stops.
 
 ```text
 material new information != mechanical BindingInput
 ```
 
-The later M1.7 Continuation layer owns the generic re-entry record.
-
-This is why `BindingIssueKind` does not contain a generic "material_new_information" escape hatch.
+M1.7 owns generic Continuation re-entry records.
 
 ## 13. Ordering and normalization
 
 Set-like tuples are canonicalized independently of caller presentation order:
 
 - BindingInput attributes by attribute name;
-- provenance identity references by RecordIdentity;
+- provenance identities by RecordIdentity;
 - BindingRule roles by enum value;
 - BindingRule source identities by RecordIdentity;
-- BindingRule constraints by their complete declarative content;
+- BindingRule constraints by complete declarative content;
 - evaluated BindingInput sets by BindingInput identity.
 
-Therefore:
+Canonical ordering is used for identity/representation only. It does not choose which validation defect becomes semantically visible; phase-based whole-set evaluation owns that classification.
 
-```text
-presentation order != binding precedence
-input array order != semantic ranking
-```
-
-For `any_interchangeable`, canonical identity order is present explicitly in the SelectionPolicy and is valid only because the candidates were already admitted as interchangeable.
+For `any_interchangeable`, canonical identity order appears explicitly in SelectionPolicy and is permitted only because the candidates were already admitted as interchangeable.
 
 ## 14. Closed Python schema
 
-All public M1.4 record classes are:
-
-- frozen;
-- slotted;
-- exact-type validated where retained by another record;
-- sealed against public subclassing through the package surface.
-
-This preserves the M1 invariant:
+All public M1.4 record classes are frozen, slotted, exact-type validated where retained by another record, and sealed against public subclassing through the package surface.
 
 ```text
 complete admitted constructor state
@@ -464,17 +374,7 @@ Unknown wire fields fail closed.
 
 ## 15. Canonical identity
 
-M1.4 does not extend the canonical value domain.
-
-All new records use only:
-
-```text
-object
-array
-Unicode-scalar string
-```
-
-and therefore preserve M1.1/M1.2/M1.3 canonical bytes byte-for-byte.
+M1.4 does not extend the canonical value domain. All records use only object, array, and Unicode-scalar string values, preserving earlier M1 canonical bytes.
 
 Identity remains:
 
@@ -486,8 +386,6 @@ sha256(canonical_json_bytes(record))
 
 M1.4 contains no authority field.
 
-Mandatory distinctions remain:
-
 ```text
 symbolic reference != authority
 Binding Input != authority
@@ -495,6 +393,7 @@ Binding Input availability != disclosure authority
 Binding Rule != Authorization
 Binding evaluation != Authorization
 Bound Value != permission
+concrete value_scope != authorization over that scope
 BindingIssue != permission to fallback
 ```
 
@@ -502,24 +401,7 @@ M1.6 owns Capability/Governance references.
 
 ## 17. Explicit deferrals
 
-M1.4 does not freeze:
-
-- WorkPlan / WorkStep schemas;
-- DelegatedWork;
-- concrete Capability I/O schemas;
-- Observation record schemas;
-- Outcome record schemas;
-- generic IRR Continuation;
-- Governance / Authorization;
-- executor scheduling;
-- external retrieval;
-- disclosure policy;
-- world-drift revalidation;
-- rebinding lifecycle;
-- fallback/retry;
-- persistence;
-- canonical numbers, booleans, or null;
-- arbitrary comparators or executable rule languages.
+M1.4 does not freeze WorkPlan/WorkStep, DelegatedWork, concrete Capability I/O schemas, Observation/Outcome schemas, generic Continuation, Governance/Authorization, executor scheduling, external retrieval, disclosure policy, world-drift revalidation, rebinding lifecycle, fallback/retry, persistence, canonical numbers/booleans/null, or arbitrary executable comparators.
 
 ## 18. Acceptance
 
@@ -528,9 +410,11 @@ M1.4 is correct when executable tests prove at least:
 ```text
 SymbolicReference is immutable and round-trippable
 BindingInput preserves explicit attribution and source role
-BindingInput ordering does not create precedence
-BindingRule source / role / type / scope boundaries fail closed
+selection_scope and concrete value_scope remain distinct
+BindingRule source / role / type / selection-scope boundaries fail closed
 selector comparison kind is admitted before runtime input
+whole-input-set diagnostic classification is presentation-order independent
+constraint attribute wrong kind is incompatible, not an ordinary mismatch
 newest-by-timestamp selects a unique winner
 timestamp-equivalent values produce a tie
 tie does not invent a hidden tie-break
@@ -540,8 +424,9 @@ require_unique rejects multiple matches
 any_interchangeable requires an explicit mechanical policy
 any_interchangeable is presentation-order independent
 BoundValue retains the full material BindingInput set
-BoundValue cannot replace the selected concrete value
-BindingIssue cannot falsely claim a mechanical failure
+BoundValue preserves selected concrete value_scope
+BoundValue cannot replace selected value or value_scope
+BindingIssue kind and description are mechanically reproducible
 unknown wire fields are rejected
 public M1.4 records are closed against subclass state
 no authority fields are introduced
