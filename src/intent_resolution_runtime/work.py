@@ -476,6 +476,7 @@ class WorkPlan(_CanonicalWorkRecord):
     resolved_intent_identity: RecordIdentity
     plan_ref: StableRef
     steps: tuple[WorkStep, ...]
+    completion_contract: str
     description: str
 
     def __post_init__(self) -> None:
@@ -568,10 +569,12 @@ class WorkPlan(_CanonicalWorkRecord):
             "steps",
             tuple(sorted(steps, key=lambda item: _ref_key(item.step_ref))),
         )
+        _require_text(self.completion_contract, field="WorkPlan.completion_contract")
         _require_text(self.description, field="WorkPlan.description")
 
     def to_primitive(self) -> dict[str, object]:
         return {
+            "completion_contract": self.completion_contract,
             "description": self.description,
             "plan_ref": self.plan_ref.to_primitive(),
             "resolved_intent_identity": self.resolved_intent_identity.to_primitive(),
@@ -584,7 +587,14 @@ class WorkPlan(_CanonicalWorkRecord):
         obj = _expect_object(value, field="WorkPlan")
         _expect_exact_keys(
             obj,
-            {"schema", "resolved_intent_identity", "plan_ref", "steps", "description"},
+            {
+                "schema",
+                "resolved_intent_identity",
+                "plan_ref",
+                "steps",
+                "completion_contract",
+                "description",
+            },
             field="WorkPlan",
         )
         if obj["schema"] != cls.SCHEMA:
@@ -601,6 +611,7 @@ class WorkPlan(_CanonicalWorkRecord):
                     WorkStep.from_primitive(item, field=f"WorkPlan.steps[{index}]")
                     for index, item in enumerate(steps)
                 ),
+                completion_contract=obj["completion_contract"],
                 description=obj["description"],
             )
         except ValidationError as exc:
