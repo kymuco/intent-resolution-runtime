@@ -171,3 +171,27 @@ authority-like extra fields rejected
 unknown v1 origin kinds rejected
 strict lowercase ASCII SHA-256 identity
 ```
+
+---
+
+# M1.2 — Context / Claims / Evidence IR
+
+M1.2 encodes the M0.2 epistemic input boundary as immutable Context records while preserving the separation between Claims, source Attribution, Evidence, Completeness, Temporal Basis, Context References, truth, and authority.
+
+The detailed normative implementation contract is maintained in [M1.2 Context / Claims / Evidence IR](m1_2_context_ir.md).
+
+Core executable distinctions:
+
+```text
+Context boundary source + occurrence are attributable
+Claim != factual truth
+Evidence for Claim != Evidence for Attribution
+Evidence target != evidentiary scope
+Evidence != authority
+Completeness != inferred exhaustiveness
+Temporal Basis != ambient clock
+Context Reference != retrieval/disclosure authority
+record order != source precedence
+```
+
+M1.2 extends canonical IR values only with arrays while preserving M1.1 object/string encoding byte-for-byte. Resolution, Clarification, Observation, Binding, Work, Governance, Attempt/Outcome, trust algorithms, retrieval, disclosure policy, and persistence remain later slices.

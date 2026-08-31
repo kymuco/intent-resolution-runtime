@@ -8,11 +8,11 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M1.1 — IntentRequest Core & Canonical Identity**.
+Current milestone: **M1.2 — Context / Claims / Evidence IR**.
 
 **M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 now encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
-M1.1 introduces the first `src/intent_resolution_runtime/` package and intentionally limits implementation to the `IntentRequest` input core, canonical object/string encoding, SHA-256 record identity, and tests. Context, resolution, work, delegation, capability/governance, and recovery IR remain later M1 slices.
+M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 adds explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References without granting retrieval, disclosure, trust, or authority. Resolution, work, delegation, capability/governance, and recovery IR remain later M1 slices.
 
 ## Product identity
 
@@ -251,6 +251,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M0.10 reference scenarios](docs/reference_scenarios.md)
 - [M0 closure & M1 handoff](docs/m0_closure.md)
 - [M1 Intent IR](docs/m1_intent_ir.md)
+- [M1.2 Context / Claims / Evidence IR](docs/m1_2_context_ir.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
