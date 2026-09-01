@@ -60,6 +60,14 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
+from .worker_result import (
+    WorkerNeed,
+    WorkerNeedKind,
+    WorkerResult,
+    WorkerResultAttribution,
+    WorkerResultMaterial,
+    WorkerResultMaterialRole,
+)
 from .work import (
     WorkContinuationMode,
     WorkInput,
@@ -125,9 +133,12 @@ for _ir_type in (
     DelegatedWork,
     DelegationHandoffAttribution,
     DelegatedWorkHandoff,
+    WorkerResultAttribution,
+    WorkerResultMaterial,
+    WorkerNeed,
+    WorkerResult,
 ):
     _seal_ir_type(_ir_type)
-
 del _ir_type, _seal_ir_type
 
 
@@ -189,6 +200,12 @@ __all__ = [
     "TemporalBasisKind",
     "TemporalBasisRecord",
     "ValidationError",
+    "WorkerNeed",
+    "WorkerNeedKind",
+    "WorkerResult",
+    "WorkerResultAttribution",
+    "WorkerResultMaterial",
+    "WorkerResultMaterialRole",
     "WorkContinuationMode",
     "WorkInput",
     "WorkLiteralInput",
