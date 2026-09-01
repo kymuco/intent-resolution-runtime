@@ -392,6 +392,130 @@ class ExpectedDeliverable(_CanonicalDelegationRecord):
         return cls.from_primitive(parse_json_object(data))
 
 
+@dataclass(frozen=True, slots=True)
+class DelegatedCapabilityAllowance(_CanonicalDelegationRecord):
+    SCHEMA: ClassVar[str] = "irr.delegated_capability_allowance.v1"
+
+    allowance_ref: StableRef
+    capability_ref: StableRef
+    capability_contract_identity: RecordIdentity
+    scope_refs: tuple[StableRef, ...]
+    description: str
+
+    def __post_init__(self) -> None:
+        if type(self.allowance_ref) is not StableRef:
+            raise ValidationError(
+                "DelegatedCapabilityAllowance.allowance_ref must be a StableRef"
+            )
+        if type(self.capability_ref) is not StableRef:
+            raise ValidationError(
+                "DelegatedCapabilityAllowance.capability_ref must be a StableRef"
+            )
+        if type(self.capability_contract_identity) is not RecordIdentity:
+            raise ValidationError(
+                "DelegatedCapabilityAllowance.capability_contract_identity "
+                "must be a RecordIdentity"
+            )
+        object.__setattr__(
+            self,
+            "scope_refs",
+            _normalize_stable_refs(
+                self.scope_refs,
+                field="DelegatedCapabilityAllowance.scope_refs",
+                nonempty=True,
+            ),
+        )
+        _require_text(
+            self.description, field="DelegatedCapabilityAllowance.description"
+        )
+
+    def to_primitive(self) -> dict[str, object]:
+        return {
+            "allowance_ref": self.allowance_ref.to_primitive(),
+            "capability_contract_identity": (
+                self.capability_contract_identity.to_primitive()
+            ),
+            "capability_ref": self.capability_ref.to_primitive(),
+            "description": self.description,
+            "schema": self.SCHEMA,
+            "scope_refs": [item.to_primitive() for item in self.scope_refs],
+        }
+
+    @classmethod
+    def from_primitive(
+        cls, value: object, *, field: str = "DelegatedCapabilityAllowance"
+    ) -> "DelegatedCapabilityAllowance":
+        obj = _expect_object(value, field=field)
+        _expect_exact_keys(
+            obj,
+            {
+                "schema",
+                "allowance_ref",
+                "capability_ref",
+                "capability_contract_identity",
+                "scope_refs",
+                "description",
+            },
+            field=field,
+        )
+        if obj["schema"] != cls.SCHEMA:
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
+        scopes = _expect_array(obj["scope_refs"], field=f"{field}.scope_refs")
+        try:
+            return cls(
+                allowance_ref=StableRef.from_primitive(
+                    obj["allowance_ref"], field=f"{field}.allowance_ref"
+                ),
+                capability_ref=StableRef.from_primitive(
+                    obj["capability_ref"], field=f"{field}.capability_ref"
+                ),
+                capability_contract_identity=RecordIdentity.from_primitive(
+                    obj["capability_contract_identity"],
+                    field=f"{field}.capability_contract_identity",
+                ),
+                scope_refs=tuple(
+                    StableRef.from_primitive(
+                        item, field=f"{field}.scope_refs[{index}]"
+                    )
+                    for index, item in enumerate(scopes)
+                ),
+                description=obj["description"],
+            )
+        except ValidationError as exc:
+            raise SerializationError(f"invalid {field}") from exc
+
+    @classmethod
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> "DelegatedCapabilityAllowance":
+        return cls.from_primitive(parse_json_object(data))
+
+
+def _normalize_capability_allowances(
+    value: object, *, field: str
+) -> tuple[DelegatedCapabilityAllowance, ...]:
+    if type(value) is not tuple:
+        raise ValidationError(f"{field} must be a tuple")
+    if not all(type(item) is DelegatedCapabilityAllowance for item in value):
+        raise ValidationError(
+            f"{field} must contain DelegatedCapabilityAllowance values"
+        )
+    items = cast(tuple[DelegatedCapabilityAllowance, ...], value)
+    allowance_refs = [item.allowance_ref for item in items]
+    if len(set(allowance_refs)) != len(allowance_refs):
+        raise ValidationError(
+            f"{field} must not contain duplicate allowance_ref values"
+        )
+    capability_refs = [item.capability_ref for item in items]
+    if len(set(capability_refs)) != len(capability_refs):
+        raise ValidationError(
+            f"{field} must not contain duplicate capability_ref values"
+        )
+    return tuple(
+        sorted(items, key=lambda item: _stable_ref_key(item.allowance_ref))
+    )
+
+
 def _normalize_scopes(
     value: object, *, field: str, nonempty: bool = False
 ) -> tuple[DelegatedScope, ...]:
@@ -468,7 +592,7 @@ class DelegatedWork(_CanonicalDelegationRecord):
     objective: str
     scopes: tuple[DelegatedScope, ...]
     context_surface: tuple[DelegatedContextReference, ...]
-    allowed_capability_refs: tuple[StableRef, ...]
+    allowed_capabilities: tuple[DelegatedCapabilityAllowance, ...]
     constraints: tuple[DelegationConstraint, ...]
     expected_deliverables: tuple[ExpectedDeliverable, ...]
     completion_contract: str
@@ -506,14 +630,18 @@ class DelegatedWork(_CanonicalDelegationRecord):
             )
         object.__setattr__(self, "context_surface", context_surface)
 
-        object.__setattr__(
-            self,
-            "allowed_capability_refs",
-            _normalize_stable_refs(
-                self.allowed_capability_refs,
-                field="DelegatedWork.allowed_capability_refs",
-            ),
+        allowed_capabilities = _normalize_capability_allowances(
+            self.allowed_capabilities, field="DelegatedWork.allowed_capabilities"
         )
+        if any(
+            scope_ref not in scope_refs
+            for allowance in allowed_capabilities
+            for scope_ref in allowance.scope_refs
+        ):
+            raise ValidationError(
+                "DelegatedWork capability allowances must reference admitted delegated scopes"
+            )
+        object.__setattr__(self, "allowed_capabilities", allowed_capabilities)
         object.__setattr__(
             self,
             "constraints",
@@ -538,14 +666,12 @@ class DelegatedWork(_CanonicalDelegationRecord):
 
     def to_primitive(self) -> dict[str, object]:
         return {
-            "allowed_capability_refs": [
-                item.to_primitive() for item in self.allowed_capability_refs
+            "allowed_capabilities": [
+                item.to_primitive() for item in self.allowed_capabilities
             ],
             "completion_contract": self.completion_contract,
             "constraints": [item.to_primitive() for item in self.constraints],
-            "context_surface": [
-                item.to_primitive() for item in self.context_surface
-            ],
+            "context_surface": [item.to_primitive() for item in self.context_surface],
             "delegation_ref": self.delegation_ref.to_primitive(),
             "description": self.description,
             "expected_deliverables": [
@@ -573,7 +699,7 @@ class DelegatedWork(_CanonicalDelegationRecord):
                 "objective",
                 "scopes",
                 "context_surface",
-                "allowed_capability_refs",
+                "allowed_capabilities",
                 "constraints",
                 "expected_deliverables",
                 "completion_contract",
@@ -594,15 +720,13 @@ class DelegatedWork(_CanonicalDelegationRecord):
             obj["context_surface"], field="DelegatedWork.context_surface"
         )
         capabilities = _expect_array(
-            obj["allowed_capability_refs"],
-            field="DelegatedWork.allowed_capability_refs",
+            obj["allowed_capabilities"], field="DelegatedWork.allowed_capabilities"
         )
         constraints = _expect_array(
             obj["constraints"], field="DelegatedWork.constraints"
         )
         deliverables = _expect_array(
-            obj["expected_deliverables"],
-            field="DelegatedWork.expected_deliverables",
+            obj["expected_deliverables"], field="DelegatedWork.expected_deliverables"
         )
         try:
             return cls(
@@ -633,10 +757,10 @@ class DelegatedWork(_CanonicalDelegationRecord):
                     )
                     for index, item in enumerate(context_surface)
                 ),
-                allowed_capability_refs=tuple(
-                    StableRef.from_primitive(
+                allowed_capabilities=tuple(
+                    DelegatedCapabilityAllowance.from_primitive(
                         item,
-                        field=f"DelegatedWork.allowed_capability_refs[{index}]",
+                        field=f"DelegatedWork.allowed_capabilities[{index}]",
                     )
                     for index, item in enumerate(capabilities)
                 ),
