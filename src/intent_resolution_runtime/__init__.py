@@ -156,6 +156,7 @@ from .work import (
     WorkStep,
     WorkSymbolicInput,
 )
+from .work_binding import WorkBindingFrontier, orchestrate_work_binding
 
 
 def _seal_ir_type(base_type: type) -> None:
@@ -387,6 +388,7 @@ __all__ = [
     "WorkerResultMaterial",
     "WorkerResultMaterialRole",
     "ProposedWorkStep",
+    "WorkBindingFrontier",
     "WorkProposal",
     "WorkProposalAttribution",
     "WorkProposalMaterial",
@@ -401,4 +403,5 @@ __all__ = [
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "orchestrate_initial_resolution",
+    "orchestrate_work_binding",
 ]
