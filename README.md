@@ -8,11 +8,11 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-**M1.5 — Work / Delegation IR is complete.** The next implementation slice is **M1.6 — Capability / Governance References**.
+**M1 — Intent Resolution IR is complete and frozen through M1.8.** All eight canonical M0.10 architecture scenarios now have executable regression coverage. No M2 semantic milestone is declared yet; the next milestone will be chosen explicitly rather than inferred from M1 completion.
 
-**M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 now encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
+**M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
-M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 Part A adds immutable bounded `WorkPlan` / `WorkStep` semantics, explicit parent-plan lineage, finite acyclic dependencies, symbolic dataflow, explicit continuation points, distinct step/plan completion contracts, and frozen canonical identities. M1.5 Part B adds explicit `DelegatedWork` / `DelegatedWorkHandoff`, exact capability-contract ceiling identities, attributable `WorkerResult` material and `WorkerNeed` re-entry, while preserving Worker-result truth/authority/completion and M1.7 lifecycle boundaries. Capability/Governance and recovery IR remain later M1 slices.
+M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 added bounded `WorkPlan` / `WorkStep` semantics, explicit DelegatedWork / Worker handoff and attributable WorkerResult / WorkerNeed re-entry. M1.6 added exact Capability Catalog / Match Evaluation, WorkProposal, external Governance Decision, and canonical Authorization IR. M1.7 added attributable CapabilityAttempt / CapabilityOutcome, typed ContinuationInput, and exact SuccessorResolutionLineage. M1.8 applies the full frozen M1 surface to all eight M0.10 canonical scenarios and closes M1 without adding a scenario-specific runtime layer.
 
 ## Product identity
 
@@ -97,7 +97,6 @@ provider recommendation != Governance Decision
 ```
 
 Provider confidence, fluent rationale, model identity, local placement, deterministic behavior, or an Organism-derived internal representation do not establish factual truth, Capability Match, Authorization, or final IRR state. IRR admission must depend on inspectable candidate semantics and attributable admitted inputs, not private chain-of-thought.
-
 Context or Capability Catalog material available inside IRR is not automatically provider-disclosable. A provider receives only the explicitly permitted projection for that provider boundary. Remote provider transport may itself create network/external-disclosure effects, while a local provider still does not gain blanket entitlement to all Context, memory, account data, Catalog entries, or authority material.
 
 The Cognitive Provider boundary does not grant ambient retrieval or tool authority. If a provider needs files, repository state, browser data, current world state, or other new information, it may propose a bounded Information Need or Observation Need; hidden model-side tools/retrieval cannot be used to launder new facts into IRR Context or Observation. A tool-using/provider-agent implementation that acquires external information must return that information through an explicit attributable Host/acquisition boundary before IRR can use it as evidence.
@@ -257,10 +256,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M1.5 Work / Delegation IR — Part A](docs/m1_5_work_delegation_ir.md)
 - [M1.5 Worker Delegation IR — Part B1](docs/m1_5b_delegation_ir.md)
 - [M1.5 Worker Result IR — Part B2](docs/m1_5b_worker_result_ir.md)
+- [M1.6 Capability / Governance / Authorization IR closure](docs/m1_6_closure.md)
+- [M1.7 Attempt / Outcome / Continuation IR closure](docs/m1_7_closure.md)
+- [M1.8 Executable M0.10 fixtures & M1 closure](docs/m1_8_closure.md)
 - [Terminology](docs/terminology.md)
-
-## Planning record
-
-- [Roadmap](ROADMAP.md)
-
-`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts are frozen in `main`; M1 implementation slices encode them incrementally without silently reopening those boundaries.
