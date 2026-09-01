@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .capability_match import CapabilityMatch, CapabilityRequirement
 from .capability_match_evaluation import (
@@ -19,14 +19,14 @@ def _ref_key(value: StableRef) -> tuple[str, str]:
     return value.namespace, value.value
 
 
-def _normalize_step_refs(value: object, *, field: str) -> tuple[StableRef, ...]:
+def _normalize_refs(value: object, *, field: str) -> tuple[StableRef, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is StableRef for item in value):
         raise ValidationError(f"{field} must contain StableRef values")
     refs = tuple(value)
     if len(set(refs)) != len(refs):
-        raise ValidationError(f"{field} must not contain duplicate step refs")
+        raise ValidationError(f"{field} must not contain duplicates")
     return tuple(sorted(refs, key=_ref_key))
 
 
@@ -55,30 +55,6 @@ def _normalize_evaluations(
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
         raise ValidationError(f"{field} must not contain duplicate evaluation identities")
-    return tuple(sorted(items, key=lambda item: str(item.identity)))
-
-
-def _normalize_matches(value: object, *, field: str) -> tuple[CapabilityMatch, ...]:
-    if type(value) is not tuple:
-        raise ValidationError(f"{field} must be a tuple")
-    if not all(type(item) is CapabilityMatch for item in value):
-        raise ValidationError(f"{field} must contain CapabilityMatch values")
-    items = tuple(value)
-    identities = [item.identity for item in items]
-    if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate match identities")
-    return tuple(sorted(items, key=lambda item: str(item.identity)))
-
-
-def _normalize_issues(value: object, *, field: str) -> tuple[CapabilityMatchIssue, ...]:
-    if type(value) is not tuple:
-        raise ValidationError(f"{field} must be a tuple")
-    if not all(type(item) is CapabilityMatchIssue for item in value):
-        raise ValidationError(f"{field} must contain CapabilityMatchIssue values")
-    items = tuple(value)
-    identities = [item.identity for item in items]
-    if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate issue identities")
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
@@ -123,161 +99,29 @@ def _normalize_authorizations(
 
 
 @dataclass(frozen=True, slots=True)
-class CapabilityGovernanceFrontier:
-    """Derived non-canonical M2.3 view over capability and Governance graph state."""
-
-    work_plan: WorkPlan
-    capability_disposition_required_step_refs: tuple[StableRef, ...] = ()
-    pending_capability_requirements: tuple[CapabilityRequirement, ...] = ()
-    capability_matches: tuple[CapabilityMatch, ...] = ()
-    capability_issues: tuple[CapabilityMatchIssue, ...] = ()
-    proposal_disposition_required_step_refs: tuple[StableRef, ...] = ()
-    work_proposals: tuple[WorkProposal, ...] = ()
-    governance_pending_proposals: tuple[WorkProposal, ...] = ()
-    governance_decisions: tuple[GovernanceDecision, ...] = ()
-    governance_unmentioned_step_refs: tuple[StableRef, ...] = ()
-    authorization_projection_pending_component_refs: tuple[StableRef, ...] = ()
-    authorizations: tuple[Authorization, ...] = ()
-    materialized_authorized_step_refs: tuple[StableRef, ...] = ()
-    denied_step_refs: tuple[StableRef, ...] = ()
-    constrained_step_refs: tuple[StableRef, ...] = ()
-    review_required_step_refs: tuple[StableRef, ...] = ()
-
-    def __post_init__(self) -> None:
-        if type(self.work_plan) is not WorkPlan:
-            raise ValidationError("CapabilityGovernanceFrontier.work_plan must be a WorkPlan")
-
-        for field_name in (
-            "capability_disposition_required_step_refs",
-            "proposal_disposition_required_step_refs",
-            "governance_unmentioned_step_refs",
-            "authorization_projection_pending_component_refs",
-            "materialized_authorized_step_refs",
-            "denied_step_refs",
-            "constrained_step_refs",
-            "review_required_step_refs",
-        ):
-            object.__setattr__(
-                self,
-                field_name,
-                _normalize_step_refs(getattr(self, field_name), field=f"CapabilityGovernanceFrontier.{field_name}"),
-            )
-
-        object.__setattr__(
-            self,
-            "pending_capability_requirements",
-            _normalize_requirements(
-                self.pending_capability_requirements,
-                field="CapabilityGovernanceFrontier.pending_capability_requirements",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "capability_matches",
-            _normalize_matches(
-                self.capability_matches,
-                field="CapabilityGovernanceFrontier.capability_matches",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "capability_issues",
-            _normalize_issues(
-                self.capability_issues,
-                field="CapabilityGovernanceFrontier.capability_issues",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "work_proposals",
-            _normalize_proposals(
-                self.work_proposals,
-                field="CapabilityGovernanceFrontier.work_proposals",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "governance_pending_proposals",
-            _normalize_proposals(
-                self.governance_pending_proposals,
-                field="CapabilityGovernanceFrontier.governance_pending_proposals",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "governance_decisions",
-            _normalize_decisions(
-                self.governance_decisions,
-                field="CapabilityGovernanceFrontier.governance_decisions",
-            ),
-        )
-        object.__setattr__(
-            self,
-            "authorizations",
-            _normalize_authorizations(
-                self.authorizations,
-                field="CapabilityGovernanceFrontier.authorizations",
-            ),
-        )
-
-        plan_step_refs = {step.step_ref for step in self.work_plan.steps}
-        for field_name in (
-            "capability_disposition_required_step_refs",
-            "proposal_disposition_required_step_refs",
-            "governance_unmentioned_step_refs",
-            "materialized_authorized_step_refs",
-            "denied_step_refs",
-            "constrained_step_refs",
-            "review_required_step_refs",
-        ):
-            if not set(getattr(self, field_name)).issubset(plan_step_refs):
-                raise ValidationError(
-                    f"CapabilityGovernanceFrontier.{field_name} must reference WorkPlan steps"
-                )
+class _CapabilityGovernanceState:
+    capability_disposition_required_step_refs: tuple[StableRef, ...]
+    pending_capability_requirements: tuple[CapabilityRequirement, ...]
+    capability_matches: tuple[CapabilityMatch, ...]
+    capability_issues: tuple[CapabilityMatchIssue, ...]
+    proposal_disposition_required_step_refs: tuple[StableRef, ...]
+    governance_pending_proposals: tuple[WorkProposal, ...]
+    governance_unmentioned_step_refs: tuple[StableRef, ...]
+    authorization_projection_pending_component_refs: tuple[StableRef, ...]
+    materialized_authorized_step_refs: tuple[StableRef, ...]
+    denied_step_refs: tuple[StableRef, ...]
+    constrained_step_refs: tuple[StableRef, ...]
+    review_required_step_refs: tuple[StableRef, ...]
 
 
-
-def orchestrate_capability_governance(
+def _derive_state(
     work_plan: WorkPlan,
-    *,
-    capability_requirements: tuple[CapabilityRequirement, ...] = (),
-    capability_evaluations: tuple[CapabilityMatchEvaluation, ...] = (),
-    work_proposals: tuple[WorkProposal, ...] = (),
-    governance_decisions: tuple[GovernanceDecision, ...] = (),
-    authorizations: tuple[Authorization, ...] = (),
-) -> CapabilityGovernanceFrontier:
-    """Derive a complete M2.3 capability/Governance frontier from explicit M1.6 records.
-
-    The function does not infer whether a WorkStep requires capability mediation or
-    Governance, does not inspect capability availability, does not choose among multiple
-    compatible capabilities, does not call Governance, and does not manufacture
-    Authorization. Absence of explicit downstream records remains neutral disposition.
-    """
-
-    if type(work_plan) is not WorkPlan:
-        raise ValidationError("orchestrate_capability_governance.work_plan must be a WorkPlan")
-
-    requirements = _normalize_requirements(
-        capability_requirements,
-        field="orchestrate_capability_governance.capability_requirements",
-    )
-    evaluations = _normalize_evaluations(
-        capability_evaluations,
-        field="orchestrate_capability_governance.capability_evaluations",
-    )
-    proposals = _normalize_proposals(
-        work_proposals,
-        field="orchestrate_capability_governance.work_proposals",
-    )
-    decisions = _normalize_decisions(
-        governance_decisions,
-        field="orchestrate_capability_governance.governance_decisions",
-    )
-    grants = _normalize_authorizations(
-        authorizations,
-        field="orchestrate_capability_governance.authorizations",
-    )
-
+    requirements: tuple[CapabilityRequirement, ...],
+    evaluations: tuple[CapabilityMatchEvaluation, ...],
+    proposals: tuple[WorkProposal, ...],
+    decisions: tuple[GovernanceDecision, ...],
+    grants: tuple[Authorization, ...],
+) -> _CapabilityGovernanceState:
     plan_step_refs = {step.step_ref for step in work_plan.steps}
 
     requirements_by_step: dict[StableRef, CapabilityRequirement] = {}
@@ -295,6 +139,7 @@ def orchestrate_capability_governance(
         requirements_by_identity[requirement.identity] = requirement
 
     evaluations_by_requirement = {}
+    active_evaluation_by_step: dict[StableRef, CapabilityMatchEvaluation] = {}
     matches: list[CapabilityMatch] = []
     issues: list[CapabilityMatchIssue] = []
     for evaluation in evaluations:
@@ -312,6 +157,7 @@ def orchestrate_capability_governance(
                 "capability/Governance graph must not contain competing active CapabilityMatchEvaluation records for one requirement"
             )
         evaluations_by_requirement[evaluation.requirement.identity] = evaluation
+        active_evaluation_by_step[evaluation.requirement.step_ref] = evaluation
         result = evaluate_capability_match_evaluation(evaluation)
         if type(result) is CapabilityMatch:
             matches.append(result)
@@ -326,10 +172,6 @@ def orchestrate_capability_governance(
     capability_disposition = tuple(
         step_ref for step_ref in plan_step_refs if step_ref not in requirements_by_step
     )
-
-    active_evaluation_by_step = {
-        evaluation.requirement.step_ref: evaluation for evaluation in evaluations
-    }
     matched_step_refs = {match.requirement.step_ref for match in matches}
 
     proposal_by_step: dict[StableRef, WorkProposal] = {}
@@ -427,21 +269,167 @@ def orchestrate_capability_governance(
     for grant in grants:
         materialized_authorized.update(grant.authorized_step_refs)
 
+    return _CapabilityGovernanceState(
+        capability_disposition_required_step_refs=_normalize_refs(
+            tuple(capability_disposition), field="capability_disposition_required_step_refs"
+        ),
+        pending_capability_requirements=tuple(
+            sorted(pending_requirements, key=lambda item: str(item.identity))
+        ),
+        capability_matches=tuple(sorted(matches, key=lambda item: str(item.identity))),
+        capability_issues=tuple(sorted(issues, key=lambda item: str(item.identity))),
+        proposal_disposition_required_step_refs=_normalize_refs(
+            tuple(proposal_disposition), field="proposal_disposition_required_step_refs"
+        ),
+        governance_pending_proposals=tuple(
+            sorted(governance_pending, key=lambda item: str(item.identity))
+        ),
+        governance_unmentioned_step_refs=_normalize_refs(
+            tuple(unmentioned), field="governance_unmentioned_step_refs"
+        ),
+        authorization_projection_pending_component_refs=_normalize_refs(
+            pending_authorization_components,
+            field="authorization_projection_pending_component_refs",
+        ),
+        materialized_authorized_step_refs=_normalize_refs(
+            tuple(materialized_authorized), field="materialized_authorized_step_refs"
+        ),
+        denied_step_refs=_normalize_refs(tuple(denied), field="denied_step_refs"),
+        constrained_step_refs=_normalize_refs(
+            tuple(constrained), field="constrained_step_refs"
+        ),
+        review_required_step_refs=_normalize_refs(
+            tuple(review_required), field="review_required_step_refs"
+        ),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityGovernanceFrontier:
+    """Derived non-canonical M2.3 view over exact active M1.6 graph records."""
+
+    work_plan: WorkPlan
+    capability_requirements: tuple[CapabilityRequirement, ...] = ()
+    capability_evaluations: tuple[CapabilityMatchEvaluation, ...] = ()
+    work_proposals: tuple[WorkProposal, ...] = ()
+    governance_decisions: tuple[GovernanceDecision, ...] = ()
+    authorizations: tuple[Authorization, ...] = ()
+    _state: _CapabilityGovernanceState = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if type(self.work_plan) is not WorkPlan:
+            raise ValidationError("CapabilityGovernanceFrontier.work_plan must be a WorkPlan")
+        requirements = _normalize_requirements(
+            self.capability_requirements,
+            field="CapabilityGovernanceFrontier.capability_requirements",
+        )
+        evaluations = _normalize_evaluations(
+            self.capability_evaluations,
+            field="CapabilityGovernanceFrontier.capability_evaluations",
+        )
+        proposals = _normalize_proposals(
+            self.work_proposals,
+            field="CapabilityGovernanceFrontier.work_proposals",
+        )
+        decisions = _normalize_decisions(
+            self.governance_decisions,
+            field="CapabilityGovernanceFrontier.governance_decisions",
+        )
+        grants = _normalize_authorizations(
+            self.authorizations,
+            field="CapabilityGovernanceFrontier.authorizations",
+        )
+        object.__setattr__(self, "capability_requirements", requirements)
+        object.__setattr__(self, "capability_evaluations", evaluations)
+        object.__setattr__(self, "work_proposals", proposals)
+        object.__setattr__(self, "governance_decisions", decisions)
+        object.__setattr__(self, "authorizations", grants)
+        object.__setattr__(
+            self,
+            "_state",
+            _derive_state(
+                self.work_plan,
+                requirements,
+                evaluations,
+                proposals,
+                decisions,
+                grants,
+            ),
+        )
+
+    @property
+    def capability_disposition_required_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.capability_disposition_required_step_refs
+
+    @property
+    def pending_capability_requirements(self) -> tuple[CapabilityRequirement, ...]:
+        return self._state.pending_capability_requirements
+
+    @property
+    def capability_matches(self) -> tuple[CapabilityMatch, ...]:
+        return self._state.capability_matches
+
+    @property
+    def capability_issues(self) -> tuple[CapabilityMatchIssue, ...]:
+        return self._state.capability_issues
+
+    @property
+    def proposal_disposition_required_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.proposal_disposition_required_step_refs
+
+    @property
+    def governance_pending_proposals(self) -> tuple[WorkProposal, ...]:
+        return self._state.governance_pending_proposals
+
+    @property
+    def governance_unmentioned_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.governance_unmentioned_step_refs
+
+    @property
+    def authorization_projection_pending_component_refs(self) -> tuple[StableRef, ...]:
+        return self._state.authorization_projection_pending_component_refs
+
+    @property
+    def materialized_authorized_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.materialized_authorized_step_refs
+
+    @property
+    def denied_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.denied_step_refs
+
+    @property
+    def constrained_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.constrained_step_refs
+
+    @property
+    def review_required_step_refs(self) -> tuple[StableRef, ...]:
+        return self._state.review_required_step_refs
+
+
+def orchestrate_capability_governance(
+    work_plan: WorkPlan,
+    *,
+    capability_requirements: tuple[CapabilityRequirement, ...] = (),
+    capability_evaluations: tuple[CapabilityMatchEvaluation, ...] = (),
+    work_proposals: tuple[WorkProposal, ...] = (),
+    governance_decisions: tuple[GovernanceDecision, ...] = (),
+    authorizations: tuple[Authorization, ...] = (),
+) -> CapabilityGovernanceFrontier:
+    """Derive M2.3 capability/Governance state from explicit exact M1.6 records.
+
+    The function does not infer whether a WorkStep requires capability mediation or
+    Governance, does not inspect capability availability, does not choose among multiple
+    compatible capabilities, does not call Governance, and does not manufacture
+    Authorization. Absence of explicit downstream records remains neutral disposition.
+    """
+
+    if type(work_plan) is not WorkPlan:
+        raise ValidationError("orchestrate_capability_governance.work_plan must be a WorkPlan")
     return CapabilityGovernanceFrontier(
         work_plan=work_plan,
-        capability_disposition_required_step_refs=capability_disposition,
-        pending_capability_requirements=pending_requirements,
-        capability_matches=tuple(matches),
-        capability_issues=tuple(issues),
-        proposal_disposition_required_step_refs=proposal_disposition,
-        work_proposals=proposals,
-        governance_pending_proposals=governance_pending,
-        governance_decisions=decisions,
-        governance_unmentioned_step_refs=tuple(unmentioned),
-        authorization_projection_pending_component_refs=pending_authorization_components,
-        authorizations=grants,
-        materialized_authorized_step_refs=tuple(materialized_authorized),
-        denied_step_refs=tuple(denied),
-        constrained_step_refs=tuple(constrained),
-        review_required_step_refs=tuple(review_required),
+        capability_requirements=capability_requirements,
+        capability_evaluations=capability_evaluations,
+        work_proposals=work_proposals,
+        governance_decisions=governance_decisions,
+        authorizations=authorizations,
     )
