@@ -19,12 +19,12 @@ def test_m2_1_runtime_surface_is_public_without_becoming_canonical_ir() -> None:
     assert not hasattr(irr.InitialResolutionFrontier, "identity")
 
 
-def test_readme_declares_m2_1_and_preserves_frozen_m1_m2_0_history() -> None:
+def test_readme_preserves_frozen_m1_m2_0_and_m2_1_history() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
     assert "**M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.**" in text
-    assert "**M2.1 — Initial Resolution Orchestrator** is the current milestone." in text
+    assert "**M2.1 — Initial Resolution Orchestrator" in text
     assert "[M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)" in text
     assert "[M2.1 Initial Resolution Orchestrator](docs/m2_1_initial_resolution_orchestrator.md)" in text
 
