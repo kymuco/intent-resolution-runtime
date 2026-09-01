@@ -9,7 +9,12 @@ from .capability_match_evaluation import (
     evaluate_capability_match_evaluation,
 )
 from .errors import ValidationError
-from .governance import Authorization, GovernanceDecision, GovernanceDecisionKind
+from .governance import (
+    Authorization,
+    GovernanceDecision,
+    GovernanceDecisionComponent,
+    GovernanceDecisionKind,
+)
 from .intent import StableRef
 from .work import WorkPlan
 from .work_proposal import WorkProposal
@@ -107,7 +112,7 @@ class _CapabilityGovernanceState:
     proposal_disposition_required_step_refs: tuple[StableRef, ...]
     governance_pending_proposals: tuple[WorkProposal, ...]
     governance_unmentioned_step_refs: tuple[StableRef, ...]
-    authorization_projection_pending_component_refs: tuple[StableRef, ...]
+    authorization_materialization_frontier: tuple[Authorization, ...]
     materialized_authorized_step_refs: tuple[StableRef, ...]
     denied_step_refs: tuple[StableRef, ...]
     constrained_step_refs: tuple[StableRef, ...]
@@ -221,7 +226,9 @@ def _derive_state(
     )
 
     unmentioned: set[StableRef] = set()
-    authorize_components = {}
+    authorize_components: dict[
+        tuple[object, StableRef], tuple[GovernanceDecision, GovernanceDecisionComponent]
+    ] = {}
     denied: set[StableRef] = set()
     constrained: set[StableRef] = set()
     review_required: set[StableRef] = set()
@@ -231,7 +238,10 @@ def _derive_state(
         for component in decision.components:
             covered.update(component.step_refs)
             if component.kind is GovernanceDecisionKind.AUTHORIZE:
-                authorize_components[(decision.identity, component.component_ref)] = component
+                authorize_components[(decision.identity, component.component_ref)] = (
+                    decision,
+                    component,
+                )
             elif component.kind is GovernanceDecisionKind.DENY:
                 denied.update(component.step_refs)
             elif component.kind is GovernanceDecisionKind.CONSTRAIN:
@@ -260,9 +270,9 @@ def _derive_state(
             )
         grants_by_component[key] = grant
 
-    pending_authorization_components = tuple(
-        component.component_ref
-        for key, component in authorize_components.items()
+    materialization_frontier = tuple(
+        Authorization(decision, component.component_ref)
+        for key, (decision, component) in authorize_components.items()
         if key not in grants_by_component
     )
     materialized_authorized: set[StableRef] = set()
@@ -287,9 +297,8 @@ def _derive_state(
         governance_unmentioned_step_refs=_normalize_refs(
             tuple(unmentioned), field="governance_unmentioned_step_refs"
         ),
-        authorization_projection_pending_component_refs=_normalize_refs(
-            pending_authorization_components,
-            field="authorization_projection_pending_component_refs",
+        authorization_materialization_frontier=tuple(
+            sorted(materialization_frontier, key=lambda item: str(item.identity))
         ),
         materialized_authorized_step_refs=_normalize_refs(
             tuple(materialized_authorized), field="materialized_authorized_step_refs"
@@ -386,8 +395,8 @@ class CapabilityGovernanceFrontier:
         return self._state.governance_unmentioned_step_refs
 
     @property
-    def authorization_projection_pending_component_refs(self) -> tuple[StableRef, ...]:
-        return self._state.authorization_projection_pending_component_refs
+    def authorization_materialization_frontier(self) -> tuple[Authorization, ...]:
+        return self._state.authorization_materialization_frontier
 
     @property
     def materialized_authorized_step_refs(self) -> tuple[StableRef, ...]:
@@ -419,8 +428,9 @@ def orchestrate_capability_governance(
 
     The function does not infer whether a WorkStep requires capability mediation or
     Governance, does not inspect capability availability, does not choose among multiple
-    compatible capabilities, does not call Governance, and does not manufacture
-    Authorization. Absence of explicit downstream records remains neutral disposition.
+    compatible capabilities, and does not call Governance. An authorize decision may
+    expose the unique idempotent Authorization projection as an eligible transition;
+    that projection is not treated as admitted history until supplied back explicitly.
     """
 
     if type(work_plan) is not WorkPlan:
