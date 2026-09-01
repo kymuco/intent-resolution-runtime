@@ -31,6 +31,17 @@ from .context import (
     TemporalBasisKind,
     TemporalBasisRecord,
 )
+from .delegation import (
+    DelegatedCapabilityAllowance,
+    DelegatedContextReference,
+    DelegatedScope,
+    DelegatedWork,
+    DelegatedWorkHandoff,
+    DelegationConstraint,
+    DelegationConstraintKind,
+    DelegationHandoffAttribution,
+    ExpectedDeliverable,
+)
 from .errors import IntentIRError, SerializationError, ValidationError
 from .identity import RecordIdentity
 from .intent import IntentExpression, IntentRequest, OriginAttribution, OriginKind, StableRef
@@ -48,6 +59,14 @@ from .resolution import (
     ResolutionIssueImpact,
     ResolutionIssueKind,
     ResolvedIntent,
+)
+from .worker_result import (
+    WorkerNeed,
+    WorkerNeedKind,
+    WorkerResult,
+    WorkerResultAttribution,
+    WorkerResultMaterial,
+    WorkerResultMaterialRole,
 )
 from .work import (
     WorkContinuationMode,
@@ -106,9 +125,20 @@ for _ir_type in (
     WorkOutput,
     WorkStep,
     WorkPlan,
+    DelegatedScope,
+    DelegatedCapabilityAllowance,
+    DelegatedContextReference,
+    DelegationConstraint,
+    ExpectedDeliverable,
+    DelegatedWork,
+    DelegationHandoffAttribution,
+    DelegatedWorkHandoff,
+    WorkerResultAttribution,
+    WorkerResultMaterial,
+    WorkerNeed,
+    WorkerResult,
 ):
     _seal_ir_type(_ir_type)
-
 del _ir_type, _seal_ir_type
 
 
@@ -137,9 +167,18 @@ __all__ = [
     "CompletenessRecord",
     "ContextEnvelope",
     "ContextReferenceRecord",
+    "DelegatedCapabilityAllowance",
+    "DelegatedContextReference",
+    "DelegatedScope",
+    "DelegatedWork",
+    "DelegatedWorkHandoff",
+    "DelegationConstraint",
+    "DelegationConstraintKind",
+    "DelegationHandoffAttribution",
     "EvidenceRecord",
     "EvidenceRelation",
     "EvidenceTargetKind",
+    "ExpectedDeliverable",
     "InformationNeed",
     "InformationNeedProposal",
     "IntentExpression",
@@ -161,6 +200,12 @@ __all__ = [
     "TemporalBasisKind",
     "TemporalBasisRecord",
     "ValidationError",
+    "WorkerNeed",
+    "WorkerNeedKind",
+    "WorkerResult",
+    "WorkerResultAttribution",
+    "WorkerResultMaterial",
+    "WorkerResultMaterialRole",
     "WorkContinuationMode",
     "WorkInput",
     "WorkLiteralInput",

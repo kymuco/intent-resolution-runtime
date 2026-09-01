@@ -275,11 +275,11 @@ M1.4 deliberately does not introduce WorkPlan/WorkStep, DelegatedWork, Capabilit
 
 # M1.5 — Work / Delegation IR
 
-M1.5 encodes the M0.3 Intent → Work boundary and the M0.8 Worker Delegation boundary in separate implementation sub-slices so ordinary bounded operational work cannot become a disguised Worker-owned autonomous lifecycle.
+M1.5 encodes the M0.3 Intent → Work boundary and M0.8 Worker Delegation boundary as separate immutable contracts so ordinary bounded WorkSteps cannot become disguised Worker-owned autonomous lifecycles.
 
-**Part A — bounded WorkPlan / WorkStep IR is complete.** The detailed normative contract is maintained in [M1.5 Work / Delegation IR](m1_5_work_delegation_ir.md). Part B will add explicit Worker Delegation records separately.
+**M1.5 is complete.** Part A freezes bounded `WorkPlan` / `WorkStep` IR; Part B freezes explicit Worker delegation, handoff, returned material, and need re-entry. Detailed contracts are maintained in [M1.5 Work / Delegation IR — Part A](m1_5_work_delegation_ir.md), [M1.5 Worker Delegation IR — Part B1](m1_5b_delegation_ir.md), and [M1.5 Worker Result IR — Part B2](m1_5b_worker_result_ir.md).
 
-Core executable distinctions frozen by Part A:
+Core executable distinctions include:
 
 ```text
 work description != execution
@@ -293,16 +293,38 @@ step completion != plan completion
 plan completion != intent satisfaction by default
 return_to_irr != embedded planner loop
 WorkStep != Worker delegation
+DelegatedWork != ordinary WorkStep
+DelegatedWork != Authorization
+DelegatedWorkHandoff != Authorization
+capability allowance != Capability Match
+same capability_ref != same capability semantics
+worker context surface != ambient context entitlement
+WorkerResult != factual truth by default
+WorkerResult != Observation by default
+WorkerResult != Outcome by default
+WorkerResult != Governance Decision
+WorkerResult != Authorization
+WorkerResult != parent intent completion
+worker completion claim != delegated completion proof
+WorkerNeed != authority grant
+WorkerNeed != scope expansion
 ```
 
-Part A introduces immutable `WorkLiteralInput`, `WorkSymbolicInput`, `WorkOutput`, `WorkStep`, and `WorkPlan` records. A WorkPlan is finite and acyclic, its steps are bound to one exact ResolvedIntent identity and explicit parent plan reference, internal symbolic dataflow must follow a dependency path, and `return_to_irr` is terminal with respect to dependent successor work. Semantic operation identifiers use a narrow lowercase dotted syntax while leaving the operation vocabulary itself open to later domain contracts.
+Part A introduces immutable `WorkLiteralInput`, `WorkSymbolicInput`, `WorkOutput`, `WorkStep`, and `WorkPlan`. A WorkPlan is finite and acyclic, its steps are bound to one exact ResolvedIntent identity and explicit parent-plan reference, internal symbolic dataflow must follow dependency lineage, and `return_to_irr` cannot hide a pre-admitted dependent successor. WorkStep and WorkPlan carry distinct identity-covered completion contracts.
 
-`WorkPlan` and `WorkStep` carry distinct identity-covered completion contracts. M1.5 preserves the semantic distinction between step completion, plan completion, and parent intent satisfaction; actual Attempt/Outcome evidence and continuation-time determination remain owned by M1.7.
+Part B1 introduces immutable `DelegatedScope`, `DelegatedContextReference`, `DelegatedCapabilityAllowance`, `DelegationConstraint`, `ExpectedDeliverable`, `DelegatedWork`, `DelegationHandoffAttribution`, and `DelegatedWorkHandoff`. The delegation envelope carries exact ResolvedIntent/optional parent WorkPlan lineage, bounded objective and scope, explicit Worker context, exact capability-contract ceiling identities, material/negative/authority-requirement constraints, required deliverables, and delegated completion semantics without minting Capability Match, Catalog membership, availability, or Authorization.
 
-Representative Part A canonical identities are frozen by tests. The complete backup-inspection WorkPlan fixture, including its plan-level completion contract, has SHA-256:
+Part B2 introduces immutable `WorkerResultAttribution`, `WorkerResultMaterial`, `WorkerNeed`, and `WorkerResult`. A result embeds the exact immutable handoff; Worker attribution must match the handoff target; result and handoff occurrences remain distinct; returned deliverables are explicitly related to the admitted `ExpectedDeliverable`; Worker needs may request new semantics without granting them; source provenance remains distinct from Worker intermediary attribution. There is deliberately no success/failure/blocked/unknown-outcome status or parent-completion boolean in M1.5b — those lifecycle semantics remain M1.7.
+
+Representative canonical identities are frozen by executable tests:
 
 ```text
-8b0996a65a513ee16a68cab39ef62d66ec9b076fee214a9e158f4b864448d54c
+WorkPlan               8b0996a65a513ee16a68cab39ef62d66ec9b076fee214a9e158f4b864448d54c
+DelegatedWork           660a82e4badfa4bfc9a90a9ed36e1e1b5cafc1c172c79fd0252a3a590292c64b
+DelegatedWorkHandoff    a0375ee355da896938abd2cd862d4ffe8b07c4b2896d1ce7de0c415c83469a1f
+WorkerResult            6369f754f3c56c1ccbf175bc3193ce19582ef4c46aa62b238a47562316bc2b79
 ```
 
-Part A deliberately does not introduce `DelegatedWork`, `WorkerResult`, Capability/Governance records, Authorization, executable handoffs, Attempt/Outcome/Continuation records, retry/fallback, Observation schemas, transport, or persistence. Worker-owned subordinate lifecycle semantics remain M1.5 Part B rather than being hidden inside ordinary WorkStep execution.
+The M1.5b golden fixture additionally freezes the component identities for delegated scope/context/capability allowance/constraint/deliverable, handoff attribution, result attribution/material, and WorkerNeed. The same full test suite continues to execute all earlier M1 frozen identities.
+
+M1.5 deliberately does not introduce concrete Capability Catalog / Match / Availability / Governance / Authorization records, executable capability handoffs, Attempt / Outcome / generic Continuation state, retry/fallback/compensation, Worker progress/cancellation/transport/registry/scheduling, nested delegation, generic Observation admission, persistence, or Codexia integration. Capability/Governance references are M1.6; Attempt/Outcome/Continuation is M1.7.
