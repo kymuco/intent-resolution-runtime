@@ -89,6 +89,18 @@ from .governance import (
 )
 from .identity import RecordIdentity
 from .intent import IntentExpression, IntentRequest, OriginAttribution, OriginKind, StableRef
+from .outcome import (
+    CapabilityOutcome,
+    CapabilityOutcomeAttribution,
+    OutcomeCompletionAssessment,
+    OutcomeCompletionState,
+    OutcomeEffectAssessment,
+    OutcomeEffectCertainty,
+    OutcomeEvidence,
+    OutcomeEvidenceRole,
+    OutcomeLifecycleAssessment,
+    OutcomeLifecycleState,
+)
 from .resolution import (
     AssumptionKind,
     AssumptionRecord,
@@ -223,6 +235,12 @@ for _ir_type in (
     CapabilityAttemptAttribution,
     AttemptBoundInput,
     CapabilityAttempt,
+    CapabilityOutcomeAttribution,
+    OutcomeEvidence,
+    OutcomeLifecycleAssessment,
+    OutcomeCompletionAssessment,
+    OutcomeEffectAssessment,
+    CapabilityOutcome,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -272,6 +290,8 @@ __all__ = [
     "CapabilityMatchIssueKind",
     "CapabilityMismatchKind",
     "CapabilityMismatchReason",
+    "CapabilityOutcome",
+    "CapabilityOutcomeAttribution",
     "CapabilityOutputContract",
     "CapabilityOutputMatch",
     "CapabilityRequestedEffect",
@@ -310,6 +330,14 @@ __all__ = [
     "InterchangeableChoicePolicy",
     "OriginAttribution",
     "OriginKind",
+    "OutcomeCompletionAssessment",
+    "OutcomeCompletionState",
+    "OutcomeEffectAssessment",
+    "OutcomeEffectCertainty",
+    "OutcomeEvidence",
+    "OutcomeEvidenceRole",
+    "OutcomeLifecycleAssessment",
+    "OutcomeLifecycleState",
     "RecordIdentity",
     "ResolutionAttribution",
     "ResolutionIssue",
