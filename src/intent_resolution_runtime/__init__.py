@@ -31,6 +31,16 @@ from .context import (
     TemporalBasisKind,
     TemporalBasisRecord,
 )
+from .delegation import (
+    DelegatedContextReference,
+    DelegatedScope,
+    DelegatedWork,
+    DelegatedWorkHandoff,
+    DelegationConstraint,
+    DelegationConstraintKind,
+    DelegationHandoffAttribution,
+    ExpectedDeliverable,
+)
 from .errors import IntentIRError, SerializationError, ValidationError
 from .identity import RecordIdentity
 from .intent import IntentExpression, IntentRequest, OriginAttribution, OriginKind, StableRef
@@ -106,6 +116,13 @@ for _ir_type in (
     WorkOutput,
     WorkStep,
     WorkPlan,
+    DelegatedScope,
+    DelegatedContextReference,
+    DelegationConstraint,
+    ExpectedDeliverable,
+    DelegatedWork,
+    DelegationHandoffAttribution,
+    DelegatedWorkHandoff,
 ):
     _seal_ir_type(_ir_type)
 
@@ -137,9 +154,17 @@ __all__ = [
     "CompletenessRecord",
     "ContextEnvelope",
     "ContextReferenceRecord",
+    "DelegatedContextReference",
+    "DelegatedScope",
+    "DelegatedWork",
+    "DelegatedWorkHandoff",
+    "DelegationConstraint",
+    "DelegationConstraintKind",
+    "DelegationHandoffAttribution",
     "EvidenceRecord",
     "EvidenceRelation",
     "EvidenceTargetKind",
+    "ExpectedDeliverable",
     "InformationNeed",
     "InformationNeedProposal",
     "IntentExpression",
