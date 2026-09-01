@@ -121,7 +121,7 @@ def test_scenario_d_provider_proposal_cannot_be_admitted_while_material_ambiguit
     request, candidate, _ = _fixture()
     ambiguity = candidate.issues[0]
 
-    with pytest.raises(ValidationError, match="Material Ambiguity"):
+    with pytest.raises(ValidationError, match="unresolved blocking issues"):
         ResolvedIntent(
             request.identity,
             CONTEXT_IDENTITY,
