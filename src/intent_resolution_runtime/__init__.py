@@ -1,5 +1,6 @@
 """Intent Resolution Runtime public M1 Intent IR surface."""
 
+from .attempt import AttemptBoundInput, CapabilityAttempt, CapabilityAttemptAttribution
 from .binding import (
     BindingAttribution,
     BindingAttribute,
@@ -219,6 +220,9 @@ for _ir_type in (
     GovernanceDecisionComponent,
     GovernanceDecision,
     Authorization,
+    CapabilityAttemptAttribution,
+    AttemptBoundInput,
+    CapabilityAttempt,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -227,6 +231,7 @@ del _ir_type, _seal_ir_type
 __all__ = [
     "AssumptionKind",
     "AssumptionRecord",
+    "AttemptBoundInput",
     "Authorization",
     "BindingAttribution",
     "BindingAttribute",
@@ -244,6 +249,8 @@ __all__ = [
     "BoundValue",
     "CandidateAttribution",
     "CandidateResolution",
+    "CapabilityAttempt",
+    "CapabilityAttemptAttribution",
     "CapabilityCatalogAttribution",
     "CapabilityCatalogSnapshot",
     "CapabilityDescriptor",
