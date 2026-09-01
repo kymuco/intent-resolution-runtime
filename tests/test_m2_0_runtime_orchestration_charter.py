@@ -17,6 +17,15 @@ def test_m2_0_charter_freezes_record_graph_not_mutable_session_as_canonical_stat
     assert "one global status != complete lifecycle state" in text
 
 
+def test_m2_0_charter_requires_global_lifecycle_graph_admission_not_record_bag_validity() -> None:
+    text = CHARTER.read_text(encoding="utf-8")
+
+    assert "valid individual records != automatically valid lifecycle graph" in text
+    assert "competing active lineage != scheduler choice" in text
+    assert "storage ordering != lifecycle ordering" in text
+    assert "no foreign/orphan material" in text
+
+
 def test_m2_0_charter_preserves_orchestration_authority_and_effect_boundaries() -> None:
     text = CHARTER.read_text(encoding="utf-8")
 
@@ -32,11 +41,12 @@ def test_m2_0_charter_preserves_orchestration_authority_and_effect_boundaries() 
         assert invariant in text
 
 
-def test_m2_0_charter_freezes_replay_and_transition_frontier_direction() -> None:
+def test_m2_0_charter_separates_replay_semantic_frontier_and_scheduler_selection() -> None:
     text = CHARTER.read_text(encoding="utf-8")
 
     assert "M2 is **replayable by design**" in text
-    assert "transition frontier" in text
+    assert "complete semantic transition frontier" in text
+    assert "scheduler selection != semantic frontier" in text
     assert "material semantic choice != scheduler discretion" in text
     assert "M2.1 — Initial Resolution Orchestrator" in text
     assert "M2.6 — End-to-end Host fixture" in text
