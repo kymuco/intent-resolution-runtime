@@ -97,6 +97,7 @@ provider recommendation != Governance Decision
 ```
 
 Provider confidence, fluent rationale, model identity, local placement, deterministic behavior, or an Organism-derived internal representation do not establish factual truth, Capability Match, Authorization, or final IRR state. IRR admission must depend on inspectable candidate semantics and attributable admitted inputs, not private chain-of-thought.
+
 Context or Capability Catalog material available inside IRR is not automatically provider-disclosable. A provider receives only the explicitly permitted projection for that provider boundary. Remote provider transport may itself create network/external-disclosure effects, while a local provider still does not gain blanket entitlement to all Context, memory, account data, Catalog entries, or authority material.
 
 The Cognitive Provider boundary does not grant ambient retrieval or tool authority. If a provider needs files, repository state, browser data, current world state, or other new information, it may propose a bounded Information Need or Observation Need; hidden model-side tools/retrieval cannot be used to launder new facts into IRR Context or Observation. A tool-using/provider-agent implementation that acquires external information must return that information through an explicit attributable Host/acquisition boundary before IRR can use it as evidence.
