@@ -8,11 +8,11 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 ## Status
 
-Current milestone: **M1.5 — Work / Delegation IR**. Part A (bounded `WorkPlan` / `WorkStep`) is complete; Part B (explicit Worker Delegation IR) is next.
+**M1.5 — Work / Delegation IR is complete.** The next implementation slice is **M1.6 — Capability / Governance References**.
 
 **M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 now encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
-M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 Part A adds immutable bounded `WorkPlan` / `WorkStep` semantics, explicit parent-plan lineage, finite acyclic dependencies, symbolic dataflow, explicit continuation points, distinct step/plan completion contracts, and frozen canonical identities. Worker Delegation remains M1.5 Part B; Capability/Governance and recovery IR remain later M1 slices.
+M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 Part A adds immutable bounded `WorkPlan` / `WorkStep` semantics, explicit parent-plan lineage, finite acyclic dependencies, symbolic dataflow, explicit continuation points, distinct step/plan completion contracts, and frozen canonical identities. M1.5 Part B adds explicit `DelegatedWork` / `DelegatedWorkHandoff`, exact capability-contract ceiling identities, attributable `WorkerResult` material and `WorkerNeed` re-entry, while preserving Worker-result truth/authority/completion and M1.7 lifecycle boundaries. Capability/Governance and recovery IR remain later M1 slices.
 
 ## Product identity
 
@@ -254,7 +254,9 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M1.2 Context / Claims / Evidence IR](docs/m1_2_context_ir.md)
 - [M1.3 Resolution / Clarification IR](docs/m1_3_resolution_ir.md)
 - [M1.4 Binding / Symbolic Reference IR](docs/m1_4_binding_ir.md)
-- [M1.5 Work / Delegation IR](docs/m1_5_work_delegation_ir.md)
+- [M1.5 Work / Delegation IR — Part A](docs/m1_5_work_delegation_ir.md)
+- [M1.5 Worker Delegation IR — Part B1](docs/m1_5b_delegation_ir.md)
+- [M1.5 Worker Result IR — Part B2](docs/m1_5b_worker_result_ir.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
