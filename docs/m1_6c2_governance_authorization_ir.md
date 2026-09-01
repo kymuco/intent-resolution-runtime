@@ -2,7 +2,7 @@
 
 Status: **candidate normative M1.6c2 contract**.
 
-This document freezes the first exact M1 representation of external Governance decisions over an immutable `WorkProposal` and the separate `Authorization` record that may be materialized only from an explicit `authorize` component.
+This document freezes the first exact M1 representation of external Governance decisions over an immutable `WorkProposal` and the separate canonical `Authorization` projection that may be materialized only from an explicit `authorize` component.
 
 It extends M0.6 and M1.6c1 without introducing a policy engine, consent UX, capability availability, executable handoff, executor verification, attempt/outcome state, retries, revocation, reusable grants, or generic continuation.
 
@@ -21,7 +21,7 @@ GovernanceDecision
   ├─ constrain
   └─ require_review
       |
-      +-- authorize component only --> Authorization
+      +-- authorize component only --> canonical Authorization
 ```
 
 The central invariants are:
@@ -37,6 +37,8 @@ constrain != Authorization
 Authorization != Capability Match
 Authorization != Availability
 Authorization != Outcome
+same decision + same authorize component -> same Authorization identity
+re-materialization != fresh grant
 ```
 
 ## 2. GovernanceDecisionAttribution
@@ -50,7 +52,7 @@ authority_context_ref
 authority_context_identity
 ```
 
-The authority context pair is provenance for the externally supplied authority context used by Governance.
+The authority-context pair is provenance for the externally supplied authority context used by Governance.
 
 ```text
 authority_context_identity != proof that Governance was correct
@@ -100,7 +102,7 @@ Authorization Condition != semantic WorkPlan mutation
 
 If satisfying an `authorize` directive would materially change resource, recipient, effect, data flow, provider semantics, Completion Semantics, or another admitted meaning, the directive is not a valid Authorization Condition. It belongs under `constrain` and requires successor semantics.
 
-The schema preserves the distinction but cannot prove the truth of arbitrary semantic statements. Correct directive admission remains the responsibility of the Governance/IRR boundary.
+The schema preserves this role distinction but cannot prove the truth of arbitrary semantic statements. Correct directive admission remains the responsibility of the Governance/IRR boundary.
 
 ## 5. GovernanceDecisionComponent
 
@@ -170,9 +172,7 @@ unmentioned step != denied step
 unmentioned step != authorized step
 ```
 
-A step omitted from all components simply has no authority result in that decision.
-
-Downstream authority-requiring execution remains fail-closed.
+A step omitted from all components simply has no authority result in that decision. Downstream authority-requiring execution remains fail-closed.
 
 ## 7. No overlapping decision components in v1
 
@@ -205,18 +205,32 @@ decision over materially changed WorkProposal identity B
 
 Historical `WorkPlan` and `WorkProposal` records are never edited by a Governance result.
 
-## 9. Authorization
+## 9. Authorization is a canonical projection
 
-`Authorization` is a separate immutable authority record:
+`Authorization.v1` contains only:
 
 ```text
-authorization_ref
 exact GovernanceDecision
 authorize component_ref
-description
 ```
 
 Construction fails closed unless `component_ref` identifies an `authorize` component of the exact embedded decision.
+
+There is intentionally **no independently supplied authorization ID, occurrence/event, description, nonce, token, or presentation label** in `Authorization.v1`.
+
+This is a security/authority invariant, not a convenience choice. `Authorization` is the canonical semantic projection of one exact `(GovernanceDecision, authorize component_ref)` pair.
+
+Therefore:
+
+```text
+same decision + same authorize component -> same Authorization bytes
+same decision + same authorize component -> same Authorization identity
+re-materialization != fresh grant
+re-materialization != renewed one-use authority
+representation duplication != authority amplification
+```
+
+Without this rule, one externally produced authorize component carrying a bounded condition such as `one_use` could be wrapped repeatedly in different local IDs/descriptions and be mistaken downstream for multiple independent grants. M1.6c2 forbids that representation-level amplification.
 
 Derived properties expose:
 
@@ -233,11 +247,13 @@ Constraint -> not Authorization
 RequireReview -> not Authorization
 ```
 
-Materializing this typed record does not make IRR the authority source. The authority source remains the external Governance boundary embedded in the exact decision provenance.
+Materializing this typed projection does not make IRR the authority source. The authority source remains the external Governance boundary embedded in the exact decision provenance.
 
 ```text
 Authorization materialization != IRR-created permission
 ```
+
+If a future system needs a reusable grant, lease, revocable token, consumption receipt, use counter, or separately occurring authority object, that requires a later explicit contract. It must not be simulated by minting more `Authorization.v1` wrappers around one decision component.
 
 ## 10. Conditions do not widen authority
 
@@ -251,6 +267,8 @@ provider A authorization != provider B when provider identity is material
 ```
 
 Work dependencies never create transitive authority.
+
+A `one_use` condition is not consumed, renewed, or counted by `Authorization.v1`; consumption semantics belong to later execution/authority-state contracts. Canonical rematerialization of the same Authorization does not create another use.
 
 ## 11. No automatic authorization from text or origin
 
@@ -306,6 +324,8 @@ All new records:
 
 Presentation order never becomes authority precedence.
 
+`Authorization.v1` additionally has idempotent semantic materialization because its wire shape is determined only by the exact Governance decision plus selected authorize component ref.
+
 ## 15. Explicit deferrals
 
 M1.6c2 intentionally does **not** freeze:
@@ -316,6 +336,8 @@ M1.6c2 intentionally does **not** freeze:
 - reusable standing grants;
 - leases / TTL parsing;
 - revocation state;
+- authority-consumption / one-use counters;
+- separately minted grant tokens;
 - quorum or multi-party composition;
 - overlapping authority axes on one WorkStep;
 - automatic constraint-to-successor-plan generation;
@@ -333,8 +355,10 @@ These remain later contracts.
 M1.6c2 is acceptable only if tests prove at least:
 
 - only an explicit authorize component can materialize `Authorization`;
+- repeated materialization of the same exact authorize component is byte/identity-idempotent;
+- no free authorization ID/nonce/description can mint a second semantic Authorization from the same component;
 - deny/constrain/require-review cannot masquerade as authority;
-- constrain and require-review require explicit directives;
+- constrain and require_review require explicit directives;
 - deny cannot carry hidden condition directives in v1;
 - component steps are bounded to the exact WorkProposal;
 - one WorkStep cannot appear in multiple components of the same v1 decision;

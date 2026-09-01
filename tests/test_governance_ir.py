@@ -209,18 +209,29 @@ def test_authorize_component_materializes_separate_authorization() -> None:
         (component,),
         "External Governance authorized the exact proposed step.",
     )
-    authorization = Authorization(
-        _ref("irr.authorization", "auth-001"),
-        decision,
-        component.component_ref,
-        "Typed authority projection of the exact authorize component.",
-    )
+    authorization = Authorization(decision, component.component_ref)
 
     assert authorization.authorized_step_refs == component.step_refs
     assert authorization.conditions == (condition,)
     assert authorization.decision.proposal == proposal
     assert Authorization.from_json_bytes(authorization.canonical_bytes()) == authorization
     assert GovernanceDecision.from_json_bytes(decision.canonical_bytes()) == decision
+
+
+def test_repeated_authorization_materialization_is_identity_idempotent() -> None:
+    proposal = _proposal()
+    component = _component(proposal, directives=(_directive(),))
+    decision = GovernanceDecision(
+        _attribution(),
+        proposal,
+        (component,),
+        "External Governance authorized the exact proposed step.",
+    )
+    first = Authorization(decision, component.component_ref)
+    second = Authorization(decision, component.component_ref)
+
+    assert first == second
+    assert first.identity == second.identity
 
 
 @pytest.mark.parametrize(
@@ -251,12 +262,7 @@ def test_non_authorize_components_cannot_materialize_authorization(
         f"External Governance returned {kind.value}.",
     )
     with pytest.raises(ValidationError):
-        Authorization(
-            _ref("irr.authorization", "invalid"),
-            decision,
-            component.component_ref,
-            "This must fail closed.",
-        )
+        Authorization(decision, component.component_ref)
 
 
 def test_constrain_and_require_review_require_explicit_directives() -> None:
@@ -341,10 +347,8 @@ def test_authorization_component_must_belong_to_exact_decision() -> None:
     )
     with pytest.raises(ValidationError):
         Authorization(
-            _ref("irr.authorization", "auth-unknown-component"),
             decision,
             _ref("irr.governance_component", "missing"),
-            "Must fail closed.",
         )
 
 
