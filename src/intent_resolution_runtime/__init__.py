@@ -123,6 +123,10 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
+from .successor_resolution import (
+    SuccessorResolutionKind,
+    SuccessorResolutionLineage,
+)
 from .worker_result import (
     WorkerNeed,
     WorkerNeedKind,
@@ -251,6 +255,7 @@ for _ir_type in (
     ContinuationInputAttribution,
     GovernanceContinuationMaterial,
     ContinuationInput,
+    SuccessorResolutionLineage,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -362,6 +367,8 @@ __all__ = [
     "SerializationError",
     "SourceAttribution",
     "StableRef",
+    "SuccessorResolutionKind",
+    "SuccessorResolutionLineage",
     "SymbolicReference",
     "TemporalBasisKind",
     "TemporalBasisRecord",
