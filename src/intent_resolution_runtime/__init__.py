@@ -32,6 +32,7 @@ from .context import (
     TemporalBasisRecord,
 )
 from .delegation import (
+    DelegatedCapabilityAllowance,
     DelegatedContextReference,
     DelegatedScope,
     DelegatedWork,
@@ -117,6 +118,7 @@ for _ir_type in (
     WorkStep,
     WorkPlan,
     DelegatedScope,
+    DelegatedCapabilityAllowance,
     DelegatedContextReference,
     DelegationConstraint,
     ExpectedDeliverable,
@@ -154,6 +156,7 @@ __all__ = [
     "CompletenessRecord",
     "ContextEnvelope",
     "ContextReferenceRecord",
+    "DelegatedCapabilityAllowance",
     "DelegatedContextReference",
     "DelegatedScope",
     "DelegatedWork",
