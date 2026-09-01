@@ -14,13 +14,15 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 **M2.1 — Initial Resolution Orchestrator is complete and frozen in `main`.** It implements exact initial request/context/candidate graph admission and a separate IRR-owned admission strategy boundary without provider voting, ambient retrieval, authority, or effect execution.
 
-**M2.2 — Work / Binding Orchestrator** is the current milestone. It derives the complete active external-binding surface of an exact WorkPlan without collapsing independent symbolic slots into one status, inventing WorkPlan disposition, assigning raw BindingInput to rules, mutating the WorkPlan, or treating binding completion as authority or executability.
+**M2.2 — Work / Binding Orchestrator is complete and frozen in `main`.** It derives the complete active external-binding surface of an exact WorkPlan without collapsing independent symbolic slots into one status, inventing WorkPlan disposition, assigning raw BindingInput to rules, mutating the WorkPlan, or treating binding completion as authority or executability.
+
+**M2.3 — Capability / Governance Orchestrator** is the current milestone. It derives exact capability-match, proposal, Governance, and Authorization-transition surfaces from admitted M1.6 records without inventing capability requirements, availability, Governance requirements, authority, or one global approval status.
 
 **M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
 M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 added bounded `WorkPlan` / `WorkStep` semantics, explicit DelegatedWork / Worker handoff and attributable WorkerResult / WorkerNeed re-entry. M1.6 added exact Capability Catalog / Match Evaluation, WorkProposal, external Governance Decision, and canonical Authorization IR. M1.7 added attributable CapabilityAttempt / CapabilityOutcome, typed ContinuationInput, and exact SuccessorResolutionLineage. M1.8 applies the full frozen M1 surface to all eight M0.10 canonical scenarios and closes M1 without adding a scenario-specific runtime layer.
 
-M2.0 freezes orchestration as replayable derivation over immutable M1 history. A mutable session object or one global lifecycle status may exist only as a reconstructible convenience view, never as the canonical semantic source of truth. M2.1 adds the first deliberately narrow derived runtime frontier and independent initial Resolution admission boundary. M2.2 extends orchestration to exact WorkPlan / BindingRule / BindingEvaluation graph admission while preserving a complete multi-slot binding frontier and keeping the M1 records as canonical history.
+M2.0 freezes orchestration as replayable derivation over immutable M1 history. A mutable session object or one global lifecycle status may exist only as a reconstructible convenience view, never as the canonical semantic source of truth. M2.1 adds the first deliberately narrow derived runtime frontier and independent initial Resolution admission boundary. M2.2 extends orchestration to exact WorkPlan / BindingRule / BindingEvaluation graph admission while preserving a complete multi-slot binding frontier. M2.3 extends the same model through CapabilityRequirement / Match Evaluation / WorkProposal / GovernanceDecision / Authorization graph admission while keeping exact M1 records as canonical history.
 
 ## Product identity
 
@@ -271,6 +273,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)
 - [M2.1 Initial Resolution Orchestrator](docs/m2_1_initial_resolution_orchestrator.md)
 - [M2.2 Work / Binding Orchestrator](docs/m2_2_work_binding_orchestrator.md)
+- [M2.3 Capability / Governance Orchestrator](docs/m2_3_capability_governance_orchestrator.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
