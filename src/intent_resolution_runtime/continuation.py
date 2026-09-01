@@ -297,6 +297,10 @@ class ContinuationInput(_CanonicalContinuationRecord):
         return self.source.identity
 
     @property
+    def source_event_ref(self) -> StableRef:
+        return _source_event_ref(self.source)
+
+    @property
     def resolved_intent_identity(self) -> RecordIdentity:
         return _resolved_intent_identity(self.source)
 
