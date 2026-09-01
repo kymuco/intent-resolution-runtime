@@ -29,16 +29,19 @@ def test_readme_declares_m2_1_and_preserves_frozen_m1_m2_0_history() -> None:
     assert "[M2.1 Initial Resolution Orchestrator](docs/m2_1_initial_resolution_orchestrator.md)" in text
 
 
-def test_m2_1_doc_freezes_candidate_admission_and_noncanonical_frontier_boundaries() -> None:
+def test_m2_1_doc_freezes_independent_admission_and_noncanonical_frontier_boundaries() -> None:
     text = DOC.read_text(encoding="utf-8")
 
     for invariant in (
         "frontier != canonical record",
         "duplicate candidate delivery != extra semantic weight",
+        "CandidateResolution != ResolutionOutput",
+        "one provider candidate != admission",
+        "provider consensus != admission",
         "provider count != voting authority",
         "semantically distinct candidates -> ADJUDICATION_REQUIRED",
-        "multiple blockers != guessed pause mapping",
-        "competing pause modes != hidden choice",
+        "admitter != Cognitive Provider",
+        "admitter output must preserve complete exact candidate provenance",
         "ResolutionAttribution != Authorization",
     ):
         assert invariant in text
