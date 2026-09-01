@@ -4,7 +4,7 @@ Status: **proposed normative charter for M2**. It becomes the M2 baseline only w
 
 M1 froze the immutable Intent Resolution IR and proved it against the eight canonical M0.10 scenarios. M2 begins a different phase: using those records to drive a real intent lifecycle without collapsing the boundaries M0/M1 deliberately separated.
 
-M2.0 therefore freezes the orchestration model before implementation code is added.
+M2.0 freezes the orchestration model before implementation code is added.
 
 The central decision is:
 
@@ -19,7 +19,7 @@ canonical lifecycle state
 != hidden provider / executor state
 ```
 
-An implementation may later expose a session-shaped convenience API, cache, cursor, or materialized view. Such a view is derived runtime state only. It is never the canonical semantic history and must be reconstructible from admitted records plus explicit orchestration configuration.
+An implementation may later expose a session-shaped convenience API, cache, cursor, scheduler view, or materialized projection. Such a view is derived runtime state only. It is never the canonical semantic history and must be reconstructible from admitted records plus explicit orchestration configuration.
 
 ## 1. M2 purpose
 
@@ -28,7 +28,7 @@ M2 turns the frozen M1 language into a bounded orchestration runtime.
 Conceptually:
 
 ```text
-explicit admitted M1 history
+explicit admitted M1 lifecycle graph
         +
 explicit new Host input, when any
         +
@@ -38,7 +38,7 @@ explicit orchestration policy/configuration
    IRR Orchestrator
         |
         v
-bounded eligible transition frontier
+complete semantic transition frontier
         |
         +--> internal deterministic M1 transition
         |
@@ -47,7 +47,7 @@ bounded eligible transition frontier
         `--> quiescent / terminal-for-now result
 ```
 
-The Orchestrator determines what transitions are semantically legal next. It does not manufacture authority and it does not perform external effects.
+The Orchestrator determines what semantic transitions are legal next. It does not manufacture authority and it does not perform external effects.
 
 ```text
 orchestration != execution
@@ -95,7 +95,45 @@ new Authorization != retroactive authorization
 
 A derived runtime view MAY summarize this graph for efficient execution, but loss of the view must not destroy semantic history.
 
-## 3. Why M2 does not freeze one global state enum
+## 3. An admitted lifecycle graph is not an arbitrary bag of valid records
+
+Local M1 validity is necessary but not sufficient for global lifecycle validity.
+
+A Host MUST NOT be able to collect individually valid records with incompatible lineage and have M2 silently treat the union as one coherent active lifecycle.
+
+M2 orchestration therefore operates over an **admitted lifecycle graph**, not a raw record bag.
+
+At minimum, graph admission/assembly must preserve:
+
+- one exact root intent lineage for the lifecycle being evaluated;
+- exact parent/predecessor identities required by each record;
+- exact source and occurrence distinctions already frozen by M1;
+- no orphan records presented as active descendants;
+- no foreign-intent records smuggled into the graph;
+- no repeated delivery of one content-identical record amplified into multiple independent semantic grounds;
+- no competing successor branches silently treated as jointly active when their semantics conflict;
+- no historical/superseded branch treated as current merely because its records still exist.
+
+Conceptually:
+
+```text
+valid(record A)
++ valid(record B)
+!= valid lifecycle graph(A, B)
+```
+
+If two successor branches compete and M2 cannot establish from explicit lineage/continuation semantics that they are compatible, ordered, or one supersedes the other, orchestration MUST fail closed rather than choose by insertion order, timestamp accident, storage ordering, or scheduler preference.
+
+```text
+competing active lineage
+!= scheduler choice
+!= latest-write-wins
+!= first-record-wins
+```
+
+The exact Python type for lifecycle graph admission is deferred. M2.1 must implement the minimum consistency checks required for the initial resolution path instead of introducing a broad graph framework pre-emptively.
+
+## 4. Why M2 does not freeze one global state enum
 
 The completed M1 model is not intrinsically linear.
 
@@ -106,7 +144,7 @@ One intent may contain:
 - an authorized subset and an unresolved subset;
 - a delegated Worker branch while another ordinary work branch is already complete;
 - an interrupted Attempt requiring continuation while unrelated work remains unaffected;
-- a successor Resolution branch that preserves the original request but supersedes only specific prior semantics.
+- historical predecessor branches plus one or more explicitly related successor branches.
 
 Therefore a single field such as:
 
@@ -116,11 +154,15 @@ session.status = WAITING_FOR_AUTHORIZATION
 
 cannot be the canonical lifecycle state. It would erase which exact proposal, step, branch, authorization scope, attempt, or continuation is waiting.
 
-M2 instead derives a **transition frontier** over exact records. The frontier may contain zero, one, or multiple independently eligible next transitions.
+M2 instead derives a **transition frontier** over the admitted lifecycle graph. The frontier may contain zero, one, or multiple independently eligible next semantic transitions.
+
+```text
+one global status != complete lifecycle state
+```
 
 The exact Python representation of that frontier is deferred beyond M2.0.
 
-## 4. Host / Orchestrator boundary
+## 5. Host / Orchestrator boundary
 
 The Host remains the embedding environment around IRR.
 
@@ -131,7 +173,7 @@ The Host may be responsible for concrete mechanisms such as:
 - acquiring explicitly requested information through an admitted mechanism;
 - supplying a Capability Catalog Snapshot;
 - transporting a WorkProposal to Governance;
-- transporting authorized capability work to an Executor;
+- transporting eligible capability work to an Executor;
 - transporting DelegatedWork to a Worker;
 - receiving external outcomes or Worker results;
 - persistence, scheduling, process lifecycle, network transport, and UI.
@@ -153,7 +195,7 @@ Host can invoke executor Z
 
 M2 may later define typed Host requests/responses, but M2.0 does not freeze those wire schemas.
 
-## 5. No hidden acquisition or hidden tool loop
+## 6. No hidden acquisition or hidden tool loop
 
 The Orchestrator MUST NOT solve missing information by ambiently reading files, memory, browsers, repositories, accounts, network state, process state, or another external source.
 
@@ -173,9 +215,9 @@ provider hidden tool call
 != authority
 ```
 
-## 6. Transition frontier
+## 7. Complete semantic transition frontier
 
-The Orchestrator derives a bounded set of legal next transitions from the exact admitted graph.
+The Orchestrator derives the complete bounded set of semantic transitions that are legal next from the exact admitted graph.
 
 Conceptual transition classes include, without freezing an enum or public API:
 
@@ -209,9 +251,9 @@ quiescent boundary
     no internal transition is currently legal without new explicit external input
 ```
 
-These are conceptual categories only. M2.0 intentionally does not add a new universal `NextAction` schema.
+These are conceptual categories only. M2.0 intentionally does not add a universal `NextAction` schema.
 
-## 7. Internal transition versus external boundary requirement
+## 8. Internal transition versus external boundary requirement
 
 Some transitions may be wholly mechanical over already admitted records. Others require external material.
 
@@ -244,23 +286,23 @@ externally available != semantically admitted
 waiting for input != permission to invent input
 ```
 
-## 8. Replayability and deterministic derivation
+## 9. Replayability and deterministic derivation
 
 M2 is **replayable by design**.
 
 Given:
 
-1. the same exact admitted M1 record graph;
+1. the same exact admitted M1 lifecycle graph;
 2. the same explicit orchestration policy/configuration version;
 3. the same explicit external inputs already admitted into that graph;
 
 IRR MUST derive the same semantic transition frontier.
 
-The derivation MUST NOT depend on hidden mutable memory, ambient filesystem state, current browser state, implicit process discovery, random provider output, or wall-clock time that was never admitted as input.
+The derivation MUST NOT depend on hidden mutable memory, ambient filesystem state, current browser state, implicit process discovery, random provider output, storage iteration order, or wall-clock time that was never admitted as input.
 
-If time, availability, quota, connectivity, or another changing fact materially affects the transition, that fact must enter through an explicit attributable boundary appropriate to its semantics.
+If time, availability, quota, connectivity, or another changing fact materially affects a semantic transition, that fact must enter through an explicit attributable boundary appropriate to its semantics.
 
-Replayability does not mean every external effect is replayed. Replaying semantic history is different from invoking an Executor again.
+Replayability does not mean external effects are replayed.
 
 ```text
 replay lifecycle derivation
@@ -269,48 +311,60 @@ replay lifecycle derivation
 != repeat Worker effect
 ```
 
-## 9. Determinism applies to the frontier, not hidden scheduling authority
+## 10. Semantic frontier versus runtime scheduling
 
-Two independent transitions may both be legal.
+The **semantic transition frontier** and the **runtime scheduler selection** are distinct.
 
-M2 may expose both as an eligible frontier rather than fabricating one global ordering.
+The Orchestrator must first derive the complete legal semantic frontier. Resource limits, concurrency limits, queue policy, fairness, worker slots, UI preferences, or execution throughput MUST NOT silently delete legal semantic transitions from that frontier.
 
-If ordering between two operations is semantically irrelevant under already admitted contracts, a Host scheduler may choose an execution order within those bounds. If the ordering or choice changes material semantics, scope, recipient, disclosure, cost, completion meaning, or authority, it is not a mere scheduler decision and must return through the appropriate IRR semantic boundary.
+A separate runtime scheduler may choose a subset of already-frontier-eligible transitions to process now when that scheduling choice is materially neutral.
 
 ```text
-independent scheduling choice
-!= semantic choice
+semantic frontier
+→ all currently legal semantic transitions
 
-material choice
-!= scheduler discretion
+scheduler selection
+→ bounded subset chosen for runtime progress
 ```
 
-M2.0 therefore does not freeze a universal FIFO, priority queue, topological scheduler, or concurrency model.
+If ordering between two operations is semantically irrelevant under already admitted contracts, a Host/runtime scheduler may choose an execution order within those bounds. If ordering or selection changes resource, recipient, scope, disclosure, mutation, cost, provider semantics, completion meaning, authority, or another material dimension, it is not a scheduling decision.
 
-## 10. Orchestration policy is not semantic authority
+```text
+transition frontier != hidden scheduler authority
+independent scheduling choice != material semantic choice
+material semantic choice != scheduler discretion
+```
+
+A scheduler MUST NOT resolve competing successor lineage, Material Ambiguity, Binding ties, capability substitution, Worker escalation, or Governance constraints.
+
+M2.0 does not freeze FIFO, priority scheduling, work stealing, topological scheduling, or a concurrency model.
+
+## 11. Orchestration policy is not semantic authority
 
 Later M2 code may require explicit policy/configuration for mechanical questions such as:
 
-- which deterministic resolver implementation to invoke first;
-- bounded provider selection among semantically equivalent configured providers;
-- whether independent eligible transitions are exposed together or processed serially;
+- deterministic implementation selection among semantically equivalent configured mechanisms;
 - runtime resource limits;
-- local scheduling details that do not alter admitted semantics.
+- scheduler concurrency;
+- tracing or diagnostic detail;
+- bounded local execution mechanics that do not alter admitted semantics.
 
 Such policy MUST NOT:
 
 - resolve Material Ambiguity by preference;
+- choose one competing semantic successor branch by convenience;
 - widen a Capability requirement;
 - substitute a missing provider/service/capability when that changes semantics;
 - create Authorization;
 - infer retry safety;
 - relabel Worker-originated material as human-originated;
 - change an admitted completion contract;
-- erase an unknown or partial effect.
+- erase an unknown or partial effect;
+- truncate the semantic transition frontier merely because runtime capacity is limited.
 
 If changing the policy changes the material meaning of the work, that is no longer orchestration policy; it is a semantic decision requiring explicit IRR representation.
 
-## 11. Cognitive Provider orchestration
+## 12. Cognitive Provider orchestration
 
 M2 may coordinate invocation of a Cognitive Provider, but the M0.7/M1.3 boundary remains frozen.
 
@@ -326,7 +380,7 @@ A provider may be local, remote, deterministic, model-based, Organism-derived, o
 
 Provider retry/fallback is not automatically harmless. If changing provider changes disclosure, cost, semantic behavior, authority surface, or another material dimension, the switch cannot be hidden in orchestration plumbing.
 
-## 12. Governance orchestration
+## 13. Governance orchestration
 
 Governance remains external to IRR.
 
@@ -341,7 +395,7 @@ old Authorization != successor Authorization
 
 Authorization applicability must be evaluated against exact represented work and its conditions.
 
-## 13. Executor orchestration
+## 14. Executor orchestration
 
 M2 may determine that one exact capability-backed WorkStep is eligible for Executor handoff only when the frozen M1 contracts permit that handoff.
 
@@ -353,11 +407,11 @@ The external execution boundary must preserve:
 - exact admitted Capability Match;
 - exact bound values required by the Attempt;
 - applicable Authorization material where required;
-- exact Attempt occurrence identity/provenance once attempted.
+- exact attributable Attempt occurrence once invocation is actually attempted.
 
 The Executor result must return as attributable M1 lifecycle material rather than mutating an in-memory status to `done`.
 
-## 14. Worker orchestration
+## 15. Worker orchestration
 
 M2 may coordinate bounded Worker handoff, but `DelegatedWork` remains an immutable envelope.
 
@@ -375,7 +429,7 @@ A material Worker escalation returns through explicit `WorkerResult` / `Continua
 
 M2 MUST NOT recursively create new delegated Workers merely because a Worker asks for one unless later explicit contracts permit that behavior.
 
-## 15. Outcome, recovery, and retry
+## 16. Outcome, recovery, and retry
 
 M2 orchestration must preserve the M0.9/M1.7 recovery model.
 
@@ -400,11 +454,13 @@ if attempt_failed_or_timed_out:
 
 unless a later explicit recovery policy has first represented and validated all semantic, idempotency, authority, and effect-history requirements.
 
-## 16. Quiescence and terminal-for-now states
+## 17. Quiescence and terminal-for-now states
 
-The absence of an immediately executable transition is not necessarily lifecycle completion.
+The absence of an immediately schedulable transition is not necessarily lifecycle completion.
 
-The derived frontier may be empty because the lifecycle is:
+The semantic frontier may require external material, or scheduler capacity may temporarily be zero, while the parent lifecycle remains unresolved.
+
+Examples include:
 
 - waiting for human clarification;
 - waiting for attributable information;
@@ -412,35 +468,37 @@ The derived frontier may be empty because the lifecycle is:
 - waiting for an Executor/Worker result;
 - blocked on missing capability;
 - paused after an unknown outcome until recovery semantics are resolved;
+- all legal transitions known but temporarily unscheduled;
 - actually complete for the represented parent intent.
 
 M2 MUST preserve these distinctions rather than compressing them into one `idle`, `blocked`, or `done` flag.
 
 Parent-intent completion policy is not frozen by M2.0.
 
-## 17. Persistence boundary
+## 18. Persistence boundary
 
 Replayable orchestration does not require M2.0 to choose a database, event store, append-only log format, or persistence backend.
 
-The Host may persist canonical M1 records and any future M2 records using an implementation-specific store, provided storage does not silently alter semantic identities or lineage.
+The Host may persist canonical M1 records and future M2 records using an implementation-specific store, provided storage does not silently alter semantic identities, lineage, or graph admission.
 
-A cache, index, materialized view, or session snapshot may be discarded and rebuilt.
+A cache, index, materialized view, scheduler queue, or session snapshot may be discarded and rebuilt.
 
 ```text
 persistence backend != semantic authority
 cache != canonical history
 materialized session view != source of truth
+storage ordering != lifecycle ordering
 ```
 
 The exact durable storage model is deferred.
 
-## 18. Crash / resume boundary
+## 19. Crash / resume boundary
 
 A runtime process crash must not require mutating historical M1 records to recover semantic state.
 
-After restart, the Orchestrator should be able to reconstruct the eligible transition frontier from persisted admitted records and explicit runtime configuration.
+After restart, the Orchestrator should be able to reconstruct the admitted lifecycle graph and semantic transition frontier from persisted records plus explicit runtime configuration.
 
-However, process restart MUST NOT convert an in-flight external effect into a known failure or safe retry.
+Process restart MUST NOT convert an in-flight external effect into a known failure or safe retry.
 
 ```text
 runtime process died
@@ -450,7 +508,7 @@ runtime process died
 
 If the external outcome is unknown, the ordinary M1 unknown-outcome/continuation boundary applies.
 
-## 19. No hidden parent completion inference
+## 20. No hidden parent completion inference
 
 M2 may derive local completion facts already encoded by M1 contracts, but it MUST NOT infer parent intent completion merely because:
 
@@ -458,13 +516,14 @@ M2 may derive local completion facts already encoded by M1 contracts, but it MUS
 - one Worker says `done`;
 - one authorized subset completed;
 - one successor branch completed;
-- no transition is currently executable.
+- no transition is currently schedulable;
+- the semantic frontier is currently empty pending external input.
 
 Parent completion may depend on the original intent semantics, explicit completion contracts, unresolved branches, and successor lineage.
 
 A dedicated parent-completion policy/evaluator, if needed, is a later M2 design decision.
 
-## 20. M2.0 deliberately does not freeze public runtime API
+## 21. M2.0 deliberately does not freeze public runtime API
 
 M2.0 freezes architecture, not Python class names.
 
@@ -472,6 +531,7 @@ It does not yet declare public types such as:
 
 ```text
 ResolutionSession
+LifecycleGraph
 OrchestratorState
 NextAction
 TransitionFrontier
@@ -483,7 +543,7 @@ Those names are illustrative only and MUST NOT be treated as frozen API.
 
 The first implementation slice should derive the smallest API from executable transition requirements instead of inventing a broad runtime framework up front.
 
-## 21. Planned M2 implementation sequence
+## 22. Planned M2 implementation sequence
 
 M2.0 declares the following implementation direction while allowing narrow PR-level refinement.
 
@@ -492,13 +552,16 @@ M2.0 declares the following implementation direction while allowing narrow PR-le
 Target:
 
 ```text
-IntentRequest
+exact IntentRequest-rooted lifecycle material
 + explicit Context
 + explicit CandidateResolution material when used
+→ admitted initial-resolution frontier
 → ResolvedIntent | ClarificationNeed | InformationNeed
 ```
 
-Focus: provider boundary, admission, non-operational resolution, and no hidden acquisition.
+M2.1 must also implement the minimum lifecycle graph assembly/admission rules required for this path: exact root lineage, no foreign/orphan material, no duplicate semantic amplification, and fail-closed handling of incompatible competing active resolution lineage.
+
+Focus: provider boundary, admission, non-operational resolution, graph consistency, and no hidden acquisition.
 
 ### M2.2 — Work / Binding Orchestrator
 
@@ -564,13 +627,14 @@ Scenario A or B is the preferred first end-to-end target because both exercise l
 
 M2.6 is not permission to add generic shell/browser fallback.
 
-## 22. M2.0 non-goals
+## 23. M2.0 non-goals
 
 M2.0 does not add:
 
 - effect execution;
 - a universal mutable `ResolutionSession` source of truth;
 - one global lifecycle state enum;
+- a broad public `LifecycleGraph` API;
 - persistence implementation;
 - event-store implementation;
 - transport implementation;
@@ -578,6 +642,7 @@ M2.0 does not add:
 - Governance engine;
 - Executor implementation;
 - Worker implementation;
+- scheduler implementation;
 - automatic retries;
 - automatic fallback;
 - ambient retrieval;
@@ -585,7 +650,7 @@ M2.0 does not add:
 - parent-intent completion evaluator;
 - HDE-, Companion-, Codexia-, Organism-, Telegram-, Signal-, shell-, browser-, or filesystem-specific orchestration shortcuts.
 
-## 23. M2.0 frozen invariants
+## 24. M2.0 frozen invariants
 
 The following statements are normative for later M2 slices:
 
@@ -593,6 +658,9 @@ The following statements are normative for later M2 slices:
 M1 record graph = canonical semantic lifecycle history
 mutable session view != canonical semantic history
 one global status != complete lifecycle state
+valid individual records != automatically valid lifecycle graph
+competing active lineage != scheduler choice
+storage ordering != lifecycle ordering
 
 orchestration != authority
 orchestration != effect execution
@@ -605,6 +673,7 @@ Host-held data != admitted Context
 provider output != admitted Resolution by default
 
 transition frontier != hidden scheduler authority
+scheduler selection != semantic frontier
 independent scheduling choice != material semantic choice
 material semantic choice != scheduler discretion
 
@@ -619,7 +688,7 @@ Outcome != parent completion
 quiescent != parent completion
 ```
 
-## 24. M2.0 Definition of Done
+## 25. M2.0 Definition of Done
 
 M2.0 is complete when:
 
@@ -628,11 +697,14 @@ M1 remains frozen and unmodified semantically
 runtime orchestration responsibility is explicit
 Host / Orchestrator / Governance / Executor / Worker boundaries remain distinct
 canonical lifecycle state is frozen as immutable record-graph semantics
+record-graph admission is distinct from individual-record validity
 mutable session state is explicitly non-canonical
 one global status enum is explicitly rejected as canonical lifecycle state
 replayability rules are explicit
-transition-frontier semantics are explicit
+complete semantic transition-frontier semantics are explicit
+scheduler selection is separated from semantic frontier derivation
 material choice remains outside scheduler discretion
+competing active lineage fails closed rather than using storage/scheduler order
 unknown-outcome/retry boundaries remain fail-closed
 no public runtime API is prematurely frozen
 planned M2.1–M2.6 implementation slices are recorded
