@@ -43,6 +43,8 @@ def test_m2_6_doc_freezes_composition_without_new_authority() -> None:
         "partial extract != launch readiness",
         "provider proposes != IRR admits",
         "one provider candidate != admission",
+        "binding does not imply completeness",
+        "missing completeness provenance != safe latest selection",
         "unknown future value != unknown decision rule",
         "Binding tie != hidden selection",
         "Capability Match != Authorization",
