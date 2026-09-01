@@ -467,14 +467,10 @@ class GovernanceDecision(_CanonicalGovernanceRecord):
 class Authorization(_CanonicalGovernanceRecord):
     SCHEMA: ClassVar[str] = "irr.authorization.v1"
 
-    authorization_ref: StableRef
     decision: GovernanceDecision
     component_ref: StableRef
-    description: str
 
     def __post_init__(self) -> None:
-        if type(self.authorization_ref) is not StableRef:
-            raise ValidationError("Authorization.authorization_ref must be a StableRef")
         if type(self.decision) is not GovernanceDecision:
             raise ValidationError("Authorization.decision must be a GovernanceDecision")
         if type(self.component_ref) is not StableRef:
@@ -490,7 +486,6 @@ class Authorization(_CanonicalGovernanceRecord):
             raise ValidationError(
                 "Authorization may materialize only an authorize GovernanceDecision component"
             )
-        _require_text(self.description, field="Authorization.description")
 
     @property
     def component(self) -> GovernanceDecisionComponent:
@@ -509,10 +504,8 @@ class Authorization(_CanonicalGovernanceRecord):
 
     def to_primitive(self) -> dict[str, object]:
         return {
-            "authorization_ref": self.authorization_ref.to_primitive(),
             "component_ref": self.component_ref.to_primitive(),
             "decision": self.decision.to_primitive(),
-            "description": self.description,
             "schema": self.SCHEMA,
         }
 
@@ -523,23 +516,19 @@ class Authorization(_CanonicalGovernanceRecord):
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
-            {"schema", "authorization_ref", "decision", "component_ref", "description"},
+            {"schema", "decision", "component_ref"},
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
-                authorization_ref=StableRef.from_primitive(
-                    obj["authorization_ref"], field=f"{field}.authorization_ref"
-                ),
                 decision=GovernanceDecision.from_primitive(
                     obj["decision"], field=f"{field}.decision"
                 ),
                 component_ref=StableRef.from_primitive(
                     obj["component_ref"], field=f"{field}.component_ref"
                 ),
-                description=obj["description"],
             )
         except ValidationError as exc:
             raise SerializationError(f"invalid {field}") from exc
