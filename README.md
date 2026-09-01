@@ -261,3 +261,9 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M1.7 Attempt / Outcome / Continuation IR closure](docs/m1_7_closure.md)
 - [M1.8 Executable M0.10 fixtures & M1 closure](docs/m1_8_closure.md)
 - [Terminology](docs/terminology.md)
+
+## Planning record
+
+- [Roadmap](ROADMAP.md)
+
+`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts are frozen in `main`; M1 implementation slices encode them incrementally without silently reopening those boundaries.
