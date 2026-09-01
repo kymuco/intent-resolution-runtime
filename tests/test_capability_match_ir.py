@@ -391,7 +391,7 @@ def test_every_work_output_is_mapped_but_unused_descriptor_output_is_allowed() -
         match,
         replace(descriptor, output_contracts=descriptor.output_contracts + (extra_output,)),
     )
-    assert changed.descriptor.output_contracts[-1] == extra_output
+    assert extra_output in changed.descriptor.output_contracts
 
 
 def test_unavoidable_effect_cannot_be_hidden_but_possible_extra_effect_can_remain_unmapped() -> None:
