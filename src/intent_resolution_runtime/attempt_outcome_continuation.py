@@ -12,6 +12,7 @@ from .continuation import (
 )
 from .errors import ValidationError
 from .identity import RecordIdentity
+from .intent import StableRef
 from .outcome import CapabilityOutcome, OutcomeLifecycleState
 from .resolution import ResolvedIntent
 from .successor_resolution import SuccessorResolutionLineage
@@ -96,6 +97,20 @@ def _source_resolved_intent_identity(source: ContinuationSource) -> RecordIdenti
     raise ValidationError("M2.4 continuation source has unsupported exact IR type")
 
 
+def _source_event_ref(source: ContinuationSource) -> StableRef:
+    if type(source) is CapabilityOutcome:
+        return source.attribution.outcome_event_ref
+    if type(source) is WorkerResult:
+        return source.attribution.result_event_ref
+    if type(source) is BindingIssue:
+        return source.binding_attribution.binding_event_ref
+    if type(source) is CapabilityMatchIssue:
+        return source.evaluation.attribution.evaluation_event_ref
+    if type(source) is GovernanceContinuationMaterial:
+        return source.decision.attribution.decision_event_ref
+    raise ValidationError("M2.4 continuation source has unsupported exact IR type")
+
+
 def _normalize_sources(value: object) -> tuple[ContinuationSource, ...]:
     if type(value) is not tuple:
         raise ValidationError(
@@ -173,6 +188,7 @@ class AttemptOutcomeContinuationFrontier:
 
         attempts = _normalize_attempts(self.attempts)
         predecessor_identity = self.predecessor.identity
+        predecessor_event = self.predecessor.admission_attribution.admission_event_ref
         for attempt in attempts:
             if (
                 attempt.capability_evaluation.requirement.work_plan.resolved_intent_identity
@@ -207,6 +223,10 @@ class AttemptOutcomeContinuationFrontier:
                 raise ValidationError(
                     "Continuation source must descend from the exact predecessor ResolvedIntent"
                 )
+            if _source_event_ref(source) == predecessor_event:
+                raise ValidationError(
+                    "Continuation source occurrence must differ from the predecessor admission occurrence"
+                )
             if type(source) is CapabilityOutcome:
                 admitted = outcome_map.get(source.identity)
                 if admitted is None or admitted != source:
@@ -221,6 +241,10 @@ class AttemptOutcomeContinuationFrontier:
             if item.resolved_intent_identity != predecessor_identity:
                 raise ValidationError(
                     "ContinuationInput must descend from the exact predecessor ResolvedIntent"
+                )
+            if item.attribution.reentry_event_ref == predecessor_event:
+                raise ValidationError(
+                    "ContinuationInput re-entry occurrence must differ from the predecessor admission occurrence"
                 )
             selected_source = source_map.get(item.source_identity)
             if selected_source is None or selected_source != item.source:
