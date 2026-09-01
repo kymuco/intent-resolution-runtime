@@ -476,6 +476,13 @@ class WorkerResult(_CanonicalWorkerResultRecord):
             raise ValidationError(
                 "WorkerResult worker attribution must match the handed-off Worker"
             )
+        if (
+            self.attribution.result_event_ref
+            == self.handoff.attribution.handoff_event_ref
+        ):
+            raise ValidationError(
+                "WorkerResult result event must be distinct from the handoff event"
+            )
 
         materials = _normalize_materials(
             self.materials, field="WorkerResult.materials"

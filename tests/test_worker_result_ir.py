@@ -211,6 +211,22 @@ def test_worker_result_is_bound_to_exact_handoff_and_worker() -> None:
     assert handoff.identity != other_handoff.identity
 
 
+def test_result_event_must_be_distinct_from_handoff_event() -> None:
+    handoff = _handoff()
+    material = _material(handoff)
+    with pytest.raises(ValidationError, match="distinct from the handoff event"):
+        WorkerResult(
+            attribution=WorkerResultAttribution(
+                worker_ref=handoff.attribution.worker_ref,
+                result_event_ref=handoff.attribution.handoff_event_ref,
+            ),
+            handoff=handoff,
+            materials=(material,),
+            needs=(),
+            description="Invalid collapsed handoff/result occurrence.",
+        )
+
+
 def test_worker_result_requires_material_or_need_without_status_enum() -> None:
     handoff = _handoff()
     with pytest.raises(ValidationError, match="at least one material or WorkerNeed"):
