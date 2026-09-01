@@ -445,7 +445,6 @@ def test_orphan_or_competing_evaluation_fails_closed() -> None:
         orchestrate_capability_governance(plan, capability_evaluations=(evaluation,))
 
     _, second = _unique_evaluation(plan, "inspect", event="second")
-    # The helper creates an equal semantic requirement embedded in a different evaluation occurrence.
     assert second.requirement == requirement
     with pytest.raises(ValidationError, match="competing active CapabilityMatchEvaluation"):
         orchestrate_capability_governance(
@@ -502,7 +501,7 @@ def test_overlapping_active_proposals_for_one_step_fail_closed() -> None:
         )
 
 
-def test_governance_omission_is_unmentioned_not_denied_or_authorized() -> None:
+def test_governance_omission_is_unmentioned_and_authorize_component_is_exact_transition_candidate() -> None:
     plan = _plan("alpha", "beta", label="partial")
     requirements, evaluations = _two_step_evaluations(plan)
     proposal = _proposal(plan, evaluations, event="proposal-both")
@@ -531,12 +530,12 @@ def test_governance_omission_is_unmentioned_not_denied_or_authorized() -> None:
     assert frontier.governance_unmentioned_step_refs == (beta_ref,)
     assert frontier.denied_step_refs == ()
     assert frontier.materialized_authorized_step_refs == ()
-    assert frontier.authorization_projection_pending_component_refs == (
-        authorize_alpha.component_ref,
+    assert frontier.authorization_materialization_frontier == (
+        Authorization(decision, authorize_alpha.component_ref),
     )
 
 
-def test_authorize_decision_requires_explicit_authorization_projection_before_materialized_authorized_surface() -> None:
+def test_authorize_decision_exposes_idempotent_authorization_transition_until_record_is_admitted() -> None:
     plan = _plan("inspect")
     requirement, evaluation = _unique_evaluation(plan, "inspect")
     proposal = _proposal(plan, (evaluation,), event="proposal-auth")
@@ -551,6 +550,7 @@ def test_authorize_decision_requires_explicit_authorization_projection_before_ma
         (component,),
         "External Governance authorizes the exact proposed step.",
     )
+    exact_projection = Authorization(decision, component.component_ref)
 
     pending = orchestrate_capability_governance(
         plan,
@@ -559,23 +559,22 @@ def test_authorize_decision_requires_explicit_authorization_projection_before_ma
         work_proposals=(proposal,),
         governance_decisions=(decision,),
     )
-    assert pending.authorization_projection_pending_component_refs == (component.component_ref,)
+    assert pending.authorization_materialization_frontier == (exact_projection,)
     assert pending.materialized_authorized_step_refs == ()
 
-    authorization = Authorization(decision, component.component_ref)
     materialized = orchestrate_capability_governance(
         plan,
         capability_requirements=(requirement,),
         capability_evaluations=(evaluation,),
         work_proposals=(proposal,),
         governance_decisions=(decision,),
-        authorizations=(authorization,),
+        authorizations=(exact_projection,),
     )
-    assert materialized.authorization_projection_pending_component_refs == ()
+    assert materialized.authorization_materialization_frontier == ()
     assert materialized.materialized_authorized_step_refs == (_ref("irr.work_step", "inspect"),)
 
 
-def test_deny_constrain_require_review_remain_distinct_and_do_not_materialize_authority() -> None:
+def test_deny_constrain_require_review_remain_distinct_and_do_not_create_authorization_transition() -> None:
     for kind, expected_attr in (
         (GovernanceDecisionKind.DENY, "denied_step_refs"),
         (GovernanceDecisionKind.CONSTRAIN, "constrained_step_refs"),
@@ -604,7 +603,7 @@ def test_deny_constrain_require_review_remain_distinct_and_do_not_materialize_au
         )
         assert getattr(frontier, expected_attr) == (_ref("irr.work_step", "inspect"),)
         assert frontier.materialized_authorized_step_refs == ()
-        assert frontier.authorization_projection_pending_component_refs == ()
+        assert frontier.authorization_materialization_frontier == ()
 
 
 def test_competing_governance_decisions_for_one_proposal_fail_closed() -> None:
@@ -639,7 +638,7 @@ def test_orphan_authorization_fails_closed() -> None:
     proposal = _proposal(plan, (evaluation,), event="proposal-active")
 
     other_plan = _plan("inspect", label="other")
-    other_req, other_eval = _unique_evaluation(other_plan, "inspect", event="other")
+    _, other_eval = _unique_evaluation(other_plan, "inspect", event="other")
     other_proposal = _proposal(other_plan, (other_eval,), event="proposal-other")
     component = _component(
         GovernanceDecisionKind.AUTHORIZE,
