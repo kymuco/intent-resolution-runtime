@@ -562,10 +562,10 @@ def test_scenario_a_partial_extract_preserves_scoped_effects_and_returns_to_irr(
     requested_effects = {
         item.semantic_type: item for item in requirement.requested_effects
     }
-    assert requested_effects["filesystem.read"].scope_refs == (
+    assert requested_effects["filesystem.read"].requested_scope_refs == (
         requested_scopes[SELECTED_BACKUP],
     )
-    assert requested_effects["filesystem.write"].scope_refs == (
+    assert requested_effects["filesystem.write"].requested_scope_refs == (
         requested_scopes[DESTINATION],
     )
 
