@@ -54,6 +54,8 @@ WorkerResultAttribution
 └─ result_event_ref
 ```
 
+`result_event_ref` must be distinct from the embedded handoff's `handoff_event_ref`; one attributable occurrence cannot simultaneously represent both dispatch and return.
+
 Attribution is not authentication, factual verification, trust amplification, Worker availability, authority, or proof that the Worker obeyed its delegation.
 
 ## 3. No lifecycle status enum
@@ -235,6 +237,7 @@ Part B2 is correct when executable tests prove at least:
 ```text
 WorkerResult embeds exact DelegatedWorkHandoff
 result Worker attribution matches handed-off Worker
+result event differs from handoff event
 Worker substitution changes handoff lineage
 WorkerResult requires material and/or need
 WorkerResult has no success/failure lifecycle status
