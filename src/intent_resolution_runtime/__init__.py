@@ -103,6 +103,13 @@ from .worker_result import (
     WorkerResultMaterial,
     WorkerResultMaterialRole,
 )
+from .work_proposal import (
+    ProposedWorkStep,
+    WorkProposal,
+    WorkProposalAttribution,
+    WorkProposalMaterial,
+    WorkProposalMaterialKind,
+)
 from .work import (
     WorkContinuationMode,
     WorkInput,
@@ -195,6 +202,10 @@ for _ir_type in (
     CapabilityIncompatibleDescriptorAssessment,
     CapabilityMatchEvaluation,
     CapabilityMatchIssue,
+    WorkProposalAttribution,
+    ProposedWorkStep,
+    WorkProposalMaterial,
+    WorkProposal,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -292,6 +303,11 @@ __all__ = [
     "WorkerResultAttribution",
     "WorkerResultMaterial",
     "WorkerResultMaterialRole",
+    "ProposedWorkStep",
+    "WorkProposal",
+    "WorkProposalAttribution",
+    "WorkProposalMaterial",
+    "WorkProposalMaterialKind",
     "WorkContinuationMode",
     "WorkInput",
     "WorkLiteralInput",
