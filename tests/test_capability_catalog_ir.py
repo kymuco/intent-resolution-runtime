@@ -10,6 +10,8 @@ from intent_resolution_runtime import (
     CapabilityDescriptor,
     CapabilityEffect,
     CapabilityEffectRequirement,
+    CapabilityExecutionBoundary,
+    CapabilityExecutionBoundaryKind,
     CapabilityInputContract,
     CapabilityOutputContract,
     CapabilityScopeRequirement,
@@ -46,12 +48,13 @@ def _input(
 
 def _output(
     name: str,
-    *,
+    *scope_refs: StableRef,
     semantic_type: str = "artifact.metadata",
 ) -> CapabilityOutputContract:
     return CapabilityOutputContract(
         output_ref=_ref("irr.capability_output", name),
         semantic_type=semantic_type,
+        scope_requirement_refs=tuple(scope_refs),
         description=f"Capability output {name}.",
     )
 
@@ -71,13 +74,30 @@ def _effect(
     )
 
 
+def _boundary(
+    name: str,
+    kind: CapabilityExecutionBoundaryKind,
+    *,
+    namespace: str = "irr.execution_boundary",
+) -> CapabilityExecutionBoundary:
+    return CapabilityExecutionBoundary(
+        boundary_ref=_ref(namespace, name),
+        kind=kind,
+        description=f"{kind.value} execution boundary {name}.",
+    )
+
+
 def _descriptor(
     *,
     capability: str = "archive.inspect",
     operation: str = "archive.inspect",
     completion_contract: str = "Return inspectable archive metadata after the bounded inspection.",
-    execution_boundary_refs: tuple[StableRef, ...] = (
-        StableRef("irr.executor", "archive-runtime-v1"),
+    execution_boundaries: tuple[CapabilityExecutionBoundary, ...] = (
+        CapabilityExecutionBoundary(
+            StableRef("irr.executor", "archive-runtime-v1"),
+            CapabilityExecutionBoundaryKind.EXECUTOR,
+            "Archive runtime executor boundary.",
+        ),
     ),
 ) -> CapabilityDescriptor:
     workspace = _scope("workspace")
@@ -88,7 +108,11 @@ def _descriptor(
             _input("archive", workspace.requirement_ref, semantic_type="archive.path"),
         ),
         output_contracts=(
-            _output("metadata", semantic_type="archive.metadata"),
+            _output(
+                "metadata",
+                workspace.requirement_ref,
+                semantic_type="archive.metadata",
+            ),
         ),
         scope_requirements=(workspace,),
         effects=(
@@ -99,7 +123,7 @@ def _descriptor(
                 semantic_type="filesystem.read",
             ),
         ),
-        execution_boundary_refs=execution_boundary_refs,
+        execution_boundaries=execution_boundaries,
         completion_contract=completion_contract,
         description="Bounded archive inspection capability.",
     )
@@ -130,8 +154,16 @@ def test_descriptor_round_trip_and_set_like_surfaces_are_canonical() -> None:
     input_destination = _input(
         "destination", destination.requirement_ref, semantic_type="filesystem.path"
     )
-    out_receipt = _output("receipt", semantic_type="archive.extraction_receipt")
-    out_files = _output("files", semantic_type="filesystem.path_set")
+    out_receipt = _output(
+        "receipt",
+        destination.requirement_ref,
+        semantic_type="archive.extraction_receipt",
+    )
+    out_files = _output(
+        "files",
+        destination.requirement_ref,
+        semantic_type="filesystem.path_set",
+    )
     effect_read = _effect(
         "read",
         workspace.requirement_ref,
@@ -144,8 +176,16 @@ def test_descriptor_round_trip_and_set_like_surfaces_are_canonical() -> None:
         requirement=CapabilityEffectRequirement.UNAVOIDABLE,
         semantic_type="filesystem.write",
     )
-    executor = _ref("irr.executor", "archive-runtime-v2")
-    provider = _ref("irr.provider", "local-archive-adapter")
+    executor = _boundary(
+        "archive-runtime-v2",
+        CapabilityExecutionBoundaryKind.EXECUTOR,
+        namespace="irr.executor",
+    )
+    provider = _boundary(
+        "local-archive-adapter",
+        CapabilityExecutionBoundaryKind.PROVIDER,
+        namespace="irr.provider",
+    )
 
     first = CapabilityDescriptor(
         capability_ref=_ref("irr.capability", "archive.extract"),
@@ -154,7 +194,7 @@ def test_descriptor_round_trip_and_set_like_surfaces_are_canonical() -> None:
         output_contracts=(out_receipt, out_files),
         scope_requirements=(destination, workspace),
         effects=(effect_write, effect_read),
-        execution_boundary_refs=(provider, executor),
+        execution_boundaries=(provider, executor),
         completion_contract="Return extraction receipt and resulting bounded path set.",
         description="Bounded archive extraction.",
     )
@@ -165,7 +205,7 @@ def test_descriptor_round_trip_and_set_like_surfaces_are_canonical() -> None:
         output_contracts=(out_files, out_receipt),
         scope_requirements=(workspace, destination),
         effects=(effect_read, effect_write),
-        execution_boundary_refs=(executor, provider),
+        execution_boundaries=(executor, provider),
         completion_contract="Return extraction receipt and resulting bounded path set.",
         description="Bounded archive extraction.",
     )
@@ -201,8 +241,12 @@ def test_same_logical_capability_ref_with_changed_contract_changes_identity() ->
         completion_contract="Return only an acknowledgement that inspection was scheduled."
     )
     changed_executor = _descriptor(
-        execution_boundary_refs=(
-            _ref("irr.executor", "remote-archive-service"),
+        execution_boundaries=(
+            _boundary(
+                "remote-archive-service",
+                CapabilityExecutionBoundaryKind.SERVICE,
+                namespace="irr.service",
+            ),
         )
     )
 
@@ -222,7 +266,7 @@ def test_catalog_rejects_duplicate_logical_capability_refs_even_if_contracts_dif
         _catalog(first, second)
 
 
-def test_input_and_effect_scope_links_must_reference_descriptor_requirements() -> None:
+def test_input_output_and_effect_scope_links_must_reference_descriptor_requirements() -> None:
     admitted = _scope("workspace")
     foreign = _scope("foreign")
 
@@ -236,9 +280,24 @@ def test_input_and_effect_scope_links_must_reference_descriptor_requirements() -
             output_contracts=(),
             scope_requirements=(admitted,),
             effects=(),
-            execution_boundary_refs=(),
+            execution_boundaries=(),
             completion_contract="Return bounded inspection material.",
             description="Invalid foreign input scope relation.",
+        )
+
+    with pytest.raises(ValidationError, match="output contracts"):
+        CapabilityDescriptor(
+            capability_ref=_ref("irr.capability", "filesystem.inspect"),
+            operation="filesystem.inspect",
+            input_contracts=(),
+            output_contracts=(
+                _output("result", foreign.requirement_ref),
+            ),
+            scope_requirements=(admitted,),
+            effects=(),
+            execution_boundaries=(),
+            completion_contract="Return bounded inspection material.",
+            description="Invalid foreign output scope relation.",
         )
 
     with pytest.raises(ValidationError, match="effects"):
@@ -255,7 +314,7 @@ def test_input_and_effect_scope_links_must_reference_descriptor_requirements() -
                     requirement=CapabilityEffectRequirement.UNAVOIDABLE,
                 ),
             ),
-            execution_boundary_refs=(),
+            execution_boundaries=(),
             completion_contract="Return bounded inspection material.",
             description="Invalid foreign effect scope relation.",
         )
@@ -277,7 +336,7 @@ def test_possible_and_unavoidable_effects_are_distinct_contract_semantics() -> N
                 semantic_type="network.interaction",
             ),
         ),
-        execution_boundary_refs=(),
+        execution_boundaries=(),
         completion_contract="Return bounded inspection material.",
         description="Capability with conditional network effect envelope.",
     )
@@ -295,7 +354,7 @@ def test_possible_and_unavoidable_effects_are_distinct_contract_semantics() -> N
                 semantic_type="network.interaction",
             ),
         ),
-        execution_boundary_refs=possible.execution_boundary_refs,
+        execution_boundaries=possible.execution_boundaries,
         completion_contract=possible.completion_contract,
         description=possible.description,
     )
@@ -365,12 +424,12 @@ def test_duplicate_semantic_refs_fail_closed() -> None:
             output_contracts=(),
             scope_requirements=(scope, duplicate_scope),
             effects=(),
-            execution_boundary_refs=(),
+            execution_boundaries=(),
             completion_contract="Return bounded result.",
             description="Invalid duplicate scope descriptor.",
         )
 
-    with pytest.raises(ValidationError, match="duplicates"):
+    with pytest.raises(ValidationError, match="duplicate kind/boundary_ref pairs"):
         CapabilityDescriptor(
             capability_ref=_ref("irr.capability", "archive.inspect"),
             operation="archive.inspect",
@@ -378,13 +437,39 @@ def test_duplicate_semantic_refs_fail_closed() -> None:
             output_contracts=(),
             scope_requirements=(),
             effects=(),
-            execution_boundary_refs=(
-                _ref("irr.executor", "archive-runtime"),
-                _ref("irr.executor", "archive-runtime"),
+            execution_boundaries=(
+                _boundary(
+                    "archive-runtime",
+                    CapabilityExecutionBoundaryKind.EXECUTOR,
+                    namespace="irr.executor",
+                ),
+                _boundary(
+                    "archive-runtime",
+                    CapabilityExecutionBoundaryKind.EXECUTOR,
+                    namespace="irr.executor",
+                ),
             ),
             completion_contract="Return bounded result.",
             description="Invalid duplicate execution boundary.",
         )
+
+
+def test_execution_boundary_role_is_explicit_and_identity_material() -> None:
+    shared_ref = _ref("irr.runtime", "archive-runtime")
+    provider = CapabilityExecutionBoundary(
+        boundary_ref=shared_ref,
+        kind=CapabilityExecutionBoundaryKind.PROVIDER,
+        description="Provider role.",
+    )
+    executor = CapabilityExecutionBoundary(
+        boundary_ref=shared_ref,
+        kind=CapabilityExecutionBoundaryKind.EXECUTOR,
+        description="Executor role.",
+    )
+    assert provider.identity != executor.identity
+
+    descriptor = _descriptor(execution_boundaries=(provider, executor))
+    assert len(descriptor.execution_boundaries) == 2
 
 
 def test_records_reject_subclassing_through_public_ir_surface() -> None:

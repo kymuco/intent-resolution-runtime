@@ -52,7 +52,7 @@ CapabilityDescriptor
 ├─ output_contracts[]
 ├─ scope_requirements[]
 ├─ effects[]
-├─ execution_boundary_refs[]
+├─ execution_boundaries[]
 ├─ completion_contract
 └─ description
 ```
@@ -139,10 +139,13 @@ CapabilityOutputContract
 ├─ schema = irr.capability_output_contract.v1
 ├─ output_ref
 ├─ semantic_type
+├─ scope_requirement_refs[]
 └─ description
 ```
 
-Outputs describe the semantic data/result surface a capability may return. Returned values do not become factual truth, Observation, Outcome, or completion evidence merely because a descriptor declares an output type.
+Outputs describe the semantic data/result surface a capability may return. Every output scope reference must belong to the parent descriptor's admitted scope requirements, so a returned path/artifact/result cannot silently lose the bounded scope semantics of the capability contract.
+
+Returned values do not become factual truth, Observation, Outcome, or completion evidence merely because a descriptor declares an output type.
 
 M1.6a also carries a descriptor-level `completion_contract`, because output shape alone is insufficient to distinguish, for example:
 
@@ -186,16 +189,29 @@ Every effect scope reference must belong to the descriptor's admitted scope requ
 
 Future M1.6b matching must reject a proposed WorkStep when unavoidable descriptor effects exceed or contradict the represented WorkStep semantics.
 
-## 7. Execution boundary references
-
-`execution_boundary_refs[]` is an identity-covered set of opaque `StableRef` values representing provider, executor, adapter family, service boundary, or another execution boundary when its identity is material to capability semantics.
-
-M1.6a deliberately does not assign a universal taxonomy to those refs.
+## 7. CapabilityExecutionBoundary
 
 ```text
-execution boundary ref != availability
-execution boundary ref != trust proof
-execution boundary ref != authorization
+CapabilityExecutionBoundary
+├─ schema = irr.capability_execution_boundary.v1
+├─ boundary_ref
+├─ kind
+│  ├─ provider
+│  ├─ executor
+│  ├─ adapter
+│  ├─ service
+│  └─ other_explicit
+└─ description
+```
+
+Execution-boundary identity is identity-covered together with its semantic role. A bare set of refs is insufficient because the same external component can be material as a provider, executor, adapter, or service boundary and those roles must not be guessed later.
+
+The same `boundary_ref` may appear under more than one explicit role when one component genuinely occupies multiple roles. Duplicate `(kind, boundary_ref)` pairs fail closed.
+
+```text
+execution boundary role != availability
+execution boundary identity != trust proof
+execution boundary identity != authorization
 same operation != provider interchangeability
 ```
 
@@ -330,7 +346,7 @@ Where presentation order is not semantic, v1 canonicalizes by explicit stable ke
 - input contracts by `input_ref`;
 - output contracts by `output_ref`;
 - effects by `effect_ref`;
-- execution boundary refs by `(namespace, value)`;
+- execution boundaries by `(kind, namespace, value)`;
 - Catalog descriptors by `capability_ref`.
 
 Duplicate semantic keys fail closed rather than creating registration-order precedence.
@@ -375,7 +391,8 @@ set-like order independence
 same capability_ref + changed semantics -> changed descriptor identity
 changed descriptor -> changed catalog snapshot identity
 duplicate capability_ref in one snapshot -> fail closed
-input/effect scope links -> admitted descriptor scope requirements only
+input/output/effect scope links -> admitted descriptor scope requirements only
+execution-boundary role is explicit and identity material
 possible effect != unavoidable effect
 semantic operation identifier != executable text
 catalog attribution occurrence is identity material
