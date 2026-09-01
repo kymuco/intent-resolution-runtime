@@ -10,13 +10,15 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 **M1 — Intent Resolution IR is complete and frozen through M1.8.** All eight canonical M0.10 architecture scenarios have executable regression coverage.
 
-**M2.0 — Runtime Orchestration Charter** is the current milestone. M2 begins the orchestration phase: deriving bounded legal lifecycle transitions over the immutable M1 record graph without turning orchestration into authority, execution, Governance, ambient retrieval, or hidden retry policy.
+**M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.** It freezes replayable orchestration over the immutable admitted M1 lifecycle graph, complete semantic transition-frontier derivation, lifecycle-graph admission, and the separation between semantic frontier and runtime scheduler selection.
+
+**M2.1 — Initial Resolution Orchestrator** is the current milestone. It implements the first runtime slice: exact initial request/context/candidate graph admission, fail-closed candidate adjudication, and deterministic admission of M1 `ResolvedIntent`, `ClarificationNeed`, or `InformationNeed` without provider voting, ambient retrieval, authority, or effect execution.
 
 **M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
 M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 added bounded `WorkPlan` / `WorkStep` semantics, explicit DelegatedWork / Worker handoff and attributable WorkerResult / WorkerNeed re-entry. M1.6 added exact Capability Catalog / Match Evaluation, WorkProposal, external Governance Decision, and canonical Authorization IR. M1.7 added attributable CapabilityAttempt / CapabilityOutcome, typed ContinuationInput, and exact SuccessorResolutionLineage. M1.8 applies the full frozen M1 surface to all eight M0.10 canonical scenarios and closes M1 without adding a scenario-specific runtime layer.
 
-M2.0 freezes orchestration as replayable derivation over immutable M1 history. A mutable session object or one global lifecycle status may exist only as a reconstructible convenience view, never as the canonical semantic source of truth.
+M2.0 freezes orchestration as replayable derivation over immutable M1 history. A mutable session object or one global lifecycle status may exist only as a reconstructible convenience view, never as the canonical semantic source of truth. M2.1 adds the first deliberately narrow derived runtime frontier and initial Resolution admission function while keeping the M1 records as canonical history.
 
 ## Product identity
 
@@ -265,10 +267,11 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M1.7 Attempt / Outcome / Continuation IR closure](docs/m1_7_closure.md)
 - [M1.8 Executable M0.10 fixtures & M1 closure](docs/m1_8_closure.md)
 - [M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)
+- [M2.1 Initial Resolution Orchestrator](docs/m2_1_initial_resolution_orchestrator.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
 
 - [Roadmap](ROADMAP.md)
 
-`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts are frozen in `main`; M1 implementation slices encode them incrementally without silently reopening those boundaries.
+`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts and the M1 IR are frozen in `main`; M2 implementation slices build orchestration over those boundaries without silently reopening them.

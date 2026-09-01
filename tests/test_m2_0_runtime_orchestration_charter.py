@@ -52,10 +52,9 @@ def test_m2_0_charter_separates_replay_semantic_frontier_and_scheduler_selection
     assert "M2.6 — End-to-end Host fixture" in text
 
 
-def test_readme_declares_m2_0_without_unfreezing_m1() -> None:
+def test_readme_preserves_m2_0_normative_link_without_unfreezing_m1() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
-    assert "**M2.0 — Runtime Orchestration Charter**" in text
     assert "[M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)" in text
     assert "No M2 semantic milestone is declared yet" not in text

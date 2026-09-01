@@ -1,4 +1,4 @@
-"""Intent Resolution Runtime public M1 Intent IR surface."""
+"""Intent Resolution Runtime public surface."""
 
 from .attempt import AttemptBoundInput, CapabilityAttempt, CapabilityAttemptAttribution
 from .binding import (
@@ -95,6 +95,11 @@ from .governance import (
     GovernanceDirective,
 )
 from .identity import RecordIdentity
+from .initial_resolution import (
+    InitialResolutionFrontier,
+    InitialResolutionFrontierKind,
+    orchestrate_initial_resolution,
+)
 from .intent import IntentExpression, IntentRequest, OriginAttribution, OriginKind, StableRef
 from .outcome import (
     CapabilityOutcome,
@@ -344,6 +349,8 @@ __all__ = [
     "GovernanceDirective",
     "InformationNeed",
     "InformationNeedProposal",
+    "InitialResolutionFrontier",
+    "InitialResolutionFrontierKind",
     "IntentExpression",
     "IntentIRError",
     "IntentRequest",
@@ -393,4 +400,5 @@ __all__ = [
     "WorkSymbolicInput",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
+    "orchestrate_initial_resolution",
 ]
