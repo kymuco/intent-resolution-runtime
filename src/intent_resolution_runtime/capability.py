@@ -80,7 +80,9 @@ def _stable_ref_key(value: StableRef) -> tuple[str, str]:
     return value.namespace, value.value
 
 
-def _normalize_stable_refs(value: object, *, field: str) -> tuple[StableRef, ...]:
+def _normalize_stable_refs(
+    value: object, *, field: str
+) -> tuple[StableRef, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is StableRef for item in value):
@@ -108,6 +110,14 @@ class _CanonicalCapabilityRecord:
 class CapabilityEffectRequirement(str, Enum):
     POSSIBLE = "possible"
     UNAVOIDABLE = "unavoidable"
+
+
+class CapabilityExecutionBoundaryKind(str, Enum):
+    PROVIDER = "provider"
+    EXECUTOR = "executor"
+    ADAPTER = "adapter"
+    SERVICE = "service"
+    OTHER_EXPLICIT = "other_explicit"
 
 
 @dataclass(frozen=True, slots=True)
@@ -304,12 +314,21 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
 
     output_ref: StableRef
     semantic_type: str
+    scope_requirement_refs: tuple[StableRef, ...]
     description: str
 
     def __post_init__(self) -> None:
         if type(self.output_ref) is not StableRef:
             raise ValidationError("CapabilityOutputContract.output_ref must be a StableRef")
         _require_token(self.semantic_type, field="CapabilityOutputContract.semantic_type")
+        object.__setattr__(
+            self,
+            "scope_requirement_refs",
+            _normalize_stable_refs(
+                self.scope_requirement_refs,
+                field="CapabilityOutputContract.scope_requirement_refs",
+            ),
+        )
         _require_text(self.description, field="CapabilityOutputContract.description")
 
     def to_primitive(self) -> dict[str, object]:
@@ -317,6 +336,9 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
             "description": self.description,
             "output_ref": self.output_ref.to_primitive(),
             "schema": self.SCHEMA,
+            "scope_requirement_refs": [
+                item.to_primitive() for item in self.scope_requirement_refs
+            ],
             "semantic_type": self.semantic_type,
         }
 
@@ -327,8 +349,17 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
-            {"schema", "output_ref", "semantic_type", "description"},
+            {
+                "schema",
+                "output_ref",
+                "semantic_type",
+                "scope_requirement_refs",
+                "description",
+            },
             field=field,
+        )
+        refs = _expect_array(
+            obj["scope_requirement_refs"], field=f"{field}.scope_requirement_refs"
         )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
@@ -338,6 +369,12 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
                     obj["output_ref"], field=f"{field}.output_ref"
                 ),
                 semantic_type=obj["semantic_type"],
+                scope_requirement_refs=tuple(
+                    StableRef.from_primitive(
+                        item, field=f"{field}.scope_requirement_refs[{index}]"
+                    )
+                    for index, item in enumerate(refs)
+                ),
                 description=obj["description"],
             )
         except ValidationError as exc:
@@ -443,6 +480,92 @@ class CapabilityEffect(_CanonicalCapabilityRecord):
         return cls.from_primitive(parse_json_object(data))
 
 
+@dataclass(frozen=True, slots=True)
+class CapabilityExecutionBoundary(_CanonicalCapabilityRecord):
+    SCHEMA: ClassVar[str] = "irr.capability_execution_boundary.v1"
+
+    boundary_ref: StableRef
+    kind: CapabilityExecutionBoundaryKind
+    description: str
+
+    def __post_init__(self) -> None:
+        if type(self.boundary_ref) is not StableRef:
+            raise ValidationError(
+                "CapabilityExecutionBoundary.boundary_ref must be a StableRef"
+            )
+        if type(self.kind) is not CapabilityExecutionBoundaryKind:
+            raise ValidationError(
+                "CapabilityExecutionBoundary.kind must be a CapabilityExecutionBoundaryKind"
+            )
+        _require_text(
+            self.description, field="CapabilityExecutionBoundary.description"
+        )
+
+    def to_primitive(self) -> dict[str, object]:
+        return {
+            "boundary_ref": self.boundary_ref.to_primitive(),
+            "description": self.description,
+            "kind": self.kind.value,
+            "schema": self.SCHEMA,
+        }
+
+    @classmethod
+    def from_primitive(
+        cls, value: object, *, field: str = "CapabilityExecutionBoundary"
+    ) -> "CapabilityExecutionBoundary":
+        obj = _expect_object(value, field=field)
+        _expect_exact_keys(
+            obj, {"schema", "boundary_ref", "kind", "description"}, field=field
+        )
+        if obj["schema"] != cls.SCHEMA:
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
+        if type(obj["kind"]) is not str:
+            raise SerializationError(f"{field}.kind must be a string")
+        try:
+            kind = CapabilityExecutionBoundaryKind(obj["kind"])
+        except ValueError as exc:
+            raise SerializationError(f"unsupported {field}.kind") from exc
+        try:
+            return cls(
+                boundary_ref=StableRef.from_primitive(
+                    obj["boundary_ref"], field=f"{field}.boundary_ref"
+                ),
+                kind=kind,
+                description=obj["description"],
+            )
+        except ValidationError as exc:
+            raise SerializationError(f"invalid {field}") from exc
+
+    @classmethod
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> "CapabilityExecutionBoundary":
+        return cls.from_primitive(parse_json_object(data))
+
+
+def _normalize_execution_boundaries(
+    value: object, *, field: str
+) -> tuple[CapabilityExecutionBoundary, ...]:
+    if type(value) is not tuple:
+        raise ValidationError(f"{field} must be a tuple")
+    if not all(type(item) is CapabilityExecutionBoundary for item in value):
+        raise ValidationError(
+            f"{field} must contain CapabilityExecutionBoundary values"
+        )
+    items = cast(tuple[CapabilityExecutionBoundary, ...], value)
+    keys = [(item.kind.value, item.boundary_ref) for item in items]
+    if len(set(keys)) != len(keys):
+        raise ValidationError(
+            f"{field} must not contain duplicate kind/boundary_ref pairs"
+        )
+    return tuple(
+        sorted(
+            items,
+            key=lambda item: (item.kind.value, *_stable_ref_key(item.boundary_ref)),
+        )
+    )
+
+
 def _normalize_scope_requirements(
     value: object, *, field: str
 ) -> tuple[CapabilityScopeRequirement, ...]:
@@ -487,7 +610,9 @@ def _normalize_output_contracts(
     return tuple(sorted(items, key=lambda item: _stable_ref_key(item.output_ref)))
 
 
-def _normalize_effects(value: object, *, field: str) -> tuple[CapabilityEffect, ...]:
+def _normalize_effects(
+    value: object, *, field: str
+) -> tuple[CapabilityEffect, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is CapabilityEffect for item in value):
@@ -509,7 +634,7 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
     output_contracts: tuple[CapabilityOutputContract, ...]
     scope_requirements: tuple[CapabilityScopeRequirement, ...]
     effects: tuple[CapabilityEffect, ...]
-    execution_boundary_refs: tuple[StableRef, ...]
+    execution_boundaries: tuple[CapabilityExecutionBoundary, ...]
     completion_contract: str
     description: str
 
@@ -537,19 +662,24 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
             )
         object.__setattr__(self, "input_contracts", input_contracts)
 
-        object.__setattr__(
-            self,
-            "output_contracts",
-            _normalize_output_contracts(
-                self.output_contracts, field="CapabilityDescriptor.output_contracts"
-            ),
+        output_contracts = _normalize_output_contracts(
+            self.output_contracts, field="CapabilityDescriptor.output_contracts"
         )
-
-        effects = _normalize_effects(self.effects, field="CapabilityDescriptor.effects")
         if any(
             ref not in scope_refs
-            for item in effects
+            for item in output_contracts
             for ref in item.scope_requirement_refs
+        ):
+            raise ValidationError(
+                "CapabilityDescriptor output contracts must reference admitted scope requirements"
+            )
+        object.__setattr__(self, "output_contracts", output_contracts)
+
+        effects = _normalize_effects(
+            self.effects, field="CapabilityDescriptor.effects"
+        )
+        if any(
+            ref not in scope_refs for item in effects for ref in item.scope_requirement_refs
         ):
             raise ValidationError(
                 "CapabilityDescriptor effects must reference admitted scope requirements"
@@ -558,10 +688,10 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
 
         object.__setattr__(
             self,
-            "execution_boundary_refs",
-            _normalize_stable_refs(
-                self.execution_boundary_refs,
-                field="CapabilityDescriptor.execution_boundary_refs",
+            "execution_boundaries",
+            _normalize_execution_boundaries(
+                self.execution_boundaries,
+                field="CapabilityDescriptor.execution_boundaries",
             ),
         )
         _require_text(
@@ -575,8 +705,8 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
             "completion_contract": self.completion_contract,
             "description": self.description,
             "effects": [item.to_primitive() for item in self.effects],
-            "execution_boundary_refs": [
-                item.to_primitive() for item in self.execution_boundary_refs
+            "execution_boundaries": [
+                item.to_primitive() for item in self.execution_boundaries
             ],
             "input_contracts": [item.to_primitive() for item in self.input_contracts],
             "operation": self.operation,
@@ -602,7 +732,7 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
                 "output_contracts",
                 "scope_requirements",
                 "effects",
-                "execution_boundary_refs",
+                "execution_boundaries",
                 "completion_contract",
                 "description",
             },
@@ -619,8 +749,8 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
         )
         effects = _expect_array(obj["effects"], field=f"{field}.effects")
         boundaries = _expect_array(
-            obj["execution_boundary_refs"],
-            field=f"{field}.execution_boundary_refs",
+            obj["execution_boundaries"],
+            field=f"{field}.execution_boundaries",
         )
         try:
             return cls(
@@ -652,9 +782,9 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
                     )
                     for index, item in enumerate(effects)
                 ),
-                execution_boundary_refs=tuple(
-                    StableRef.from_primitive(
-                        item, field=f"{field}.execution_boundary_refs[{index}]"
+                execution_boundaries=tuple(
+                    CapabilityExecutionBoundary.from_primitive(
+                        item, field=f"{field}.execution_boundaries[{index}]"
                     )
                     for index, item in enumerate(boundaries)
                 ),
