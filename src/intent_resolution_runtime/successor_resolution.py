@@ -157,11 +157,23 @@ class SuccessorResolutionLineage(_CanonicalSuccessorResolutionRecord):
             )
 
         predecessor_event = self.predecessor.admission_attribution.admission_event_ref
+        source_events = {item.source_event_ref for item in inputs}
         reentry_events = {item.attribution.reentry_event_ref for item in inputs}
+
+        if predecessor_event in source_events:
+            raise ValidationError(
+                "SuccessorResolutionLineage source occurrence must differ from "
+                "the predecessor admission occurrence"
+            )
         if predecessor_event in reentry_events:
             raise ValidationError(
                 "SuccessorResolutionLineage re-entry occurrence must differ from "
                 "the predecessor admission occurrence"
+            )
+        if source_events.intersection(reentry_events):
+            raise ValidationError(
+                "SuccessorResolutionLineage source occurrences must remain distinct "
+                "from Host re-entry occurrences"
             )
 
         successor_event = self.successor.admission_attribution.admission_event_ref
@@ -169,6 +181,11 @@ class SuccessorResolutionLineage(_CanonicalSuccessorResolutionRecord):
             raise ValidationError(
                 "SuccessorResolutionLineage successor admission occurrence must differ "
                 "from the predecessor admission occurrence"
+            )
+        if successor_event in source_events:
+            raise ValidationError(
+                "SuccessorResolutionLineage successor admission occurrence must differ "
+                "from every source occurrence"
             )
         if successor_event in reentry_events:
             raise ValidationError(
