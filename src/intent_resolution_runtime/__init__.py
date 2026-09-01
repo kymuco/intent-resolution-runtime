@@ -1,6 +1,10 @@
 """Intent Resolution Runtime public surface."""
 
 from .attempt import AttemptBoundInput, CapabilityAttempt, CapabilityAttemptAttribution
+from .attempt_outcome_continuation import (
+    AttemptOutcomeContinuationFrontier,
+    orchestrate_attempt_outcome_continuation,
+)
 from .binding import (
     BindingAttribution,
     BindingAttribute,
@@ -275,6 +279,7 @@ __all__ = [
     "AssumptionKind",
     "AssumptionRecord",
     "AttemptBoundInput",
+    "AttemptOutcomeContinuationFrontier",
     "Authorization",
     "BindingAttribution",
     "BindingAttribute",
@@ -407,6 +412,7 @@ __all__ = [
     "WorkSymbolicInput",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
+    "orchestrate_attempt_outcome_continuation",
     "orchestrate_capability_governance",
     "orchestrate_initial_resolution",
     "orchestrate_work_binding",
