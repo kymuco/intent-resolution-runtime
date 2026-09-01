@@ -67,32 +67,50 @@ Binding success != Attempt
 
 A retry or fallback execution, if ever admitted by later runtime policy, is a new Attempt. M1.7 does not mutate an old Attempt into a second invocation.
 
-## 3. M1.7a2 — Capability Outcome IR
+## 3. M1.7a2 — Capability Outcome / Effect Certainty IR
 
 M1.7a2 freezes attributable scoped result interpretation for one exact Attempt without rewriting the Attempt itself.
 
-Outcome lifecycle states preserve the M0.9 distinctions:
+It deliberately does **not** collapse M0.9 concepts into one status enum. The frozen Outcome has orthogonal dimensions:
 
 ```text
-succeeded
-failed
-blocked
-interrupted
-unknown_outcome
+OutcomeLifecycleState
+    normal_protocol_completed | interrupted
+
+OutcomeCompletionState
+    satisfied | not_satisfied | unknown
+
+OutcomeEffectCertainty
+    confirmed_not_occurred
+    | confirmed_partial
+    | confirmed_occurred
+    | unknown
 ```
 
-These states do not collapse into one another:
+This preserves combinations that a single `succeeded/failed/unknown_outcome` field would erase, for example:
 
 ```text
-unknown_outcome != failed
-failed != no effect
-blocked != Governance Denial
-interrupted != no effect
+interrupted + completion unknown + effect unknown
+normal protocol completed + completion not_satisfied + partial effect confirmed
+interrupted + completion satisfied + effect confirmed
+normal protocol completed + completion unknown
+```
+
+Core distinctions remain:
+
+```text
+lifecycle state != completion state
+completion state != effect certainty
+transport state != semantic completion
+interrupted != failed
+not_satisfied != no effect
+unknown != failed
 Outcome != Authorization
-Outcome != parent intent completion by default
+Outcome != Observation
+Outcome != parent completion
 ```
 
-Outcome material may preserve completion/effect certainty and exact attributable evidence or result material under its frozen contract, but it does not create retry permission or erase partial/uncertain historical effects.
+M1.7a2 intentionally does not freeze a separate `succeeded` or `failed` wire enum, and pre-attempt blockers do not require fake Attempt/Outcome records. Outcome material may preserve exact attributable evidence and certainty assessments under its frozen contract, but it does not create retry permission or erase partial/uncertain historical effects.
 
 ## 4. M1.7b1 — Continuation Input IR
 
@@ -273,9 +291,11 @@ The full suite continued executing earlier M1 frozen goldens, so M1.7 did not si
 
 ```text
 Attempt != Outcome
-Outcome != Effect
-unknown_outcome != failed
-failed != no effect
+Outcome lifecycle != Outcome completion
+Outcome completion != effect certainty
+interrupted != failed
+unknown completion/effect != failed
+not_satisfied != no effect
 Retry != mutation of an Attempt
 ContinuationInput != Retry
 source production != Host re-entry
