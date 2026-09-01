@@ -270,3 +270,39 @@ BindingIssue       ba6fe8fb6071a8eec52e5893a37faf6967d2f00df894ac1d2a55471180e76
 The same full test suite continues to execute the frozen M1.1 request, M1.2 context, and M1.3 candidate/resolved golden identities, so adding M1.4 cannot silently redefine earlier canonical bytes.
 
 M1.4 deliberately does not introduce WorkPlan/WorkStep, DelegatedWork, Capability/Governance records, generic Continuation, Observation/Outcome schemas, external retrieval, execution scheduling, retry/fallback, or persistence. Those remain later slices.
+
+---
+
+# M1.5 — Work / Delegation IR
+
+M1.5 encodes the M0.3 Intent → Work boundary and the M0.8 Worker Delegation boundary in separate implementation sub-slices so ordinary bounded operational work cannot become a disguised Worker-owned autonomous lifecycle.
+
+**Part A — bounded WorkPlan / WorkStep IR is complete.** The detailed normative contract is maintained in [M1.5 Work / Delegation IR](m1_5_work_delegation_ir.md). Part B will add explicit Worker Delegation records separately.
+
+Core executable distinctions frozen by Part A:
+
+```text
+work description != execution
+work description != authorization
+semantic operation != implementation command
+presentation order != execution dependency
+symbolic input != known value
+internal symbolic dataflow -> producer dependency path
+WorkStep lineage includes parent WorkPlan ref
+step completion != plan completion
+plan completion != intent satisfaction by default
+return_to_irr != embedded planner loop
+WorkStep != Worker delegation
+```
+
+Part A introduces immutable `WorkLiteralInput`, `WorkSymbolicInput`, `WorkOutput`, `WorkStep`, and `WorkPlan` records. A WorkPlan is finite and acyclic, its steps are bound to one exact ResolvedIntent identity and explicit parent plan reference, internal symbolic dataflow must follow a dependency path, and `return_to_irr` is terminal with respect to dependent successor work. Semantic operation identifiers use a narrow lowercase dotted syntax while leaving the operation vocabulary itself open to later domain contracts.
+
+`WorkPlan` and `WorkStep` carry distinct identity-covered completion contracts. M1.5 preserves the semantic distinction between step completion, plan completion, and parent intent satisfaction; actual Attempt/Outcome evidence and continuation-time determination remain owned by M1.7.
+
+Representative Part A canonical identities are frozen by tests. The complete backup-inspection WorkPlan fixture, including its plan-level completion contract, has SHA-256:
+
+```text
+8b0996a65a513ee16a68cab39ef62d66ec9b076fee214a9e158f4b864448d54c
+```
+
+Part A deliberately does not introduce `DelegatedWork`, `WorkerResult`, Capability/Governance records, Authorization, executable handoffs, Attempt/Outcome/Continuation records, retry/fallback, Observation schemas, transport, or persistence. Worker-owned subordinate lifecycle semantics remain M1.5 Part B rather than being hidden inside ordinary WorkStep execution.
