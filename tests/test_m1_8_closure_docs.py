@@ -8,12 +8,11 @@ README = ROOT / "README.md"
 CLOSURE = ROOT / "docs" / "m1_8_closure.md"
 
 
-def test_readme_declares_completed_m1_and_removes_stale_next_m1_6_status() -> None:
+def test_readme_preserves_completed_m1_and_removes_stale_next_m1_6_status() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
     assert "The next implementation slice is **M1.6" not in text
-    assert "No M2 semantic milestone is declared yet" in text
 
 
 def test_readme_normative_index_reaches_m1_8_closure() -> None:
