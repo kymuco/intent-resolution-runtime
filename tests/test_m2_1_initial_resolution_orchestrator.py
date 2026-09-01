@@ -83,15 +83,6 @@ def _missing() -> ResolutionIssue:
     )
 
 
-def _uncertainty() -> ResolutionIssue:
-    return ResolutionIssue(
-        ResolutionIssueKind.UNCERTAINTY,
-        ResolutionIssueImpact.BLOCKING,
-        "target state",
-        "The admitted material does not establish the target state.",
-    )
-
-
 def _candidate(
     request: IntentRequest,
     context: ContextEnvelope,
@@ -118,13 +109,80 @@ def _candidate(
     )
 
 
-def test_no_candidate_material_yields_explicit_candidate_input_requirement() -> None:
+def _resolved_admitter(
+    request: IntentRequest,
+    context: ContextEnvelope,
+    candidates: tuple[CandidateResolution, ...],
+    attribution: ResolutionAttribution,
+) -> ResolvedIntent:
+    return ResolvedIntent(
+        request.identity,
+        context.identity,
+        attribution,
+        "IRR independently admits the bounded answer semantics.",
+        candidate_inputs=candidates,
+    )
+
+
+def _deterministic_admitter(
+    request: IntentRequest,
+    context: ContextEnvelope,
+    candidates: tuple[CandidateResolution, ...],
+    attribution: ResolutionAttribution,
+) -> ResolvedIntent:
+    assert candidates == ()
+    return ResolvedIntent(
+        request.identity,
+        context.identity,
+        attribution,
+        "A deterministic IRR path resolves the simple request without provider candidate material.",
+    )
+
+
+def _clarification_admitter(
+    request: IntentRequest,
+    context: ContextEnvelope,
+    candidates: tuple[CandidateResolution, ...],
+    attribution: ResolutionAttribution,
+) -> ClarificationNeed:
+    issue = candidates[0].issues[0]
+    return ClarificationNeed(
+        request.identity,
+        context.identity,
+        attribution,
+        "Which target do you mean: alpha or beta?",
+        "launch target",
+        (issue,),
+        candidates,
+    )
+
+
+def _information_admitter(
+    request: IntentRequest,
+    context: ContextEnvelope,
+    candidates: tuple[CandidateResolution, ...],
+    attribution: ResolutionAttribution,
+) -> InformationNeed:
+    issue = candidates[0].issues[0]
+    return InformationNeed(
+        request.identity,
+        context.identity,
+        attribution,
+        "An attributable bounded report listing with modification timestamps.",
+        "admitted reports directory",
+        "The term latest cannot be grounded from current Context.",
+        (issue,),
+        candidates,
+    )
+
+
+def test_no_resolution_material_yields_explicit_input_requirement_without_provider_call() -> None:
     request = _request()
     context = _context(request)
 
     frontier = orchestrate_initial_resolution(request, context)
 
-    assert frontier.kind is InitialResolutionFrontierKind.CANDIDATE_INPUT_REQUIRED
+    assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_INPUT_REQUIRED
     assert frontier.candidate_inputs == ()
     assert frontier.resolution_output is None
     assert frontier.intent_request_identity == request.identity
@@ -160,7 +218,6 @@ def test_candidate_must_belong_to_exact_request_and_context_graph_slice() -> Non
             request,
             context,
             candidate_inputs=(foreign,),
-            admission_attribution=_admission(),
         )
 
 
@@ -174,11 +231,10 @@ def test_duplicate_candidate_delivery_cannot_amplify_semantic_weight() -> None:
             request,
             context,
             candidate_inputs=(candidate, candidate),
-            admission_attribution=_admission(),
         )
 
 
-def test_one_unblocked_candidate_admits_resolved_intent() -> None:
+def test_one_provider_candidate_is_not_automatically_admitted() -> None:
     request = _request()
     context = _context(request)
     candidate = _candidate(request, context)
@@ -187,17 +243,50 @@ def test_one_unblocked_candidate_admits_resolved_intent() -> None:
         request,
         context,
         candidate_inputs=(candidate,),
-        admission_attribution=_admission(),
+    )
+
+    assert frontier.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    assert frontier.candidate_inputs == (candidate,)
+    assert frontier.resolution_output is None
+
+
+def test_explicit_irr_admitter_can_admit_candidate_without_becoming_provider_authority() -> None:
+    request = _request()
+    context = _context(request)
+    candidate = _candidate(request, context)
+
+    frontier = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(candidate,),
+        admitter=_resolved_admitter,
+        admission_attribution=_admission("resolved"),
     )
 
     assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
     assert isinstance(frontier.resolution_output, ResolvedIntent)
-    assert frontier.resolution_output.semantics == candidate.proposed_semantics
+    assert frontier.resolution_output.semantics != candidate.proposed_semantics
     assert frontier.resolution_output.candidate_inputs == (candidate,)
-    assert frontier.candidate_inputs == frontier.resolution_output.candidate_inputs
+    assert frontier.resolution_output.admission_attribution == _admission("resolved")
 
 
-def test_equivalent_provider_candidates_preserve_provenance_without_precedence() -> None:
+def test_deterministic_irr_path_can_resolve_without_provider_candidate() -> None:
+    request = _request()
+    context = _context(request)
+
+    frontier = orchestrate_initial_resolution(
+        request,
+        context,
+        admitter=_deterministic_admitter,
+        admission_attribution=_admission("deterministic"),
+    )
+
+    assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
+    assert isinstance(frontier.resolution_output, ResolvedIntent)
+    assert frontier.resolution_output.candidate_inputs == ()
+
+
+def test_equivalent_provider_candidates_require_admission_but_not_provider_precedence() -> None:
     request = _request()
     context = _context(request)
     first = _candidate(request, context, provider="provider-a", invocation="inv-a")
@@ -207,19 +296,42 @@ def test_equivalent_provider_candidates_preserve_provenance_without_precedence()
         request,
         context,
         candidate_inputs=(first, second),
+    )
+    b = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(second, first),
+    )
+
+    assert a.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    assert b.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    assert a == b
+    assert set(a.candidate_inputs) == {first, second}
+
+
+def test_equivalent_candidates_can_be_admitted_with_all_exact_provenance() -> None:
+    request = _request()
+    context = _context(request)
+    first = _candidate(request, context, provider="provider-a", invocation="inv-a")
+    second = _candidate(request, context, provider="provider-b", invocation="inv-b")
+
+    a = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(first, second),
+        admitter=_resolved_admitter,
         admission_attribution=_admission("equivalent"),
     )
     b = orchestrate_initial_resolution(
         request,
         context,
         candidate_inputs=(second, first),
+        admitter=_resolved_admitter,
         admission_attribution=_admission("equivalent"),
     )
 
-    assert a.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
-    assert isinstance(a.resolution_output, ResolvedIntent)
     assert a == b
-    assert a.resolution_output == b.resolution_output
+    assert isinstance(a.resolution_output, ResolvedIntent)
     assert set(a.resolution_output.candidate_inputs) == {first, second}
 
 
@@ -245,20 +357,17 @@ def test_semantically_distinct_candidates_require_adjudication_without_ranking()
         request,
         context,
         candidate_inputs=(first, second),
-        admission_attribution=_admission("unused-a"),
     )
     b = orchestrate_initial_resolution(
         request,
         context,
         candidate_inputs=(second, first),
-        admission_attribution=_admission("unused-b"),
     )
 
     assert a.kind is InitialResolutionFrontierKind.ADJUDICATION_REQUIRED
     assert b.kind is InitialResolutionFrontierKind.ADJUDICATION_REQUIRED
-    assert a.candidate_inputs == b.candidate_inputs
+    assert a == b
     assert a.resolution_output is None
-    assert b.resolution_output is None
 
 
 def test_candidate_majority_does_not_become_semantic_authority() -> None:
@@ -290,14 +399,44 @@ def test_candidate_majority_does_not_become_semantic_authority() -> None:
         request,
         context,
         candidate_inputs=(alpha_a, alpha_b, beta),
-        admission_attribution=_admission("majority"),
     )
 
     assert frontier.kind is InitialResolutionFrontierKind.ADJUDICATION_REQUIRED
     assert frontier.resolution_output is None
 
 
-def test_single_blocking_issue_with_unique_clarification_path_admits_pause() -> None:
+def test_explicit_admitter_can_adjudicate_distinct_candidates_only_with_full_provenance() -> None:
+    request = _request()
+    context = _context(request)
+    first = _candidate(
+        request,
+        context,
+        provider="provider-a",
+        invocation="alpha",
+        semantics="Use alpha.",
+    )
+    second = _candidate(
+        request,
+        context,
+        provider="provider-b",
+        invocation="beta",
+        semantics="Use beta.",
+    )
+
+    frontier = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(first, second),
+        admitter=_resolved_admitter,
+        admission_attribution=_admission("adjudicated"),
+    )
+
+    assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
+    assert isinstance(frontier.resolution_output, ResolvedIntent)
+    assert set(frontier.resolution_output.candidate_inputs) == {first, second}
+
+
+def test_provider_clarification_proposal_does_not_pause_irr_without_admitter() -> None:
     request = _request()
     context = _context(request)
     candidate = _candidate(
@@ -318,16 +457,23 @@ def test_single_blocking_issue_with_unique_clarification_path_admits_pause() -> 
         request,
         context,
         candidate_inputs=(candidate,),
-        admission_attribution=_admission("clarification"),
     )
 
-    assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
-    assert isinstance(frontier.resolution_output, ClarificationNeed)
-    assert frontier.resolution_output.blocking_issues == (_ambiguity(),)
-    assert frontier.resolution_output.candidate_inputs == (candidate,)
+    assert frontier.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    assert frontier.resolution_output is None
+
+    admitted = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(candidate,),
+        admitter=_clarification_admitter,
+        admission_attribution=_admission("clarification"),
+    )
+    assert isinstance(admitted.resolution_output, ClarificationNeed)
+    assert admitted.resolution_output.blocking_issues == (_ambiguity(),)
 
 
-def test_single_blocking_issue_with_unique_information_path_admits_information_need() -> None:
+def test_provider_information_proposal_does_not_create_retrieval_authority() -> None:
     request = _request()
     context = _context(request)
     candidate = _candidate(
@@ -344,96 +490,135 @@ def test_single_blocking_issue_with_unique_information_path_admits_information_n
         ),
     )
 
-    frontier = orchestrate_initial_resolution(
+    pending = orchestrate_initial_resolution(
         request,
         context,
         candidate_inputs=(candidate,),
+    )
+    assert pending.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+
+    admitted = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(candidate,),
+        admitter=_information_admitter,
         admission_attribution=_admission("information"),
     )
-
-    assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
-    assert isinstance(frontier.resolution_output, InformationNeed)
-    assert frontier.resolution_output.blocking_issues == (_missing(),)
-    assert frontier.resolution_output.candidate_inputs == (candidate,)
+    assert isinstance(admitted.resolution_output, InformationNeed)
+    assert "authorization" not in repr(admitted)
 
 
-def test_multiple_blocking_issues_do_not_get_guessed_into_one_pause() -> None:
-    request = _request()
-    context = _context(request)
-    candidate = _candidate(
-        request,
-        context,
-        semantics="Multiple independent blockers remain.",
-        issues=(_missing(), _uncertainty()),
-        clarifications=(
-            ClarificationProposal(
-                "Please clarify the missing material.",
-                "resolution blockers",
-                "M2.1 has no typed mapping from one proposal to multiple blockers.",
-            ),
-        ),
-    )
-
-    frontier = orchestrate_initial_resolution(
-        request,
-        context,
-        candidate_inputs=(candidate,),
-        admission_attribution=_admission("multiple-blockers"),
-    )
-
-    assert frontier.kind is InitialResolutionFrontierKind.ADJUDICATION_REQUIRED
-    assert frontier.resolution_output is None
-
-
-def test_competing_pause_modes_require_adjudication() -> None:
-    request = _request()
-    context = _context(request)
-    candidate = _candidate(
-        request,
-        context,
-        semantics="The missing fact could be obtained or clarified by the caller.",
-        issues=(_missing(),),
-        clarifications=(
-            ClarificationProposal(
-                "Which bounded listing should be used?",
-                "report source",
-                "Caller selection would resolve the source semantics.",
-            ),
-        ),
-        information_needs=(
-            InformationNeedProposal(
-                "An attributable bounded report listing.",
-                "reports",
-                "Freshness is otherwise unknown.",
-            ),
-        ),
-    )
-
-    frontier = orchestrate_initial_resolution(
-        request,
-        context,
-        candidate_inputs=(candidate,),
-        admission_attribution=_admission("competing-pause"),
-    )
-
-    assert frontier.kind is InitialResolutionFrontierKind.ADJUDICATION_REQUIRED
-    assert frontier.resolution_output is None
-
-
-def test_deterministic_admission_requires_explicit_irr_admission_occurrence() -> None:
+def test_admitter_may_abstain_without_mutating_frontier_semantics() -> None:
     request = _request()
     context = _context(request)
     candidate = _candidate(request, context)
 
-    with pytest.raises(ValidationError, match="explicit ResolutionAttribution"):
+    def abstain(
+        request: IntentRequest,
+        context: ContextEnvelope,
+        candidates: tuple[CandidateResolution, ...],
+        attribution: ResolutionAttribution,
+    ) -> None:
+        return None
+
+    frontier = orchestrate_initial_resolution(
+        request,
+        context,
+        candidate_inputs=(candidate,),
+        admitter=abstain,
+        admission_attribution=_admission("abstain"),
+    )
+
+    assert frontier.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    assert frontier.resolution_output is None
+
+
+def test_admission_attribution_requires_explicit_admitter() -> None:
+    request = _request()
+    context = _context(request)
+    candidate = _candidate(request, context)
+
+    with pytest.raises(ValidationError, match="without an explicit initial-resolution admitter"):
         orchestrate_initial_resolution(
             request,
             context,
             candidate_inputs=(candidate,),
+            admission_attribution=_admission("ghost"),
         )
 
 
-def test_existing_admitted_output_is_reused_without_rewriting_history() -> None:
+def test_admitter_requires_explicit_irr_admission_occurrence() -> None:
+    request = _request()
+    context = _context(request)
+
+    with pytest.raises(ValidationError, match="requires explicit ResolutionAttribution"):
+        orchestrate_initial_resolution(
+            request,
+            context,
+            admitter=_deterministic_admitter,
+        )
+
+
+def test_admitter_cannot_replace_supplied_admission_attribution() -> None:
+    request = _request()
+    context = _context(request)
+    candidate = _candidate(request, context)
+
+    def wrong_attribution(
+        request: IntentRequest,
+        context: ContextEnvelope,
+        candidates: tuple[CandidateResolution, ...],
+        attribution: ResolutionAttribution,
+    ) -> ResolvedIntent:
+        return ResolvedIntent(
+            request.identity,
+            context.identity,
+            _admission("wrong"),
+            "Resolved by a mismatched occurrence.",
+            candidate_inputs=candidates,
+        )
+
+    with pytest.raises(ValidationError, match="exact supplied ResolutionAttribution"):
+        orchestrate_initial_resolution(
+            request,
+            context,
+            candidate_inputs=(candidate,),
+            admitter=wrong_attribution,
+            admission_attribution=_admission("expected"),
+        )
+
+
+def test_admitter_cannot_erase_or_invent_candidate_provenance() -> None:
+    request = _request()
+    context = _context(request)
+    first = _candidate(request, context, provider="provider-a", invocation="a")
+    second = _candidate(request, context, provider="provider-b", invocation="b")
+
+    def erase_one(
+        request: IntentRequest,
+        context: ContextEnvelope,
+        candidates: tuple[CandidateResolution, ...],
+        attribution: ResolutionAttribution,
+    ) -> ResolvedIntent:
+        return ResolvedIntent(
+            request.identity,
+            context.identity,
+            attribution,
+            "Invalid provenance erasure.",
+            candidate_inputs=(candidates[0],),
+        )
+
+    with pytest.raises(ValidationError, match="complete exact supplied candidate provenance"):
+        orchestrate_initial_resolution(
+            request,
+            context,
+            candidate_inputs=(first, second),
+            admitter=erase_one,
+            admission_attribution=_admission("erase"),
+        )
+
+
+def test_existing_admitted_output_is_reused_without_new_admission_transition() -> None:
     request = _request()
     context = _context(request)
     candidate = _candidate(request, context)
@@ -441,10 +626,8 @@ def test_existing_admitted_output_is_reused_without_rewriting_history() -> None:
         request.identity,
         context.identity,
         _admission("historical"),
-        candidate.proposed_semantics,
-        (),
-        (),
-        (candidate,),
+        "Historical independently admitted semantics.",
+        candidate_inputs=(candidate,),
     )
 
     frontier = orchestrate_initial_resolution(
@@ -452,12 +635,20 @@ def test_existing_admitted_output_is_reused_without_rewriting_history() -> None:
         context,
         candidate_inputs=(candidate,),
         admitted_outputs=(output,),
-        admission_attribution=_admission("ignored-new"),
     )
 
     assert frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
     assert frontier.resolution_output is output
     assert frontier.resolution_output.admission_attribution == _admission("historical")
+
+    with pytest.raises(ValidationError, match="cannot be combined with a new admission transition"):
+        orchestrate_initial_resolution(
+            request,
+            context,
+            admitted_outputs=(output,),
+            admitter=_resolved_admitter,
+            admission_attribution=_admission("new"),
+        )
 
 
 def test_competing_admitted_initial_outputs_fail_closed() -> None:
@@ -468,14 +659,14 @@ def test_competing_admitted_initial_outputs_fail_closed() -> None:
         request.identity,
         context.identity,
         _admission("first"),
-        candidate.proposed_semantics,
+        "First admitted semantics.",
         candidate_inputs=(candidate,),
     )
     second = ResolvedIntent(
         request.identity,
         context.identity,
         _admission("second"),
-        candidate.proposed_semantics,
+        "Second admitted semantics.",
         candidate_inputs=(candidate,),
     )
 
@@ -506,7 +697,7 @@ def test_candidate_outside_existing_output_provenance_is_orphaned() -> None:
         request.identity,
         context.identity,
         _admission("existing"),
-        admitted_candidate.proposed_semantics,
+        "Historical semantics.",
         candidate_inputs=(admitted_candidate,),
     )
 
