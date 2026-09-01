@@ -40,6 +40,7 @@ from intent_resolution_runtime import (
     CapabilityScopeMatch,
     CapabilityScopeRequirement,
     ClaimRecord,
+    CompletenessRecord,
     ContextEnvelope,
     ContinuationInput,
     ContinuationInputAttribution,
@@ -102,6 +103,17 @@ TEMPORAL_BASIS_IDENTITY = RecordIdentity("sha256", "6" * 64)
 
 def _ref(namespace: str, value: str) -> StableRef:
     return StableRef(namespace, value)
+
+
+def _search_completeness() -> CompletenessRecord:
+    return CompletenessRecord(
+        SourceAttribution(
+            _ref("executor.source", "filesystem-search"),
+            _ref("executor.event", "scenario-a-search-completeness"),
+        ),
+        f"All organism_lab backup matches inside the bounded root {BACKUP_ROOT}.",
+        "Establish the complete bounded candidate set required for latest-by-modification-time binding.",
+    )
 
 
 def _request_and_context() -> tuple[IntentRequest, ContextEnvelope]:
@@ -167,8 +179,9 @@ def _admit_scenario_a(
         attribution,
         (
             f"Search only {BACKUP_ROOT} for organism_lab backups; select only the unique greatest "
-            f"admitted modification timestamp; restore only to {DESTINATION}; any later launch must "
-            "use an exact admitted target and occurs only after the preceding restore semantics remain satisfied."
+            f"admitted modification timestamp from a complete bounded matching set; restore only to "
+            f"{DESTINATION}; any later launch must use an exact admitted target and occurs only after "
+            "the preceding restore semantics remain satisfied."
         ),
         candidate_inputs=candidates,
     )
@@ -332,6 +345,7 @@ def _search_capability_evaluation(
 
 
 def _latest_rule(resolved: ResolvedIntent) -> BindingRule:
+    completeness = _search_completeness()
     return BindingRule(
         resolved.identity,
         _ref("irr.binding_rule", "latest-backup"),
@@ -347,9 +361,9 @@ def _latest_rule(resolved: ResolvedIntent) -> BindingRule:
             ("modification_time",),
             (BindingAttributeKind.RFC3339_TIMESTAMP,),
         ),
-        "Select one unique greatest admitted timestamp and invent no tie-breaker.",
+        "Select one unique greatest admitted timestamp only from search material carrying the exact required completeness provenance.",
         (),
-        (),
+        (completeness.identity,),
         (),
     )
 
@@ -360,7 +374,9 @@ def _candidate_path(
     name: str,
     value: str,
     mtime: str,
+    complete: bool = True,
 ) -> BindingInput:
+    completeness_refs = (_search_completeness().identity,) if complete else ()
     return BindingInput(
         resolved.identity,
         _ref("irr.binding_input", name),
@@ -383,7 +399,7 @@ def _candidate_path(
             ),
         ),
         (),
-        (),
+        completeness_refs,
         (),
     )
 
@@ -748,7 +764,9 @@ def test_m2_6_scenario_a_threads_m2_1_through_m2_5_without_hidden_policy() -> No
     assert search_capability.proposal_disposition_required_step_refs == (search_step.step_ref,)
     assert search_capability.materialized_authorized_step_refs == ()
 
+    completeness = _search_completeness()
     rule = _latest_rule(resolved)
+    assert rule.required_completeness_refs == (completeness.identity,)
     candidates = (
         _candidate_path(
             resolved,
@@ -762,6 +780,10 @@ def test_m2_6_scenario_a_threads_m2_1_through_m2_5_without_hidden_policy() -> No
             value=SELECTED_BACKUP,
             mtime="2026-08-31T22:30:00+06:00",
         ),
+    )
+    assert all(
+        candidate_input.completeness_refs == (completeness.identity,)
+        for candidate_input in candidates
     )
     bound = evaluate_binding(
         rule,
@@ -930,6 +952,42 @@ def test_m2_6_equal_latest_timestamp_stops_before_extract_binding_completion() -
     )
     assert type(issue) is BindingIssue
     assert issue.kind is BindingIssueKind.TIE
+
+    extract_plan, _ = _extract_plan(resolved, rule.symbolic_reference)
+    frontier = orchestrate_work_binding(
+        resolved,
+        work_plans=(extract_plan,),
+        binding_rules=(rule,),
+        binding_evaluations=(issue,),
+    )
+    assert frontier.binding_issues == (issue,)
+    assert frontier.bound_values == ()
+    assert frontier.external_binding_complete is False
+
+
+def test_m2_6_missing_search_completeness_stops_latest_selection() -> None:
+    _, _, _, resolved = _resolved_fixture()
+    rule = _latest_rule(resolved)
+    incomplete_material = (
+        _candidate_path(
+            resolved,
+            name="organism_lab-2026-08-31.zip",
+            value=SELECTED_BACKUP,
+            mtime="2026-08-31T22:30:00+06:00",
+            complete=False,
+        ),
+    )
+
+    issue = evaluate_binding(
+        rule,
+        incomplete_material,
+        attribution=BindingAttribution(
+            _ref("irr.binding_evaluator", "scenario-a"),
+            _ref("irr.event", "scenario-a-bind-incomplete-search"),
+        ),
+    )
+    assert type(issue) is BindingIssue
+    assert issue.kind is BindingIssueKind.MISSING_REQUIRED_DATA
 
     extract_plan, _ = _extract_plan(resolved, rule.symbolic_reference)
     frontier = orchestrate_work_binding(
