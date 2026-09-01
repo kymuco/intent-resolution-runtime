@@ -67,6 +67,13 @@ from .context import (
     TemporalBasisKind,
     TemporalBasisRecord,
 )
+from .continuation import (
+    ContinuationInput,
+    ContinuationInputAttribution,
+    ContinuationSource,
+    ContinuationSourceKind,
+    GovernanceContinuationMaterial,
+)
 from .delegation import (
     DelegatedCapabilityAllowance,
     DelegatedContextReference,
@@ -241,6 +248,9 @@ for _ir_type in (
     OutcomeCompletionAssessment,
     OutcomeEffectAssessment,
     CapabilityOutcome,
+    ContinuationInputAttribution,
+    GovernanceContinuationMaterial,
+    ContinuationInput,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -305,6 +315,10 @@ __all__ = [
     "CompletenessRecord",
     "ContextEnvelope",
     "ContextReferenceRecord",
+    "ContinuationInput",
+    "ContinuationInputAttribution",
+    "ContinuationSource",
+    "ContinuationSourceKind",
     "DelegatedCapabilityAllowance",
     "DelegatedContextReference",
     "DelegatedScope",
@@ -317,6 +331,7 @@ __all__ = [
     "EvidenceRelation",
     "EvidenceTargetKind",
     "ExpectedDeliverable",
+    "GovernanceContinuationMaterial",
     "GovernanceDecision",
     "GovernanceDecisionAttribution",
     "GovernanceDecisionComponent",
