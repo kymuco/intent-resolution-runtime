@@ -31,7 +31,10 @@ SuccessorResolutionLineage != Evidence
 SuccessorResolutionLineage != parent completion
 successor ResolutionOutput != successor WorkPlan
 lineage association != causal proof
-re-entry occurrence != successor admission occurrence
+predecessor admission occurrence != source production occurrence
+predecessor admission occurrence != Host re-entry occurrence
+source production occurrence != Host re-entry occurrence
+successor admission occurrence != predecessor/source/re-entry occurrence
 one source re-submitted many times != many independent lineage inputs
 ```
 
@@ -146,31 +149,57 @@ ContinuationInput != ContextEnvelope mutation
 lineage relation != context admission
 ```
 
-## 5. Distinct occurrences remain distinct
+## 5. Four occurrence roles remain distinct
 
-Every frozen Resolution Output contains `ResolutionAttribution` with an IRR-owned `admission_event_ref`.
+M1.7b2 preserves four semantic occurrence roles across one successor lineage:
 
-The successor admission occurrence must differ from the predecessor admission occurrence:
+```text
+1. predecessor Resolution admission
+2. continuation source production
+3. Host re-entry submission
+4. successor Resolution admission
+```
+
+These are different semantic layers even when all four are represented by `StableRef` values.
+
+For each continuation input, its source-production occurrence is mechanically derived from the exact source record. Examples include the exact `CapabilityOutcome.outcome_event_ref`, `WorkerResult.result_event_ref`, `BindingIssue.binding_event_ref`, capability-match evaluation event, or Governance decision event selected by the continuation material.
+
+The predecessor admission occurrence must differ from every source-production occurrence and every Host re-entry occurrence:
+
+```text
+predecessor.admission_event_ref != continuation_input.source_event_ref
+predecessor.admission_event_ref != continuation_input.attribution.reentry_event_ref
+```
+
+No source-production occurrence may be reused as a Host re-entry occurrence anywhere in the same lineage:
+
+```text
+source_event_refs ∩ reentry_event_refs = empty
+```
+
+The successor admission occurrence must differ from the predecessor admission occurrence, every source-production occurrence, and every Host re-entry occurrence:
 
 ```text
 successor.admission_event_ref != predecessor.admission_event_ref
-```
-
-It must also differ from every Host-side re-entry occurrence:
-
-```text
+successor.admission_event_ref != continuation_input.source_event_ref
 successor.admission_event_ref != continuation_input.attribution.reentry_event_ref
 ```
 
-This preserves three distinct events:
+Therefore a single occurrence cannot impersonate another semantic role:
 
 ```text
+predecessor Resolution admitted
+        !=
 source produced
+        !=
 Host submitted source back to IRR
+        !=
 IRR admitted successor semantic state
 ```
 
-No one event may impersonate another layer.
+The prohibition is **cross-category**. M1.7b2 does not require all source-production events to be mutually unique with other source-production events, nor all re-entry events to be mutually unique with other re-entry events. One real downstream occurrence may legitimately produce multiple exact records, and one real Host submission occurrence may legitimately submit multiple exact continuation records. What is forbidden is reuse of one occurrence across different semantic roles.
+
+`ContinuationInput.source_event_ref` is a mechanically derived, non-serialized projection. It does not alter the frozen M1.7b1 wire identity.
 
 ## 6. Duplicate-source amplification is forbidden
 
@@ -363,7 +392,9 @@ M1.7b2 is merge-ready only when:
 - all three frozen Resolution Output kinds round-trip as successors;
 - continuation inputs are tied to the exact predecessor `ResolvedIntent.identity`;
 - original `IntentRequest` identity is preserved;
-- successor admission differs from predecessor and re-entry occurrences;
+- predecessor admission differs from every source-production and Host re-entry occurrence;
+- source-production occurrences and Host re-entry occurrences do not alias across categories;
+- successor admission differs from predecessor admission, every source-production occurrence, and every Host re-entry occurrence;
 - repeated re-entry of one `source_identity` cannot amplify lineage material;
 - continuation presentation order cannot affect identity;
 - hidden retry/fallback/authority/successor-work fields fail closed;
