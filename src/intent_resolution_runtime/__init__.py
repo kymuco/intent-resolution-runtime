@@ -49,6 +49,15 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
+from .work import (
+    WorkContinuationMode,
+    WorkInput,
+    WorkLiteralInput,
+    WorkOutput,
+    WorkPlan,
+    WorkStep,
+    WorkSymbolicInput,
+)
 
 
 def _seal_ir_type(base_type: type) -> None:
@@ -92,6 +101,11 @@ for _ir_type in (
     BindingRule,
     BoundValue,
     BindingIssue,
+    WorkLiteralInput,
+    WorkSymbolicInput,
+    WorkOutput,
+    WorkStep,
+    WorkPlan,
 ):
     _seal_ir_type(_ir_type)
 
@@ -147,5 +161,12 @@ __all__ = [
     "TemporalBasisKind",
     "TemporalBasisRecord",
     "ValidationError",
+    "WorkContinuationMode",
+    "WorkInput",
+    "WorkLiteralInput",
+    "WorkOutput",
+    "WorkPlan",
+    "WorkStep",
+    "WorkSymbolicInput",
     "evaluate_binding",
 ]
