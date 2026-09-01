@@ -78,6 +78,14 @@ from .delegation import (
     ExpectedDeliverable,
 )
 from .errors import IntentIRError, SerializationError, ValidationError
+from .governance import (
+    Authorization,
+    GovernanceDecision,
+    GovernanceDecisionAttribution,
+    GovernanceDecisionComponent,
+    GovernanceDecisionKind,
+    GovernanceDirective,
+)
 from .identity import RecordIdentity
 from .intent import IntentExpression, IntentRequest, OriginAttribution, OriginKind, StableRef
 from .resolution import (
@@ -206,6 +214,11 @@ for _ir_type in (
     ProposedWorkStep,
     WorkProposalMaterial,
     WorkProposal,
+    GovernanceDecisionAttribution,
+    GovernanceDirective,
+    GovernanceDecisionComponent,
+    GovernanceDecision,
+    Authorization,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -214,6 +227,7 @@ del _ir_type, _seal_ir_type
 __all__ = [
     "AssumptionKind",
     "AssumptionRecord",
+    "Authorization",
     "BindingAttribution",
     "BindingAttribute",
     "BindingAttributeKind",
@@ -276,6 +290,11 @@ __all__ = [
     "EvidenceRelation",
     "EvidenceTargetKind",
     "ExpectedDeliverable",
+    "GovernanceDecision",
+    "GovernanceDecisionAttribution",
+    "GovernanceDecisionComponent",
+    "GovernanceDecisionKind",
+    "GovernanceDirective",
     "InformationNeed",
     "InformationNeedProposal",
     "IntentExpression",
