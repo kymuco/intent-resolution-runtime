@@ -140,6 +140,7 @@ from .successor_resolution import (
     SuccessorResolutionKind,
     SuccessorResolutionLineage,
 )
+from .worker_lifecycle import WorkerLifecycleFrontier, orchestrate_worker_lifecycle
 from .worker_result import (
     WorkerNeed,
     WorkerNeedKind,
@@ -391,6 +392,7 @@ __all__ = [
     "TemporalBasisKind",
     "TemporalBasisRecord",
     "ValidationError",
+    "WorkerLifecycleFrontier",
     "WorkerNeed",
     "WorkerNeedKind",
     "WorkerResult",
@@ -415,5 +417,6 @@ __all__ = [
     "orchestrate_attempt_outcome_continuation",
     "orchestrate_capability_governance",
     "orchestrate_initial_resolution",
+    "orchestrate_worker_lifecycle",
     "orchestrate_work_binding",
 ]
