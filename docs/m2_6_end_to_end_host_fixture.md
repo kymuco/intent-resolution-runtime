@@ -64,13 +64,15 @@ M2.3 Capability / Governance Orchestrator
         `-- exact unique Capability Match; no hidden Governance inference
 
 explicit attributable bounded search result material
++ exact completeness provenance
 + already-admitted latest BindingRule
         |
         v
 M1.4 evaluate_binding
         |
-        +-- unique latest -> BoundValue
-        `-- equal latest -> BindingIssue.TIE
+        +-- complete unique latest -> BoundValue
+        +-- equal latest -> BindingIssue.TIE
+        `-- missing completeness -> BindingIssue.MISSING_REQUIRED_DATA
 
 BoundValue
 + exact extract WorkPlan
@@ -136,7 +138,7 @@ provider proposes != IRR admits
 one provider candidate != admission
 ```
 
-## 4. Search and late Binding boundary
+## 4. Search, completeness, and late Binding boundary
 
 The bounded search phase contains no external symbolic input, so M2.2 may correctly report its external binding surface complete.
 
@@ -148,9 +150,24 @@ The Host then calls the already-frozen M1.4 mechanical `evaluate_binding` bounda
 latest = unique greatest admitted RFC3339 modification timestamp
 ```
 
-No first-result or storage-order tie-break exists.
+That extremum is meaningful only over the complete bounded matching set. M1.4 explicitly does not infer completeness from the existence of candidate values. The Scenario A rule therefore requires one exact `CompletenessRecord.identity`, and every candidate admitted into the complete search result carries that exact identity in `BindingInput.completeness_refs`.
 
-The adversarial fixture reproduces equal maximum timestamps and requires:
+```text
+binding does not imply completeness
+complete-result assertion != factual omniscience
+missing completeness provenance != safe latest selection
+```
+
+This does not make IRR omniscient or cryptographically prove that a search source told the truth. It preserves the exact attributable completeness assertion that the already-admitted rule requires. If returned search material lacks that provenance, mechanical Binding fail-closes as:
+
+```text
+BindingIssueKind.MISSING_REQUIRED_DATA
+external_binding_complete = false
+```
+
+Only material carrying the exact required completeness provenance can proceed to extremum selection.
+
+No first-result or storage-order tie-break exists. The independent tie fixture reproduces equal maximum timestamps and requires:
 
 ```text
 BindingIssueKind.TIE
@@ -162,6 +179,7 @@ Therefore:
 ```text
 unknown future value != unknown decision rule
 Binding tie != hidden selection
+missing completeness != permission to select from a partial set
 ```
 
 ## 5. Capability / Governance boundary
@@ -309,6 +327,8 @@ If a reusable Host composition abstraction is added later, it must be justified 
 Host composition != new semantic authority
 provider candidate != admission
 search WorkPlan != ambient search authority
+binding does not imply completeness
+missing completeness provenance != safe latest selection
 unique Capability Match != Authorization
 Binding tie != hidden tie-break
 BoundValue != WorkPlan mutation
