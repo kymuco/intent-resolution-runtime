@@ -18,7 +18,7 @@ def test_m2_5_runtime_surface_is_public_without_becoming_canonical_ir() -> None:
     assert not hasattr(irr.WorkerLifecycleFrontier, "identity")
 
 
-def test_readme_declares_m2_5_and_preserves_frozen_m2_4_history() -> None:
+def test_readme_preserves_m2_5_as_frozen_history() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
@@ -27,7 +27,7 @@ def test_readme_declares_m2_5_and_preserves_frozen_m2_4_history() -> None:
     assert "**M2.2 — Work / Binding Orchestrator is complete and frozen in `main`.**" in text
     assert "**M2.3 — Capability / Governance Orchestrator is complete and frozen in `main`.**" in text
     assert "**M2.4 — Attempt / Outcome / Continuation Orchestrator is complete and frozen in `main`.**" in text
-    assert "**M2.5 — Worker Lifecycle Orchestrator** is the current milestone." in text
+    assert "**M2.5 — Worker Lifecycle Orchestrator is complete and frozen in `main`.**" in text
     assert "[M2.4 Attempt / Outcome / Continuation Orchestrator](docs/m2_4_attempt_outcome_continuation_orchestrator.md)" in text
     assert "[M2.5 Worker Lifecycle Orchestrator](docs/m2_5_worker_lifecycle_orchestrator.md)" in text
 
