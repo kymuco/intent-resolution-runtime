@@ -256,7 +256,10 @@ def test_scenario_c_successor_resolution_is_new_semantics_not_old_envelope_mutat
 
     assert lineage.predecessor == predecessor
     assert lineage.successor == successor
-    assert successor.attribution.admission_event_ref != predecessor.attribution.admission_event_ref
+    assert (
+        successor.admission_attribution.admission_event_ref
+        != predecessor.admission_attribution.admission_event_ref
+    )
     assert successor.identity != predecessor.identity
     assert successor.intent_request_identity == predecessor.intent_request_identity
     assert successor.context_envelope_identity == predecessor.context_envelope_identity
