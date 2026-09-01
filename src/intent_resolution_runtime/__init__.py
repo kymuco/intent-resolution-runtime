@@ -19,6 +19,18 @@ from .binding import (
     SymbolicReference,
     evaluate_binding,
 )
+from .capability import (
+    CapabilityCatalogAttribution,
+    CapabilityCatalogSnapshot,
+    CapabilityDescriptor,
+    CapabilityEffect,
+    CapabilityEffectRequirement,
+    CapabilityExecutionBoundary,
+    CapabilityExecutionBoundaryKind,
+    CapabilityInputContract,
+    CapabilityOutputContract,
+    CapabilityScopeRequirement,
+)
 from .context import (
     ClaimRecord,
     CompletenessRecord,
@@ -137,6 +149,14 @@ for _ir_type in (
     WorkerResultMaterial,
     WorkerNeed,
     WorkerResult,
+    CapabilityCatalogAttribution,
+    CapabilityScopeRequirement,
+    CapabilityInputContract,
+    CapabilityOutputContract,
+    CapabilityEffect,
+    CapabilityExecutionBoundary,
+    CapabilityDescriptor,
+    CapabilityCatalogSnapshot,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -161,6 +181,16 @@ __all__ = [
     "BoundValue",
     "CandidateAttribution",
     "CandidateResolution",
+    "CapabilityCatalogAttribution",
+    "CapabilityCatalogSnapshot",
+    "CapabilityDescriptor",
+    "CapabilityEffect",
+    "CapabilityEffectRequirement",
+    "CapabilityExecutionBoundary",
+    "CapabilityExecutionBoundaryKind",
+    "CapabilityInputContract",
+    "CapabilityOutputContract",
+    "CapabilityScopeRequirement",
     "ClaimRecord",
     "ClarificationNeed",
     "ClarificationProposal",
