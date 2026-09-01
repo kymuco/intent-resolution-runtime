@@ -43,6 +43,17 @@ from .capability_match import (
     CapabilityRequirement,
     CapabilityScopeMatch,
 )
+from .capability_match_evaluation import (
+    CapabilityIncompatibleDescriptorAssessment,
+    CapabilityMatchEvaluation,
+    CapabilityMatchEvaluationAttribution,
+    CapabilityMatchEvaluationResult,
+    CapabilityMatchIssue,
+    CapabilityMatchIssueKind,
+    CapabilityMismatchKind,
+    CapabilityMismatchReason,
+    evaluate_capability_match_evaluation,
+)
 from .context import (
     ClaimRecord,
     CompletenessRecord,
@@ -179,6 +190,11 @@ for _ir_type in (
     CapabilityEffectMatch,
     CapabilityMatchAttribution,
     CapabilityMatch,
+    CapabilityMatchEvaluationAttribution,
+    CapabilityMismatchReason,
+    CapabilityIncompatibleDescriptorAssessment,
+    CapabilityMatchEvaluation,
+    CapabilityMatchIssue,
 ):
     _seal_ir_type(_ir_type)
 del _ir_type, _seal_ir_type
@@ -212,10 +228,18 @@ __all__ = [
     "CapabilityExecutionBoundary",
     "CapabilityExecutionBoundaryKind",
     "CapabilityExecutionBoundaryRequirement",
+    "CapabilityIncompatibleDescriptorAssessment",
     "CapabilityInputContract",
     "CapabilityInputMatch",
     "CapabilityMatch",
     "CapabilityMatchAttribution",
+    "CapabilityMatchEvaluation",
+    "CapabilityMatchEvaluationAttribution",
+    "CapabilityMatchEvaluationResult",
+    "CapabilityMatchIssue",
+    "CapabilityMatchIssueKind",
+    "CapabilityMismatchKind",
+    "CapabilityMismatchReason",
     "CapabilityOutputContract",
     "CapabilityOutputMatch",
     "CapabilityRequestedEffect",
@@ -276,4 +300,5 @@ __all__ = [
     "WorkStep",
     "WorkSymbolicInput",
     "evaluate_binding",
+    "evaluate_capability_match_evaluation",
 ]
