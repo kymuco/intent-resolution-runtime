@@ -87,8 +87,7 @@ CapabilityMismatchReason
 │  ├─ unavoidable_effect_mismatch
 │  ├─ completion_mismatch
 │  ├─ execution_boundary_mismatch
-│  ├─ insufficient_semantics
-│  └─ mapping_ambiguity
+│  └─ insufficient_semantics
 ├─ scope
 └─ description
 
@@ -110,6 +109,8 @@ mismatch reason != Availability
 ```
 
 There are intentionally no `unavailable`, `unauthorized`, `unsafe`, or `denied` mismatch kinds.
+
+`mapping_ambiguity` is also intentionally not an incompatibility kind. If one exact Descriptor admits multiple distinct valid match relations, those relations belong on the compatible side and must surface through the multiple-match boundary rather than being laundered into rejection. If semantics are too weak to admit any relation, `insufficient_semantics` is the correct explicit assessment.
 
 ## 4. CapabilityMatchEvaluation
 

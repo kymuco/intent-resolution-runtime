@@ -78,7 +78,6 @@ class CapabilityMismatchKind(str, Enum):
     COMPLETION_MISMATCH = "completion_mismatch"
     EXECUTION_BOUNDARY_MISMATCH = "execution_boundary_mismatch"
     INSUFFICIENT_SEMANTICS = "insufficient_semantics"
-    MAPPING_AMBIGUITY = "mapping_ambiguity"
 
 
 class CapabilityMatchIssueKind(str, Enum):

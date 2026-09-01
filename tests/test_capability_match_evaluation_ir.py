@@ -198,12 +198,15 @@ def test_empty_catalog_classifies_as_bounded_no_match_not_global_impossibility()
 
 def test_incompatible_assessment_pins_exact_descriptor_and_covers_catalog() -> None:
     requirement = _requirement()
-    descriptor = _descriptor("workspace.inspect.remote")
+    descriptor = replace(
+        _descriptor("workspace.inspect.remote"),
+        operation="workspace.scan",
+    )
     snapshot = _snapshot(descriptor)
     reason = CapabilityMismatchReason(
-        kind=CapabilityMismatchKind.INSUFFICIENT_SEMANTICS,
+        kind=CapabilityMismatchKind.OPERATION_MISMATCH,
         scope="descriptor:workspace.inspect.remote",
-        description="The supplied descriptor semantics are insufficient for admission.",
+        description="Descriptor operation differs from the selected WorkStep operation.",
     )
     assessment = CapabilityIncompatibleDescriptorAssessment(
         capability_ref=descriptor.capability_ref,
@@ -236,7 +239,10 @@ def test_incompatible_assessment_pins_exact_descriptor_and_covers_catalog() -> N
 def test_evaluation_must_cover_every_exact_catalog_descriptor_once() -> None:
     requirement = _requirement()
     first = _descriptor("workspace.inspect.a")
-    second = _descriptor("workspace.inspect.b")
+    second = replace(
+        _descriptor("workspace.inspect.b"),
+        operation="workspace.scan",
+    )
     snapshot = _snapshot(first, second)
     first_match = _match(requirement, snapshot, first, "match-a")
 
@@ -249,9 +255,9 @@ def test_evaluation_must_cover_every_exact_catalog_descriptor_once() -> None:
         )
 
     reason = CapabilityMismatchReason(
-        CapabilityMismatchKind.MAPPING_AMBIGUITY,
+        CapabilityMismatchKind.OPERATION_MISMATCH,
         "descriptor:workspace.inspect.b",
-        "No single mapping was admitted for this descriptor.",
+        "Descriptor operation differs from the selected WorkStep operation.",
     )
     second_assessment = CapabilityIncompatibleDescriptorAssessment(
         second.capability_ref,
