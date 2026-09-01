@@ -52,8 +52,9 @@ from intent_resolution_runtime import (
     evaluate_capability_match_evaluation,
 )
 
-REQUEST = RecordIdentity("sha256", "1" * 64)
-CONTEXT = RecordIdentity("sha256", "2" * 64)
+REQUEST_IDENTITY = RecordIdentity("sha256", "1" * 64)
+CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
+SEARCH_SOURCE_CONTRACT_IDENTITY = RecordIdentity("sha256", "3" * 64)
 BACKUP_ROOT = r"D:\Backups"
 DESTINATION = r"W:\organism_lab"
 
@@ -72,8 +73,8 @@ def _ref(namespace: str, value: str) -> StableRef:
 
 def _resolved() -> ResolvedIntent:
     return ResolvedIntent(
-        REQUEST,
-        CONTEXT,
+        REQUEST_IDENTITY,
+        CONTEXT_IDENTITY,
         ResolutionAttribution(
             _ref("irr.resolver", "scenario-a"),
             _ref("irr.resolution_event", "scenario-a-resolved"),
@@ -89,7 +90,7 @@ def _resolved() -> ResolvedIntent:
     )
 
 
-def _search_step(resolved: ResolvedIntent) -> tuple[WorkPlan, WorkStep]:
+def _search_plan(resolved: ResolvedIntent) -> tuple[WorkPlan, WorkStep]:
     plan_ref = _ref("irr.work_plan", "scenario-a-search")
     candidates = SymbolicReference(
         resolved.identity,
@@ -114,19 +115,17 @@ def _search_step(resolved: ResolvedIntent) -> tuple[WorkPlan, WorkStep]:
         "Return the complete bounded matching candidate set.",
         "Bounded Scenario A backup discovery.",
     )
-    return (
-        WorkPlan(
-            resolved.identity,
-            plan_ref,
-            (step,),
-            "The bounded candidate set has returned to IRR.",
-            "Scenario A search phase.",
-        ),
-        step,
+    plan = WorkPlan(
+        resolved.identity,
+        plan_ref,
+        (step,),
+        "The bounded candidate set has returned to IRR.",
+        "Scenario A search phase.",
     )
+    return plan, step
 
 
-def _rule(resolved: ResolvedIntent, source_contract: RecordIdentity) -> BindingRule:
+def _latest_rule(resolved: ResolvedIntent) -> BindingRule:
     selected = SymbolicReference(
         resolved.identity,
         _ref("irr.slot", "selected-backup"),
@@ -140,7 +139,7 @@ def _rule(resolved: ResolvedIntent, source_contract: RecordIdentity) -> BindingR
         selected,
         (BindingInputRole.PLAN_LOCAL_OUTPUT,),
         (_ref("executor.source", "filesystem-search"),),
-        (source_contract,),
+        (SEARCH_SOURCE_CONTRACT_IDENTITY,),
         "artifact.path",
         BACKUP_ROOT,
         (),
@@ -158,7 +157,6 @@ def _rule(resolved: ResolvedIntent, source_contract: RecordIdentity) -> BindingR
 
 def _candidate(
     resolved: ResolvedIntent,
-    source_contract: RecordIdentity,
     *,
     name: str,
     value: str,
@@ -172,7 +170,7 @@ def _candidate(
             _ref("executor.event", f"scenario-a-result-{name}"),
         ),
         BindingInputRole.PLAN_LOCAL_OUTPUT,
-        source_contract,
+        SEARCH_SOURCE_CONTRACT_IDENTITY,
         "artifact.path",
         value,
         BACKUP_ROOT,
@@ -278,16 +276,14 @@ def _restore_plan(
         "workspace.inspect": inspect_workspace,
         "process.launch": launch,
     }
-    return (
-        WorkPlan(
-            resolved.identity,
-            plan_ref,
-            tuple(reversed(tuple(steps.values()))),
-            "Every admitted restore step reaches its own completion contract.",
-            "Scenario A restore phase.",
-        ),
-        steps,
+    plan = WorkPlan(
+        resolved.identity,
+        plan_ref,
+        tuple(reversed(tuple(steps.values()))),
+        "Every admitted restore step reaches its own completion contract.",
+        "Scenario A restore phase.",
     )
+    return plan, steps
 
 
 def _requirement(plan: WorkPlan, step: WorkStep) -> CapabilityRequirement:
@@ -326,7 +322,9 @@ def _descriptor(step: WorkStep) -> CapabilityDescriptor:
     inputs = tuple(
         CapabilityInputContract(
             _ref("irr.capability_input", f"{step.step_ref.value}-{item.name}"),
-            item.semantic_type if isinstance(item, WorkLiteralInput) else item.reference.semantic_type,
+            item.semantic_type
+            if isinstance(item, WorkLiteralInput)
+            else item.reference.semantic_type,
             (),
             f"Exact {item.name} input.",
         )
@@ -472,9 +470,9 @@ def _evaluation(
 
 def _fixture() -> dict[str, object]:
     resolved = _resolved()
-    search_plan, search_step = _search_step(resolved)
+    search_plan, search_step = _search_plan(resolved)
     search_descriptor = _descriptor(search_step)
-    rule = _rule(resolved, search_descriptor.identity)
+    rule = _latest_rule(resolved)
     restore_plan, restore_steps = _restore_plan(resolved, rule.symbolic_reference)
     descriptors = (search_descriptor,) + tuple(
         _descriptor(step) for step in restore_steps.values()
@@ -484,14 +482,12 @@ def _fixture() -> dict[str, object]:
     candidates = (
         _candidate(
             resolved,
-            search_descriptor.identity,
             name="organism_lab-2026-08-30.zip",
             value=r"D:\Backups\organism_lab-2026-08-30.zip",
             mtime="2026-08-30T20:00:00+06:00",
         ),
         _candidate(
             resolved,
-            search_descriptor.identity,
             name="organism_lab-2026-08-31.zip",
             value=r"D:\Backups\organism_lab-2026-08-31.zip",
             mtime="2026-08-31T22:30:00+06:00",
@@ -529,7 +525,7 @@ def _fixture() -> dict[str, object]:
     }
 
 
-def test_scenario_a_discovery_binding_and_restore_capability_surface_is_executable() -> None:
+def test_scenario_a_separates_source_contract_capability_and_occurrence() -> None:
     fixture = _fixture()
     search_plan = fixture["search_plan"]
     search_descriptor = fixture["search_descriptor"]
@@ -543,12 +539,22 @@ def test_scenario_a_discovery_binding_and_restore_capability_surface_is_executab
     assert isinstance(bound, BoundValue)
     assert isinstance(restore_plan, WorkPlan)
     assert isinstance(snapshot, CapabilityCatalogSnapshot)
+
     assert search_plan.steps[0].continuation is WorkContinuationMode.RETURN_TO_IRR
-    assert rule.allowed_source_identities == (search_descriptor.identity,)
+    assert SEARCH_SOURCE_CONTRACT_IDENTITY != search_descriptor.identity
+    assert rule.allowed_source_identities == (SEARCH_SOURCE_CONTRACT_IDENTITY,)
     assert all(
-        candidate.source_identity == search_descriptor.identity
+        candidate.source_identity == SEARCH_SOURCE_CONTRACT_IDENTITY
         for candidate in bound.binding_inputs
     )
+    assert len(
+        {candidate.attribution.source_event_ref for candidate in bound.binding_inputs}
+    ) == len(bound.binding_inputs)
+    assert all(
+        candidate.attribution.source_ref == _ref("executor.source", "filesystem-search")
+        for candidate in bound.binding_inputs
+    )
+
     assert bound.value == r"D:\Backups\organism_lab-2026-08-31.zip"
     assert bound.selection_scope == BACKUP_ROOT
     assert {step.operation for step in restore_plan.steps} == {
@@ -559,19 +565,18 @@ def test_scenario_a_discovery_binding_and_restore_capability_surface_is_executab
     }
     assert {descriptor.operation for descriptor in snapshot.descriptors} == set(_EFFECTS)
     for evaluation in fixture["evaluations"].values():
-        assert evaluate_capability_match_evaluation(evaluation) == evaluation.compatible_matches[0]
+        assert evaluate_capability_match_evaluation(evaluation) == (
+            evaluation.compatible_matches[0]
+        )
 
 
 def test_scenario_a_equal_latest_timestamps_fail_closed() -> None:
     fixture = _fixture()
     resolved = fixture["resolved"]
-    search_descriptor = fixture["search_descriptor"]
     assert isinstance(resolved, ResolvedIntent)
-    assert isinstance(search_descriptor, CapabilityDescriptor)
     candidates = tuple(
         _candidate(
             resolved,
-            search_descriptor.identity,
             name=name,
             value=rf"D:\Backups\{name}",
             mtime="2026-08-31T22:30:00+06:00",
@@ -599,7 +604,11 @@ def test_scenario_a_missing_extract_is_no_match_not_hidden_fallback() -> None:
     assert isinstance(restore_plan, WorkPlan)
     assert isinstance(restore_steps, dict)
     missing = _catalog(
-        *(descriptor for descriptor in snapshot.descriptors if descriptor.operation != "archive.extract"),
+        *(
+            descriptor
+            for descriptor in snapshot.descriptors
+            if descriptor.operation != "archive.extract"
+        ),
         event="catalog-without-extract",
     )
     requirement = _requirement(restore_plan, restore_steps["archive.extract"])
@@ -611,7 +620,10 @@ def test_scenario_a_missing_extract_is_no_match_not_hidden_fallback() -> None:
         requirement,
         missing,
         (),
-        tuple(_incompatible(descriptor, "archive.extract") for descriptor in missing.descriptors),
+        tuple(
+            _incompatible(descriptor, "archive.extract")
+            for descriptor in missing.descriptors
+        ),
         "Exhaustive bounded evaluation with archive.extract absent.",
     )
     result = evaluate_capability_match_evaluation(evaluation)
