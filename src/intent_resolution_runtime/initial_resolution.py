@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TypeAlias
+from typing import Callable, TypeAlias
 
 from .context import ContextEnvelope
 from .errors import ValidationError
@@ -13,18 +13,27 @@ from .resolution import (
     ClarificationNeed,
     InformationNeed,
     ResolutionAttribution,
-    ResolutionIssueImpact,
     ResolvedIntent,
 )
 
 
 ResolutionOutput: TypeAlias = ResolvedIntent | ClarificationNeed | InformationNeed
+InitialResolutionAdmitter: TypeAlias = Callable[
+    [
+        IntentRequest,
+        ContextEnvelope,
+        tuple[CandidateResolution, ...],
+        ResolutionAttribution,
+    ],
+    ResolutionOutput | None,
+]
 
 
 class InitialResolutionFrontierKind(str, Enum):
     """Narrow M2.1 frontier classification; not a global lifecycle state."""
 
-    CANDIDATE_INPUT_REQUIRED = "candidate_input_required"
+    RESOLUTION_INPUT_REQUIRED = "resolution_input_required"
+    ADMISSION_REQUIRED = "admission_required"
     ADJUDICATION_REQUIRED = "adjudication_required"
     RESOLUTION_OUTPUT_AVAILABLE = "resolution_output_available"
 
@@ -74,19 +83,22 @@ class InitialResolutionFrontier:
                 field="InitialResolutionFrontier.resolution_output",
             )
 
-        if self.kind is InitialResolutionFrontierKind.CANDIDATE_INPUT_REQUIRED:
+        if self.kind is InitialResolutionFrontierKind.RESOLUTION_INPUT_REQUIRED:
             if candidates or self.resolution_output is not None:
                 raise ValidationError(
-                    "candidate_input_required frontier cannot contain candidate or resolution output"
+                    "resolution_input_required frontier cannot contain candidate or resolution output"
                 )
-        elif self.kind is InitialResolutionFrontierKind.ADJUDICATION_REQUIRED:
+        elif self.kind in (
+            InitialResolutionFrontierKind.ADMISSION_REQUIRED,
+            InitialResolutionFrontierKind.ADJUDICATION_REQUIRED,
+        ):
             if not candidates:
                 raise ValidationError(
-                    "adjudication_required frontier requires candidate material"
+                    f"{self.kind.value} frontier requires explicit candidate material"
                 )
             if self.resolution_output is not None:
                 raise ValidationError(
-                    "adjudication_required frontier cannot contain an admitted resolution output"
+                    f"{self.kind.value} frontier cannot contain an admitted resolution output"
                 )
         elif self.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE:
             if self.resolution_output is None:
@@ -144,18 +156,20 @@ def _validate_candidate_lineage(
 
 
 def _validate_resolution_output_lineage(
-    output: ResolutionOutput,
+    output: object,
     *,
     intent_request_identity: RecordIdentity,
     context_envelope_identity: RecordIdentity,
     field: str,
-) -> None:
+) -> ResolutionOutput:
     if type(output) not in (ResolvedIntent, ClarificationNeed, InformationNeed):
         raise ValidationError(f"{field} must be an exact ResolutionOutput type")
-    if output.intent_request_identity != intent_request_identity:
+    admitted = output
+    if admitted.intent_request_identity != intent_request_identity:
         raise ValidationError(f"{field} belongs to a foreign IntentRequest lineage")
-    if output.context_envelope_identity != context_envelope_identity:
+    if admitted.context_envelope_identity != context_envelope_identity:
         raise ValidationError(f"{field} belongs to a foreign ContextEnvelope lineage")
+    return admitted
 
 
 def _candidate_semantic_signature(candidate: CandidateResolution) -> tuple[object, ...]:
@@ -182,64 +196,27 @@ def _candidates_are_semantically_equivalent(
     )
 
 
-def _derive_resolution_output(
+def _unresolved_frontier_kind(
     candidates: tuple[CandidateResolution, ...],
-    *,
-    admission_attribution: ResolutionAttribution,
-) -> ResolutionOutput | None:
-    candidate = candidates[0]
-    blocking_issues = tuple(
-        issue
-        for issue in candidate.issues
-        if issue.impact is ResolutionIssueImpact.BLOCKING
+) -> InitialResolutionFrontierKind:
+    if not candidates:
+        return InitialResolutionFrontierKind.RESOLUTION_INPUT_REQUIRED
+    if _candidates_are_semantically_equivalent(candidates):
+        return InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    return InitialResolutionFrontierKind.ADJUDICATION_REQUIRED
+
+
+def _frontier_without_output(
+    intent_request: IntentRequest,
+    context_envelope: ContextEnvelope,
+    candidates: tuple[CandidateResolution, ...],
+) -> InitialResolutionFrontier:
+    return InitialResolutionFrontier(
+        intent_request_identity=intent_request.identity,
+        context_envelope_identity=context_envelope.identity,
+        kind=_unresolved_frontier_kind(candidates),
+        candidate_inputs=candidates,
     )
-
-    if not blocking_issues:
-        return ResolvedIntent(
-            intent_request_identity=candidate.intent_request_identity,
-            context_envelope_identity=candidate.context_envelope_identity,
-            admission_attribution=admission_attribution,
-            semantics=candidate.proposed_semantics,
-            assumptions=candidate.assumptions,
-            unresolved_issues=candidate.issues,
-            candidate_inputs=candidates,
-        )
-
-    if len(blocking_issues) != 1:
-        return None
-
-    if (
-        len(candidate.clarification_proposals) == 1
-        and not candidate.information_need_proposals
-    ):
-        proposal = candidate.clarification_proposals[0]
-        return ClarificationNeed(
-            intent_request_identity=candidate.intent_request_identity,
-            context_envelope_identity=candidate.context_envelope_identity,
-            admission_attribution=admission_attribution,
-            question=proposal.question,
-            scope=proposal.scope,
-            blocking_issues=blocking_issues,
-            candidate_inputs=candidates,
-        )
-
-    if (
-        len(candidate.information_need_proposals) == 1
-        and not candidate.clarification_proposals
-    ):
-        proposal = candidate.information_need_proposals[0]
-        return InformationNeed(
-            intent_request_identity=candidate.intent_request_identity,
-            context_envelope_identity=candidate.context_envelope_identity,
-            admission_attribution=admission_attribution,
-            description=proposal.description,
-            scope=proposal.scope,
-            reason=proposal.reason,
-            blocking_issues=blocking_issues,
-            candidate_inputs=candidates,
-        )
-
-    return None
 
 
 def orchestrate_initial_resolution(
@@ -248,14 +225,19 @@ def orchestrate_initial_resolution(
     *,
     candidate_inputs: tuple[CandidateResolution, ...] = (),
     admitted_outputs: tuple[ResolutionOutput, ...] = (),
+    admitter: InitialResolutionAdmitter | None = None,
     admission_attribution: ResolutionAttribution | None = None,
 ) -> InitialResolutionFrontier:
-    """Derive the M2.1 initial-resolution frontier from explicit admitted material.
+    """Derive and, when explicitly delegated, advance the M2.1 initial frontier.
+
+    The orchestrator never treats CandidateResolution as admitted merely because it is
+    unique, fluent, or provider-consensual. A new M1 ResolutionOutput may be produced
+    only by an explicit IRR-owned ``admitter`` boundary. The returned output is then
+    validated against exact request/context lineage, admission occurrence, and complete
+    supplied candidate provenance.
 
     This function performs no provider invocation, retrieval, Governance, execution,
-    retry, fallback, or hidden candidate ranking. It may admit a new M1 ResolutionOutput
-    only when the supplied candidate semantics make that transition deterministic under
-    the deliberately narrow M2.1 admission rules.
+    retry, fallback, or hidden candidate ranking.
     """
 
     if type(intent_request) is not IntentRequest:
@@ -301,6 +283,10 @@ def orchestrate_initial_resolution(
         )
 
     if outputs:
+        if admitter is not None or admission_attribution is not None:
+            raise ValidationError(
+                "existing admitted ResolutionOutput cannot be combined with a new admission transition"
+            )
         output = outputs[0]
         admitted_candidate_identities = {
             candidate.identity for candidate in output.candidate_inputs
@@ -318,40 +304,48 @@ def orchestrate_initial_resolution(
             resolution_output=output,
         )
 
-    if not candidates:
-        return InitialResolutionFrontier(
-            intent_request_identity=intent_request.identity,
-            context_envelope_identity=context_envelope.identity,
-            kind=InitialResolutionFrontierKind.CANDIDATE_INPUT_REQUIRED,
-        )
+    if admitter is None:
+        if admission_attribution is not None:
+            raise ValidationError(
+                "ResolutionAttribution cannot be supplied without an explicit initial-resolution admitter"
+            )
+        return _frontier_without_output(intent_request, context_envelope, candidates)
 
-    if not _candidates_are_semantically_equivalent(candidates):
-        return InitialResolutionFrontier(
-            intent_request_identity=intent_request.identity,
-            context_envelope_identity=context_envelope.identity,
-            kind=InitialResolutionFrontierKind.ADJUDICATION_REQUIRED,
-            candidate_inputs=candidates,
+    if not callable(admitter):
+        raise ValidationError(
+            "orchestrate_initial_resolution.admitter must be callable"
         )
-
     if admission_attribution is None:
         raise ValidationError(
-            "deterministic initial resolution admission requires explicit ResolutionAttribution"
+            "initial-resolution admitter requires explicit ResolutionAttribution"
         )
     if type(admission_attribution) is not ResolutionAttribution:
         raise ValidationError(
             "orchestrate_initial_resolution.admission_attribution must be a ResolutionAttribution"
         )
 
-    output = _derive_resolution_output(
+    proposed_output = admitter(
+        intent_request,
+        context_envelope,
         candidates,
-        admission_attribution=admission_attribution,
+        admission_attribution,
     )
-    if output is None:
-        return InitialResolutionFrontier(
-            intent_request_identity=intent_request.identity,
-            context_envelope_identity=context_envelope.identity,
-            kind=InitialResolutionFrontierKind.ADJUDICATION_REQUIRED,
-            candidate_inputs=candidates,
+    if proposed_output is None:
+        return _frontier_without_output(intent_request, context_envelope, candidates)
+
+    output = _validate_resolution_output_lineage(
+        proposed_output,
+        intent_request_identity=intent_request.identity,
+        context_envelope_identity=context_envelope.identity,
+        field="orchestrate_initial_resolution.admitter output",
+    )
+    if output.admission_attribution != admission_attribution:
+        raise ValidationError(
+            "admitter output must preserve the exact supplied ResolutionAttribution"
+        )
+    if output.candidate_inputs != candidates:
+        raise ValidationError(
+            "admitter output must preserve the complete exact supplied candidate provenance"
         )
 
     return InitialResolutionFrontier(
