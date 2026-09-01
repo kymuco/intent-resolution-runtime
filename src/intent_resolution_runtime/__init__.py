@@ -32,6 +32,10 @@ from .capability import (
     CapabilityOutputContract,
     CapabilityScopeRequirement,
 )
+from .capability_governance import (
+    CapabilityGovernanceFrontier,
+    orchestrate_capability_governance,
+)
 from .capability_match import (
     CapabilityEffectMatch,
     CapabilityExecutionBoundaryRequirement,
@@ -299,6 +303,7 @@ __all__ = [
     "CapabilityExecutionBoundary",
     "CapabilityExecutionBoundaryKind",
     "CapabilityExecutionBoundaryRequirement",
+    "CapabilityGovernanceFrontier",
     "CapabilityIncompatibleDescriptorAssessment",
     "CapabilityInputContract",
     "CapabilityInputMatch",
@@ -402,6 +407,7 @@ __all__ = [
     "WorkSymbolicInput",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
+    "orchestrate_capability_governance",
     "orchestrate_initial_resolution",
     "orchestrate_work_binding",
 ]
