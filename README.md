@@ -10,6 +10,8 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 **M1 — Intent Resolution IR is complete and frozen through M1.8.** All eight canonical M0.10 architecture scenarios have executable regression coverage.
 
+**M2 — Runtime Orchestration is complete and frozen through M2.6.** M2 derives replayable semantic transition frontiers from exact immutable M1 lifecycle history without making orchestration, Host sequencing, scheduling, Governance, execution, or mutable session state a new source of semantic authority.
+
 **M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.** It freezes replayable orchestration over the immutable admitted M1 lifecycle graph, complete semantic transition-frontier derivation, lifecycle-graph admission, and the separation between semantic frontier and runtime scheduler selection.
 
 **M2.1 — Initial Resolution Orchestrator is complete and frozen in `main`.** It implements exact initial request/context/candidate graph admission and a separate IRR-owned admission strategy boundary without provider voting, ambient retrieval, authority, or effect execution.
@@ -22,13 +24,15 @@ IRR resolves what an intent means and what, if anything, should happen next oper
 
 **M2.5 — Worker Lifecycle Orchestrator is complete and frozen in `main`.** It derives exact DelegatedWork, Worker handoff, and WorkerResult history without selecting a Worker, treating WorkerResult as terminal, widening delegation, inferring completion, or duplicating the generic M2.4 Continuation boundary.
 
-**M2.6 — End-to-End Host Fixture** is the current milestone. It proves that the frozen M2.1–M2.5 frontiers compose over one exact Scenario A lifecycle without adding a mutable Host runtime, hidden orchestration authority, automatic recovery, or scenario-specific production shortcuts.
+**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.** It proves that the frozen M2.1–M2.5 frontiers compose over one exact Scenario A lifecycle without adding a mutable Host runtime, hidden orchestration authority, automatic recovery, or scenario-specific production shortcuts.
+
+**M3.0 — Host Integration Charter** is the next milestone. M3 begins by defining how a real embedding Host retains/replays admitted history and connects Provider, Governance, Executor, Worker, and acquisition mechanisms without turning Host mechanism or convenience state into semantic or authority state.
 
 **M0 — Runtime Charter & Boundary Freeze is complete and frozen in `main` through M0.10.** M1 encodes those semantics as immutable Python contracts, validation, canonical serialization, stable identity/digests, and executable fixtures without reopening the M0 product boundary.
 
 M1.1 introduced the immutable `IntentRequest` input core and canonical record identity. M1.2 added explicit bounded Context, Claim/Evidence separation, attributable Temporal Basis and Completeness, and Context References. M1.3 added attributable provider `CandidateResolution`, IRR-owned `ResolvedIntent` / clarification / information-need outputs, explicit assumptions and resolution issues, exact candidate lineage, and explicit blocking/non-blocking uncertainty without granting retrieval, trust, authority, or effect. M1.4 added immutable `SymbolicReference`, attributable `BindingInput`, bounded `BindingRule`, `BoundValue`, and `BindingIssue` records plus effect-free mechanical binding. M1.5 added bounded `WorkPlan` / `WorkStep` semantics, explicit DelegatedWork / Worker handoff and attributable WorkerResult / WorkerNeed re-entry. M1.6 added exact Capability Catalog / Match Evaluation, WorkProposal, external Governance Decision, and canonical Authorization IR. M1.7 added attributable CapabilityAttempt / CapabilityOutcome, typed ContinuationInput, and exact SuccessorResolutionLineage. M1.8 applies the full frozen M1 surface to all eight M0.10 canonical scenarios and closes M1 without adding a scenario-specific runtime layer.
 
-M2.0 freezes orchestration as replayable derivation over immutable M1 history. A mutable session object or one global lifecycle status may exist only as a reconstructible convenience view, never as the canonical semantic source of truth. M2.1 adds the first deliberately narrow derived runtime frontier and independent initial Resolution admission boundary. M2.2 extends orchestration to exact WorkPlan / BindingRule / BindingEvaluation graph admission while preserving a complete multi-slot binding frontier. M2.3 extends the same model through CapabilityRequirement / Match Evaluation / WorkProposal / GovernanceDecision / Authorization graph admission. M2.4 extends replayable orchestration through CapabilityAttempt / CapabilityOutcome / ContinuationInput / SuccessorResolutionLineage history while keeping exact M1 records as canonical history and recovery policy external. M2.5 adds exact Worker delegation / handoff / result lifecycle graph admission while leaving Worker scheduling, completion policy, semantic widening, and generic continuation selection outside the Worker-specific runtime. M2.6 composes those slices in an executable Host fixture without promoting Host sequencing or any M2 frontier into canonical lifecycle state.
+M2.0 freezes orchestration as replayable derivation over immutable M1 history. A mutable session object or one global lifecycle status may exist only as a reconstructible convenience view, never as the canonical semantic source of truth. M2.1 adds the first deliberately narrow derived runtime frontier and independent initial Resolution admission boundary. M2.2 extends orchestration to exact WorkPlan / BindingRule / BindingEvaluation graph admission while preserving a complete multi-slot binding frontier. M2.3 extends the same model through CapabilityRequirement / Match Evaluation / WorkProposal / GovernanceDecision / Authorization graph admission. M2.4 extends replayable orchestration through CapabilityAttempt / CapabilityOutcome / ContinuationInput / SuccessorResolutionLineage history while keeping exact M1 records as canonical history and recovery policy external. M2.5 adds exact Worker delegation / handoff / result lifecycle graph admission while leaving Worker scheduling, completion policy, semantic widening, and generic continuation selection outside the Worker-specific runtime. M2.6 composes those slices in an executable Host fixture without promoting Host sequencing or any M2 frontier into canonical lifecycle state. The M2 closure freezes those results and hands the next phase to M3.0 Host Integration Charter.
 
 ## Product identity
 
@@ -283,10 +287,11 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M2.4 Attempt / Outcome / Continuation Orchestrator](docs/m2_4_attempt_outcome_continuation_orchestrator.md)
 - [M2.5 Worker Lifecycle Orchestrator](docs/m2_5_worker_lifecycle_orchestrator.md)
 - [M2.6 End-to-End Host Fixture](docs/m2_6_end_to_end_host_fixture.md)
+- [M2 closure & M3 handoff](docs/m2_closure_m3_handoff.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
 
 - [Roadmap](ROADMAP.md)
 
-`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts and the M1 IR are frozen in `main`; M2 implementation slices build orchestration over those boundaries without silently reopening them.
+`ROADMAP.md` is the preserved planning record and may contain superseded planning guidance. Normative M0 contracts, the M1 IR, and M2 Runtime Orchestration are frozen in `main`; M3 begins with a charter-first Host integration boundary rather than silently reopening those layers.
