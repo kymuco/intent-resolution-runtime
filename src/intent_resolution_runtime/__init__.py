@@ -166,6 +166,18 @@ from .work import (
     WorkSymbolicInput,
 )
 from .work_binding import WorkBindingFrontier, orchestrate_work_binding
+from .work_disposition import (
+    AdmittedWorkPlan,
+    CandidateWorkDisposition,
+    NoOperationalWork,
+    WorkDispositionAdmissionAttribution,
+    WorkDispositionFrontier,
+    WorkDispositionFrontierKind,
+    WorkDispositionKind,
+    WorkDispositionOutput,
+    WorkDispositionProposalAttribution,
+    orchestrate_work_disposition,
+)
 
 
 def _seal_ir_type(base_type: type) -> None:
@@ -214,6 +226,11 @@ for _ir_type in (
     WorkOutput,
     WorkStep,
     WorkPlan,
+    WorkDispositionProposalAttribution,
+    WorkDispositionAdmissionAttribution,
+    CandidateWorkDisposition,
+    NoOperationalWork,
+    AdmittedWorkPlan,
     DelegatedScope,
     DelegatedCapabilityAllowance,
     DelegatedContextReference,
@@ -277,6 +294,7 @@ del _ir_type, _seal_ir_type
 
 
 __all__ = [
+    "AdmittedWorkPlan",
     "AssumptionKind",
     "AssumptionRecord",
     "AttemptBoundInput",
@@ -298,6 +316,7 @@ __all__ = [
     "BoundValue",
     "CandidateAttribution",
     "CandidateResolution",
+    "CandidateWorkDisposition",
     "CapabilityAttempt",
     "CapabilityAttemptAttribution",
     "CapabilityCatalogAttribution",
@@ -367,6 +386,7 @@ __all__ = [
     "IntentIRError",
     "IntentRequest",
     "InterchangeableChoicePolicy",
+    "NoOperationalWork",
     "OriginAttribution",
     "OriginKind",
     "OutcomeCompletionAssessment",
@@ -401,6 +421,12 @@ __all__ = [
     "WorkerResultMaterialRole",
     "ProposedWorkStep",
     "WorkBindingFrontier",
+    "WorkDispositionAdmissionAttribution",
+    "WorkDispositionFrontier",
+    "WorkDispositionFrontierKind",
+    "WorkDispositionKind",
+    "WorkDispositionOutput",
+    "WorkDispositionProposalAttribution",
     "WorkProposal",
     "WorkProposalAttribution",
     "WorkProposalMaterial",
@@ -417,6 +443,7 @@ __all__ = [
     "orchestrate_attempt_outcome_continuation",
     "orchestrate_capability_governance",
     "orchestrate_initial_resolution",
+    "orchestrate_work_disposition",
     "orchestrate_worker_lifecycle",
     "orchestrate_work_binding",
 ]
