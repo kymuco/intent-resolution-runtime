@@ -185,24 +185,27 @@ Host mechanism != semantic authority
 
 ## Semantic equivalence and ordering
 
-Candidate proposal attribution is excluded from semantic equivalence.
+Candidate proposal attribution is excluded from semantic equivalence. The candidate's
+remaining proposed payload is not discarded: `kind`, exact proposed `WorkPlan`, and
+`rationale` all participate in the equivalence signature.
 
-For the M3.0.2 frontier, materially equal disposition proposals are compared by the
-proposed disposition kind and exact proposed WorkPlan. Rationale text is explanatory
-proposal material and does not become provider-count or ordering authority.
+This is intentionally conservative. Two proposers describing the same exact WorkPlan
+with materially different rationales remain distinct candidate semantics and require
+adjudication rather than having one explanation silently ignored.
 
 Therefore:
 
 ```text
-same exact WorkPlan from two proposers
+same exact candidate payload + different proposer attribution
 != two votes
 != automatic admission
+→ ADMISSION_REQUIRED
 
-same proposal semantics + different attribution/rationale
-→ still ADMISSION_REQUIRED
+same exact WorkPlan + different rationale
+→ ADJUDICATION_REQUIRED
 ```
 
-Divergent work/no-work proposals or distinct WorkPlans remain
+Divergent work/no-work proposals or distinct WorkPlans also remain
 `ADJUDICATION_REQUIRED`.
 
 ## Relationship to M2.2 Work / Binding
