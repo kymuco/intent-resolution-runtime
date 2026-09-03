@@ -6,9 +6,9 @@ from .attempt_outcome_continuation import (
     orchestrate_attempt_outcome_continuation,
 )
 from .binding import (
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingConstraint,
     BindingConstraintOperator,
     BindingEvaluation,
@@ -108,7 +108,13 @@ from .initial_resolution import (
     InitialResolutionFrontierKind,
     orchestrate_initial_resolution,
 )
-from .intent import IntentExpression, IntentRequest, OriginAttribution, OriginKind, StableRef
+from .intent import (
+    IntentExpression,
+    IntentRequest,
+    OriginAttribution,
+    OriginKind,
+    StableRef,
+)
 from .outcome import (
     CapabilityOutcome,
     CapabilityOutcomeAttribution,
@@ -140,22 +146,6 @@ from .successor_resolution import (
     SuccessorResolutionKind,
     SuccessorResolutionLineage,
 )
-from .worker_lifecycle import WorkerLifecycleFrontier, orchestrate_worker_lifecycle
-from .worker_result import (
-    WorkerNeed,
-    WorkerNeedKind,
-    WorkerResult,
-    WorkerResultAttribution,
-    WorkerResultMaterial,
-    WorkerResultMaterialRole,
-)
-from .work_proposal import (
-    ProposedWorkStep,
-    WorkProposal,
-    WorkProposalAttribution,
-    WorkProposalMaterial,
-    WorkProposalMaterialKind,
-)
 from .work import (
     WorkContinuationMode,
     WorkInput,
@@ -177,6 +167,22 @@ from .work_disposition import (
     WorkDispositionOutput,
     WorkDispositionProposalAttribution,
     orchestrate_work_disposition,
+)
+from .work_proposal import (
+    ProposedWorkStep,
+    WorkProposal,
+    WorkProposalAttribution,
+    WorkProposalMaterial,
+    WorkProposalMaterialKind,
+)
+from .worker_lifecycle import WorkerLifecycleFrontier, orchestrate_worker_lifecycle
+from .worker_result import (
+    WorkerNeed,
+    WorkerNeedKind,
+    WorkerResult,
+    WorkerResultAttribution,
+    WorkerResultMaterial,
+    WorkerResultMaterialRole,
 )
 
 
@@ -300,9 +306,9 @@ __all__ = [
     "AttemptBoundInput",
     "AttemptOutcomeContinuationFrontier",
     "Authorization",
-    "BindingAttribution",
     "BindingAttribute",
     "BindingAttributeKind",
+    "BindingAttribution",
     "BindingConstraint",
     "BindingConstraintOperator",
     "BindingEvaluation",
@@ -397,6 +403,7 @@ __all__ = [
     "OutcomeEvidenceRole",
     "OutcomeLifecycleAssessment",
     "OutcomeLifecycleState",
+    "ProposedWorkStep",
     "RecordIdentity",
     "ResolutionAttribution",
     "ResolutionIssue",
@@ -412,6 +419,24 @@ __all__ = [
     "TemporalBasisKind",
     "TemporalBasisRecord",
     "ValidationError",
+    "WorkBindingFrontier",
+    "WorkContinuationMode",
+    "WorkDispositionAdmissionAttribution",
+    "WorkDispositionFrontier",
+    "WorkDispositionFrontierKind",
+    "WorkDispositionKind",
+    "WorkDispositionOutput",
+    "WorkDispositionProposalAttribution",
+    "WorkInput",
+    "WorkLiteralInput",
+    "WorkOutput",
+    "WorkPlan",
+    "WorkProposal",
+    "WorkProposalAttribution",
+    "WorkProposalMaterial",
+    "WorkProposalMaterialKind",
+    "WorkStep",
+    "WorkSymbolicInput",
     "WorkerLifecycleFrontier",
     "WorkerNeed",
     "WorkerNeedKind",
@@ -419,31 +444,12 @@ __all__ = [
     "WorkerResultAttribution",
     "WorkerResultMaterial",
     "WorkerResultMaterialRole",
-    "ProposedWorkStep",
-    "WorkBindingFrontier",
-    "WorkDispositionAdmissionAttribution",
-    "WorkDispositionFrontier",
-    "WorkDispositionFrontierKind",
-    "WorkDispositionKind",
-    "WorkDispositionOutput",
-    "WorkDispositionProposalAttribution",
-    "WorkProposal",
-    "WorkProposalAttribution",
-    "WorkProposalMaterial",
-    "WorkProposalMaterialKind",
-    "WorkContinuationMode",
-    "WorkInput",
-    "WorkLiteralInput",
-    "WorkOutput",
-    "WorkPlan",
-    "WorkStep",
-    "WorkSymbolicInput",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "orchestrate_attempt_outcome_continuation",
     "orchestrate_capability_governance",
     "orchestrate_initial_resolution",
+    "orchestrate_work_binding",
     "orchestrate_work_disposition",
     "orchestrate_worker_lifecycle",
-    "orchestrate_work_binding",
 ]

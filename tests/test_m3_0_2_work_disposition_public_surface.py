@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import intent_resolution_runtime as irr
 
-
 EXPECTED_PUBLIC_NAMES = (
     "AdmittedWorkPlan",
     "CandidateWorkDisposition",
@@ -38,7 +37,9 @@ def test_new_canonical_work_disposition_records_are_closed_ir_types() -> None:
         except TypeError as exc:
             assert "closed IR type" in str(exc)
         else:  # pragma: no cover - explicit regression failure branch
-            raise AssertionError(f"{record_type.__name__} unexpectedly allowed subclassing")
+            raise AssertionError(
+                f"{record_type.__name__} unexpectedly allowed subclassing"
+            )
 
 
 def test_derived_work_disposition_frontier_is_not_sealed_as_canonical_ir() -> None:

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, ClassVar, TypeAlias
+from typing import Any, ClassVar, TypeAlias
 
 from .canonical import canonical_json_bytes, parse_json_object
 from .errors import SerializationError, ValidationError
@@ -38,7 +39,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -97,7 +100,7 @@ class WorkDispositionProposalAttribution(_CanonicalWorkDispositionRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkDispositionProposalAttribution"
-    ) -> "WorkDispositionProposalAttribution":
+    ) -> WorkDispositionProposalAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -121,7 +124,7 @@ class WorkDispositionProposalAttribution(_CanonicalWorkDispositionRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "WorkDispositionProposalAttribution":
+    ) -> WorkDispositionProposalAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -152,7 +155,7 @@ class WorkDispositionAdmissionAttribution(_CanonicalWorkDispositionRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkDispositionAdmissionAttribution"
-    ) -> "WorkDispositionAdmissionAttribution":
+    ) -> WorkDispositionAdmissionAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -176,7 +179,7 @@ class WorkDispositionAdmissionAttribution(_CanonicalWorkDispositionRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "WorkDispositionAdmissionAttribution":
+    ) -> WorkDispositionAdmissionAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -226,55 +229,70 @@ class CandidateWorkDisposition(_CanonicalWorkDispositionRecord):
         raise AssertionError("unsupported WorkDispositionKind")
 
     def to_primitive(self) -> dict[str, object]:
-        return {
+        primitive: dict[str, object] = {
             "attribution": self.attribution.to_primitive(),
             "kind": self.kind.value,
             "rationale": self.rationale,
             "resolved_intent_identity": self.resolved_intent_identity.to_primitive(),
             "schema": self.SCHEMA,
-            "work_plan": None if self.work_plan is None else self.work_plan.to_primitive(),
         }
+        if self.work_plan is not None:
+            primitive["work_plan"] = self.work_plan.to_primitive()
+        return primitive
 
     @classmethod
-    def from_primitive(cls, value: object) -> "CandidateWorkDisposition":
+    def from_primitive(cls, value: object) -> CandidateWorkDisposition:
         obj = _expect_object(value, field="CandidateWorkDisposition")
-        _expect_exact_keys(
-            obj,
-            {
-                "schema",
-                "resolved_intent_identity",
-                "attribution",
-                "kind",
-                "work_plan",
-                "rationale",
-            },
-            field="CandidateWorkDisposition",
-        )
-        if obj["schema"] != cls.SCHEMA:
+
+        schema = obj.get("schema")
+        if schema != cls.SCHEMA:
             raise SerializationError(
-                f"unsupported CandidateWorkDisposition schema: {obj['schema']!r}"
+                f"unsupported CandidateWorkDisposition schema: {schema!r}"
             )
-        if type(obj["kind"]) is not str:
+
+        kind_value = obj.get("kind")
+        if type(kind_value) is not str:
             raise SerializationError("CandidateWorkDisposition.kind must be a string")
         try:
-            kind = WorkDispositionKind(obj["kind"])
+            kind = WorkDispositionKind(kind_value)
         except ValueError as exc:
-            raise SerializationError("unsupported CandidateWorkDisposition.kind") from exc
+            raise SerializationError(
+                "unsupported CandidateWorkDisposition.kind"
+            ) from exc
+
+        expected_keys = {
+            "schema",
+            "resolved_intent_identity",
+            "attribution",
+            "kind",
+            "rationale",
+        }
+        if kind is WorkDispositionKind.WORK_PLAN:
+            expected_keys.add("work_plan")
+
+        _expect_exact_keys(
+            obj,
+            expected_keys,
+            field="CandidateWorkDisposition",
+        )
+
         try:
+            work_plan = (
+                WorkPlan.from_primitive(obj["work_plan"])
+                if kind is WorkDispositionKind.WORK_PLAN
+                else None
+            )
             return cls(
                 resolved_intent_identity=RecordIdentity.from_primitive(
                     obj["resolved_intent_identity"],
                     field="CandidateWorkDisposition.resolved_intent_identity",
                 ),
                 attribution=WorkDispositionProposalAttribution.from_primitive(
-                    obj["attribution"], field="CandidateWorkDisposition.attribution"
+                    obj["attribution"],
+                    field="CandidateWorkDisposition.attribution",
                 ),
                 kind=kind,
-                work_plan=(
-                    None
-                    if obj["work_plan"] is None
-                    else WorkPlan.from_primitive(obj["work_plan"])
-                ),
+                work_plan=work_plan,
                 rationale=obj["rationale"],
             )
         except ValidationError as exc:
@@ -283,7 +301,7 @@ class CandidateWorkDisposition(_CanonicalWorkDispositionRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CandidateWorkDisposition":
+    ) -> CandidateWorkDisposition:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -297,7 +315,9 @@ def _normalize_candidates(
     candidates = tuple(value)
     identities = [candidate.identity for candidate in candidates]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate candidate identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate candidate identities"
+        )
     return tuple(sorted(candidates, key=lambda candidate: str(candidate.identity)))
 
 
@@ -355,7 +375,7 @@ class NoOperationalWork(_CanonicalWorkDispositionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "NoOperationalWork":
+    def from_primitive(cls, value: object) -> NoOperationalWork:
         obj = _expect_object(value, field="NoOperationalWork")
         _expect_exact_keys(
             obj,
@@ -394,9 +414,7 @@ class NoOperationalWork(_CanonicalWorkDispositionRecord):
             raise SerializationError("invalid NoOperationalWork") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "NoOperationalWork":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> NoOperationalWork:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -421,7 +439,9 @@ class AdmittedWorkPlan(_CanonicalWorkDispositionRecord):
                 "AdmittedWorkPlan.admission_attribution must be a WorkDispositionAdmissionAttribution"
             )
         if type(self.work_plan) is not WorkPlan:
-            raise ValidationError("AdmittedWorkPlan.work_plan must be an exact WorkPlan")
+            raise ValidationError(
+                "AdmittedWorkPlan.work_plan must be an exact WorkPlan"
+            )
         if self.work_plan.resolved_intent_identity != self.resolved_intent_identity:
             raise ValidationError(
                 "AdmittedWorkPlan WorkPlan must belong to the exact ResolvedIntent"
@@ -446,7 +466,7 @@ class AdmittedWorkPlan(_CanonicalWorkDispositionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "AdmittedWorkPlan":
+    def from_primitive(cls, value: object) -> AdmittedWorkPlan:
         obj = _expect_object(value, field="AdmittedWorkPlan")
         _expect_exact_keys(
             obj,
@@ -485,9 +505,7 @@ class AdmittedWorkPlan(_CanonicalWorkDispositionRecord):
             raise SerializationError("invalid AdmittedWorkPlan") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "AdmittedWorkPlan":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> AdmittedWorkPlan:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -535,7 +553,7 @@ def _candidate_semantic_signature(
 ) -> tuple[object, ...]:
     """Proposal attribution is provenance, not precedence or voting weight."""
 
-    return candidate.kind, candidate.work_plan, candidate.rationale
+    return candidate.kind, candidate.work_plan
 
 
 def _candidates_are_semantically_equivalent(

@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from intent_resolution_runtime import RecordIdentity, ResolutionAttribution, ResolvedIntent, StableRef
+from intent_resolution_runtime import (
+    RecordIdentity,
+    ResolutionAttribution,
+    ResolvedIntent,
+    StableRef,
+)
 from intent_resolution_runtime.errors import ValidationError
 from intent_resolution_runtime.work import (
     WorkContinuationMode,
@@ -76,7 +81,9 @@ def _proposal_attribution(label: str) -> WorkDispositionProposalAttribution:
 def _admission_attribution(label: str = "main") -> WorkDispositionAdmissionAttribution:
     return WorkDispositionAdmissionAttribution(
         resolver_ref=_ref("irr.work_disposition_resolver", "m3.0.2-test"),
-        admission_event_ref=_ref("irr.work_disposition_admission", f"admission-{label}"),
+        admission_event_ref=_ref(
+            "irr.work_disposition_admission", f"admission-{label}"
+        ),
     )
 
 
@@ -303,7 +310,9 @@ def test_admitter_cannot_replace_admission_attribution() -> None:
             candidate_inputs=candidates,
         )
 
-    with pytest.raises(ValidationError, match="preserve exact WorkDispositionAdmissionAttribution"):
+    with pytest.raises(
+        ValidationError, match="preserve exact WorkDispositionAdmissionAttribution"
+    ):
         orchestrate_work_disposition(
             resolved,
             candidate_inputs=(candidate,),
