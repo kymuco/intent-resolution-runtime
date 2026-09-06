@@ -24,6 +24,15 @@ from .binding import (
     SymbolicReference,
     evaluate_binding,
 )
+from .binding_rule_admission import (
+    AdmittedBindingRule,
+    BindingRuleAdmissionAttribution,
+    BindingRuleAdmissionFrontier,
+    BindingRuleAdmissionFrontierKind,
+    BindingRuleProposalAttribution,
+    CandidateBindingRule,
+    orchestrate_binding_rule_admission,
+)
 from .capability import (
     CapabilityCatalogAttribution,
     CapabilityCatalogSnapshot,
@@ -227,6 +236,10 @@ for _ir_type in (
     BindingRule,
     BoundValue,
     BindingIssue,
+    BindingRuleProposalAttribution,
+    BindingRuleAdmissionAttribution,
+    CandidateBindingRule,
+    AdmittedBindingRule,
     WorkLiteralInput,
     WorkSymbolicInput,
     WorkOutput,
@@ -300,6 +313,7 @@ del _ir_type, _seal_ir_type
 
 
 __all__ = [
+    "AdmittedBindingRule",
     "AdmittedWorkPlan",
     "AssumptionKind",
     "AssumptionRecord",
@@ -317,10 +331,15 @@ __all__ = [
     "BindingIssue",
     "BindingIssueKind",
     "BindingRule",
+    "BindingRuleAdmissionAttribution",
+    "BindingRuleAdmissionFrontier",
+    "BindingRuleAdmissionFrontierKind",
+    "BindingRuleProposalAttribution",
     "BindingSelectionMode",
     "BindingSelectionPolicy",
     "BoundValue",
     "CandidateAttribution",
+    "CandidateBindingRule",
     "CandidateResolution",
     "CandidateWorkDisposition",
     "CapabilityAttempt",
@@ -447,6 +466,7 @@ __all__ = [
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "orchestrate_attempt_outcome_continuation",
+    "orchestrate_binding_rule_admission",
     "orchestrate_capability_governance",
     "orchestrate_initial_resolution",
     "orchestrate_work_binding",
