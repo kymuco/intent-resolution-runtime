@@ -200,7 +200,9 @@ class CandidateBindingRule(_CanonicalBindingRuleAdmissionRecord):
                 "CandidateBindingRule.attribution must be a BindingRuleProposalAttribution"
             )
         if type(self.rule) is not BindingRule:
-            raise ValidationError("CandidateBindingRule.rule must be an exact BindingRule")
+            raise ValidationError(
+                "CandidateBindingRule.rule must be an exact BindingRule"
+            )
         _require_text(self.rationale, field="CandidateBindingRule.rationale")
 
     def to_primitive(self) -> dict[str, object]:
@@ -251,7 +253,9 @@ def _normalize_candidates(
     candidates = tuple(value)
     identities = [candidate.identity for candidate in candidates]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate candidate identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate candidate identities"
+        )
     return tuple(sorted(candidates, key=lambda candidate: str(candidate.identity)))
 
 
@@ -263,7 +267,9 @@ def _validate_candidates_target(
 ) -> None:
     for candidate in candidates:
         if candidate.rule.symbolic_reference != symbolic_reference:
-            raise ValidationError(f"{field} contains a foreign symbolic-reference target")
+            raise ValidationError(
+                f"{field} contains a foreign symbolic-reference target"
+            )
         if (
             candidate.rule.resolved_intent_identity
             != symbolic_reference.resolved_intent_identity
@@ -288,7 +294,9 @@ class AdmittedBindingRule(_CanonicalBindingRuleAdmissionRecord):
                 "BindingRuleAdmissionAttribution"
             )
         if type(self.rule) is not BindingRule:
-            raise ValidationError("AdmittedBindingRule.rule must be an exact BindingRule")
+            raise ValidationError(
+                "AdmittedBindingRule.rule must be an exact BindingRule"
+            )
         candidates = _normalize_candidates(
             self.candidate_inputs, field="AdmittedBindingRule.candidate_inputs"
         )
@@ -353,9 +361,7 @@ BindingRuleAdmitter: TypeAlias = Callable[
 ]
 
 
-def _normalize_outputs(
-    value: object, *, field: str
-) -> tuple[AdmittedBindingRule, ...]:
+def _normalize_outputs(value: object, *, field: str) -> tuple[AdmittedBindingRule, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is AdmittedBindingRule for item in value):

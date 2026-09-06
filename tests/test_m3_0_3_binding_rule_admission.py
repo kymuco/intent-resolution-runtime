@@ -142,7 +142,9 @@ def test_canonical_records_round_trip() -> None:
         )
         == candidate.attribution
     )
-    assert CandidateBindingRule.from_json_bytes(candidate.canonical_bytes()) == candidate
+    assert (
+        CandidateBindingRule.from_json_bytes(candidate.canonical_bytes()) == candidate
+    )
     assert (
         BindingRuleAdmissionAttribution.from_json_bytes(
             admitted.admission_attribution.canonical_bytes()
