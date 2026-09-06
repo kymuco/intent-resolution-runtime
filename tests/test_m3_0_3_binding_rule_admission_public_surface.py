@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import intent_resolution_runtime as irr
 import pytest
+
+import intent_resolution_runtime as irr
 
 
 def test_binding_rule_admission_types_are_public() -> None:
