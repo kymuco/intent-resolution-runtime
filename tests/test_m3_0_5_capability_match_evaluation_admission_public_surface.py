@@ -56,6 +56,7 @@ def test_new_canonical_records_are_closed() -> None:
 def test_admission_surface_has_no_selection_or_authorization_outputs() -> None:
     annotations = irr.AdmittedCapabilityMatchEvaluation.__annotations__
     assert set(annotations) == {
+        "SCHEMA",
         "admission_attribution",
         "evaluation",
         "candidate_inputs",
