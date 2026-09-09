@@ -7,7 +7,7 @@ from typing import Any, ClassVar, TypeAlias, cast
 
 from .canonical import canonical_json_bytes, parse_json_object
 from .capability import CapabilityCatalogSnapshot
-from .capability_match import CapabilityRequirement
+from .capability_match import CapabilityMatch, CapabilityRequirement
 from .capability_match_evaluation import CapabilityMatchEvaluation
 from .errors import SerializationError, ValidationError
 from .identity import RecordIdentity, identity_for_bytes
@@ -73,7 +73,9 @@ class _CanonicalCapabilityMatchEvaluationAdmissionRecord:
 class CapabilityMatchEvaluationAdmissionAttribution(
     _CanonicalCapabilityMatchEvaluationAdmissionRecord
 ):
-    SCHEMA: ClassVar[str] = "irr.capability_match_evaluation_admission_attribution.v1"
+    SCHEMA: ClassVar[str] = (
+        "irr.capability_match_evaluation_admission_attribution.v1"
+    )
 
     resolver_ref: StableRef
     admission_event_ref: StableRef
@@ -118,7 +120,8 @@ class CapabilityMatchEvaluationAdmissionAttribution(
                     obj["resolver_ref"], field=f"{field}.resolver_ref"
                 ),
                 admission_event_ref=StableRef.from_primitive(
-                    obj["admission_event_ref"], field=f"{field}.admission_event_ref"
+                    obj["admission_event_ref"],
+                    field=f"{field}.admission_event_ref",
                 ),
             )
         except ValidationError as exc:
@@ -135,7 +138,7 @@ class CapabilityMatchEvaluationAdmissionAttribution(
 class CandidateCapabilityMatchEvaluation(
     _CanonicalCapabilityMatchEvaluationAdmissionRecord
 ):
-    """Proposed exhaustive catalog assessment; not active M2.3 evaluation state."""
+    """Proposed exhaustive catalog assessment; not active M2.3 state."""
 
     SCHEMA: ClassVar[str] = "irr.candidate_capability_match_evaluation.v1"
 
@@ -148,7 +151,10 @@ class CandidateCapabilityMatchEvaluation(
                 "CandidateCapabilityMatchEvaluation.evaluation must be a "
                 "CapabilityMatchEvaluation"
             )
-        _require_text(self.rationale, field="CandidateCapabilityMatchEvaluation.rationale")
+        _require_text(
+            self.rationale,
+            field="CandidateCapabilityMatchEvaluation.rationale",
+        )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -159,10 +165,17 @@ class CandidateCapabilityMatchEvaluation(
 
     @classmethod
     def from_primitive(
-        cls, value: object, *, field: str = "CandidateCapabilityMatchEvaluation"
+        cls,
+        value: object,
+        *,
+        field: str = "CandidateCapabilityMatchEvaluation",
     ) -> CandidateCapabilityMatchEvaluation:
         obj = _expect_object(value, field=field)
-        _expect_exact_keys(obj, {"schema", "evaluation", "rationale"}, field=field)
+        _expect_exact_keys(
+            obj,
+            {"schema", "evaluation", "rationale"},
+            field=field,
+        )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
@@ -194,8 +207,12 @@ def _normalize_candidates(
     candidates = cast(tuple[CandidateCapabilityMatchEvaluation, ...], value)
     identities = [candidate.identity for candidate in candidates]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate candidate identities")
-    return tuple(sorted(candidates, key=lambda candidate: str(candidate.identity)))
+        raise ValidationError(
+            f"{field} must not contain duplicate candidate identities"
+        )
+    return tuple(
+        sorted(candidates, key=lambda candidate: str(candidate.identity))
+    )
 
 
 def _validate_candidate_targets(
@@ -207,24 +224,38 @@ def _validate_candidate_targets(
 ) -> None:
     for candidate in candidates:
         if candidate.evaluation.requirement != requirement:
-            raise ValidationError(f"{field} contains a foreign CapabilityRequirement")
+            raise ValidationError(
+                f"{field} contains a foreign CapabilityRequirement"
+            )
         if candidate.evaluation.catalog_snapshot != catalog_snapshot:
-            raise ValidationError(f"{field} contains a foreign CapabilityCatalogSnapshot")
+            raise ValidationError(
+                f"{field} contains a foreign CapabilityCatalogSnapshot"
+            )
 
 
-def _evaluation_semantic_key(evaluation: CapabilityMatchEvaluation) -> tuple[object, ...]:
+def _match_semantic_key(match: CapabilityMatch) -> tuple[object, ...]:
+    return (
+        match.capability_ref,
+        match.capability_contract_identity,
+        match.scope_matches,
+        match.input_matches,
+        match.output_matches,
+        match.effect_matches,
+    )
+
+
+def _evaluation_semantic_key(
+    evaluation: CapabilityMatchEvaluation,
+) -> tuple[object, ...]:
     compatible = tuple(
         sorted(
-            (
-                match.capability_ref,
-                match.capability_contract_identity,
-                match.scope_matches,
-                match.input_matches,
-                match.output_matches,
-                match.effect_matches,
-            )
-            for match in evaluation.compatible_matches
-        , key=lambda item: (item[0].namespace, item[0].value, str(item[1])))
+            (_match_semantic_key(match) for match in evaluation.compatible_matches),
+            key=lambda item: (
+                cast(StableRef, item[0]).namespace,
+                cast(StableRef, item[0]).value,
+                str(item[1]),
+            ),
+        )
     )
     incompatible = tuple(
         (
@@ -246,7 +277,7 @@ def _evaluation_semantic_key(evaluation: CapabilityMatchEvaluation) -> tuple[obj
 class AdmittedCapabilityMatchEvaluation(
     _CanonicalCapabilityMatchEvaluationAdmissionRecord
 ):
-    """Explicit IRR admission of one exhaustive match evaluation; never selection."""
+    """Explicit admission of one exhaustive evaluation; never selection."""
 
     SCHEMA: ClassVar[str] = "irr.admitted_capability_match_evaluation.v1"
 
@@ -282,19 +313,29 @@ class AdmittedCapabilityMatchEvaluation(
     def to_primitive(self) -> dict[str, object]:
         return {
             "admission_attribution": self.admission_attribution.to_primitive(),
-            "candidate_inputs": [item.to_primitive() for item in self.candidate_inputs],
+            "candidate_inputs": [
+                item.to_primitive() for item in self.candidate_inputs
+            ],
             "evaluation": self.evaluation.to_primitive(),
             "schema": self.SCHEMA,
         }
 
     @classmethod
     def from_primitive(
-        cls, value: object, *, field: str = "AdmittedCapabilityMatchEvaluation"
+        cls,
+        value: object,
+        *,
+        field: str = "AdmittedCapabilityMatchEvaluation",
     ) -> AdmittedCapabilityMatchEvaluation:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
-            {"schema", "admission_attribution", "evaluation", "candidate_inputs"},
+            {
+                "schema",
+                "admission_attribution",
+                "evaluation",
+                "candidate_inputs",
+            },
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
@@ -339,7 +380,7 @@ class CapabilityMatchEvaluationAdmissionFrontierKind(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class CapabilityMatchEvaluationAdmissionFrontier:
-    """Derived admission state for one requirement/catalog evaluation surface."""
+    """Admission state for one exact requirement/catalog evaluation surface."""
 
     requirement: CapabilityRequirement
     catalog_snapshot: CapabilityCatalogSnapshot
@@ -355,8 +396,8 @@ class CapabilityMatchEvaluationAdmissionFrontier:
             )
         if type(self.catalog_snapshot) is not CapabilityCatalogSnapshot:
             raise ValidationError(
-                "CapabilityMatchEvaluationAdmissionFrontier.catalog_snapshot must be a "
-                "CapabilityCatalogSnapshot"
+                "CapabilityMatchEvaluationAdmissionFrontier.catalog_snapshot must be "
+                "a CapabilityCatalogSnapshot"
             )
         candidates = _normalize_candidates(
             self.candidate_inputs,
@@ -382,7 +423,8 @@ class CapabilityMatchEvaluationAdmissionFrontier:
         ):
             if candidates or output is not None:
                 raise ValidationError(
-                    "proposal_input_required frontier cannot contain candidates or output"
+                    "proposal_input_required frontier cannot contain candidates or "
+                    "output"
                 )
             return
 
@@ -416,9 +458,13 @@ class CapabilityMatchEvaluationAdmissionFrontier:
                     "AdmittedCapabilityMatchEvaluation"
                 )
             if output.evaluation.requirement != self.requirement:
-                raise ValidationError("admitted evaluation changed the exact requirement")
+                raise ValidationError(
+                    "admitted evaluation changed the exact requirement"
+                )
             if output.evaluation.catalog_snapshot != self.catalog_snapshot:
-                raise ValidationError("admitted evaluation changed the exact catalog snapshot")
+                raise ValidationError(
+                    "admitted evaluation changed the exact catalog snapshot"
+                )
             if output.candidate_inputs != candidates:
                 raise ValidationError(
                     "evaluation_output_available candidate_inputs must equal exact "
@@ -426,7 +472,9 @@ class CapabilityMatchEvaluationAdmissionFrontier:
                 )
             return
 
-        raise AssertionError("unsupported CapabilityMatchEvaluationAdmissionFrontierKind")
+        raise AssertionError(
+            "unsupported CapabilityMatchEvaluationAdmissionFrontierKind"
+        )
 
 
 CapabilityMatchEvaluationAdmitter: TypeAlias = Callable[
@@ -472,9 +520,13 @@ def orchestrate_capability_match_evaluation_admission(
     """
 
     if type(requirement) is not CapabilityRequirement:
-        raise ValidationError("requirement must be an exact CapabilityRequirement")
+        raise ValidationError(
+            "requirement must be an exact CapabilityRequirement"
+        )
     if type(catalog_snapshot) is not CapabilityCatalogSnapshot:
-        raise ValidationError("catalog_snapshot must be an exact CapabilityCatalogSnapshot")
+        raise ValidationError(
+            "catalog_snapshot must be an exact CapabilityCatalogSnapshot"
+        )
 
     candidates = _normalize_candidates(candidate_inputs, field="candidate_inputs")
     _validate_candidate_targets(
@@ -486,20 +538,31 @@ def orchestrate_capability_match_evaluation_admission(
 
     if type(admitted_outputs) is not tuple:
         raise ValidationError("admitted_outputs must be a tuple")
-    if not all(type(item) is AdmittedCapabilityMatchEvaluation for item in admitted_outputs):
+    if not all(
+        type(item) is AdmittedCapabilityMatchEvaluation
+        for item in admitted_outputs
+    ):
         raise ValidationError(
             "admitted_outputs must contain AdmittedCapabilityMatchEvaluation values"
         )
-    outputs = cast(tuple[AdmittedCapabilityMatchEvaluation, ...], admitted_outputs)
+    outputs = cast(
+        tuple[AdmittedCapabilityMatchEvaluation, ...], admitted_outputs
+    )
     if len(outputs) > 1:
-        raise ValidationError("competing admitted capability match evaluations fail closed")
+        raise ValidationError(
+            "competing admitted capability match evaluations fail closed"
+        )
 
     if outputs:
         output = outputs[0]
         if output.evaluation.requirement != requirement:
-            raise ValidationError("admitted output belongs to a foreign requirement")
+            raise ValidationError(
+                "admitted output belongs to a foreign requirement"
+            )
         if output.evaluation.catalog_snapshot != catalog_snapshot:
-            raise ValidationError("admitted output belongs to a foreign catalog snapshot")
+            raise ValidationError(
+                "admitted output belongs to a foreign catalog snapshot"
+            )
         if admitter is not None or admission_attribution is not None:
             raise ValidationError(
                 "admitted-output replay cannot also invoke a new admitter"
@@ -507,8 +570,12 @@ def orchestrate_capability_match_evaluation_admission(
         admitted_candidate_identities = {
             candidate.identity for candidate in output.candidate_inputs
         }
-        supplied_candidate_identities = {candidate.identity for candidate in candidates}
-        if not supplied_candidate_identities.issubset(admitted_candidate_identities):
+        supplied_candidate_identities = {
+            candidate.identity for candidate in candidates
+        }
+        if not supplied_candidate_identities.issubset(
+            admitted_candidate_identities
+        ):
             raise ValidationError(
                 "candidate material outside admitted evaluation provenance is orphaned"
             )
@@ -537,13 +604,20 @@ def orchestrate_capability_match_evaluation_admission(
         return unresolved
     if not callable(admitter):
         raise ValidationError("admitter must be callable")
-    if type(admission_attribution) is not CapabilityMatchEvaluationAdmissionAttribution:
+    if type(admission_attribution) is not (
+        CapabilityMatchEvaluationAdmissionAttribution
+    ):
         raise ValidationError(
             "explicit admission requires "
             "CapabilityMatchEvaluationAdmissionAttribution"
         )
 
-    admitted = admitter(requirement, catalog_snapshot, candidates, admission_attribution)
+    admitted = admitter(
+        requirement,
+        catalog_snapshot,
+        candidates,
+        admission_attribution,
+    )
     if admitted is None:
         return unresolved
     if type(admitted) is not AdmittedCapabilityMatchEvaluation:
@@ -552,19 +626,29 @@ def orchestrate_capability_match_evaluation_admission(
             "AdmittedCapabilityMatchEvaluation or None"
         )
     if admitted.admission_attribution != admission_attribution:
-        raise ValidationError("admitter changed the exact admission attribution")
+        raise ValidationError(
+            "admitter changed the exact admission attribution"
+        )
     if admitted.evaluation.requirement != requirement:
-        raise ValidationError("admitter returned a foreign requirement evaluation")
+        raise ValidationError(
+            "admitter returned a foreign requirement evaluation"
+        )
     if admitted.evaluation.catalog_snapshot != catalog_snapshot:
-        raise ValidationError("admitter returned a foreign catalog snapshot evaluation")
+        raise ValidationError(
+            "admitter returned a foreign catalog snapshot evaluation"
+        )
     if admitted.candidate_inputs != candidates:
-        raise ValidationError("admitter must preserve the exact candidate set")
+        raise ValidationError(
+            "admitter must preserve the exact candidate set"
+        )
 
     return CapabilityMatchEvaluationAdmissionFrontier(
         requirement=requirement,
         catalog_snapshot=catalog_snapshot,
         candidate_inputs=candidates,
-        kind=CapabilityMatchEvaluationAdmissionFrontierKind.EVALUATION_OUTPUT_AVAILABLE,
+        kind=(
+            CapabilityMatchEvaluationAdmissionFrontierKind.EVALUATION_OUTPUT_AVAILABLE
+        ),
         admitted_evaluation=admitted,
     )
 
