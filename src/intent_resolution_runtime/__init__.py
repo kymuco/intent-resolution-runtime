@@ -72,6 +72,15 @@ from .capability_match_evaluation import (
     CapabilityMismatchReason,
     evaluate_capability_match_evaluation,
 )
+from .capability_requirement_admission import (
+    AdmittedCapabilityRequirement,
+    CandidateCapabilityRequirement,
+    CapabilityRequirementAdmissionAttribution,
+    CapabilityRequirementAdmissionFrontier,
+    CapabilityRequirementAdmissionFrontierKind,
+    CapabilityRequirementProposalAttribution,
+    orchestrate_capability_requirement_admission,
+)
 from .context import (
     ClaimRecord,
     CompletenessRecord,
@@ -285,6 +294,10 @@ for _ir_type in (
     CapabilityIncompatibleDescriptorAssessment,
     CapabilityMatchEvaluation,
     CapabilityMatchIssue,
+    CapabilityRequirementProposalAttribution,
+    CapabilityRequirementAdmissionAttribution,
+    CandidateCapabilityRequirement,
+    AdmittedCapabilityRequirement,
     WorkProposalAttribution,
     ProposedWorkStep,
     WorkProposalMaterial,
@@ -314,6 +327,7 @@ del _ir_type, _seal_ir_type
 
 __all__ = [
     "AdmittedBindingRule",
+    "AdmittedCapabilityRequirement",
     "AdmittedWorkPlan",
     "AssumptionKind",
     "AssumptionRecord",
@@ -340,6 +354,7 @@ __all__ = [
     "BoundValue",
     "CandidateAttribution",
     "CandidateBindingRule",
+    "CandidateCapabilityRequirement",
     "CandidateResolution",
     "CandidateWorkDisposition",
     "CapabilityAttempt",
@@ -373,6 +388,10 @@ __all__ = [
     "CapabilityRequestedEffect",
     "CapabilityRequestedScope",
     "CapabilityRequirement",
+    "CapabilityRequirementAdmissionAttribution",
+    "CapabilityRequirementAdmissionFrontier",
+    "CapabilityRequirementAdmissionFrontierKind",
+    "CapabilityRequirementProposalAttribution",
     "CapabilityScopeMatch",
     "CapabilityScopeRequirement",
     "ClaimRecord",
@@ -468,6 +487,7 @@ __all__ = [
     "orchestrate_attempt_outcome_continuation",
     "orchestrate_binding_rule_admission",
     "orchestrate_capability_governance",
+    "orchestrate_capability_requirement_admission",
     "orchestrate_initial_resolution",
     "orchestrate_work_binding",
     "orchestrate_work_disposition",
