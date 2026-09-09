@@ -25,7 +25,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -265,11 +267,15 @@ def _normalize_candidates(
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is CandidateCapabilityRequirement for item in value):
-        raise ValidationError(f"{field} must contain CandidateCapabilityRequirement values")
+        raise ValidationError(
+            f"{field} must contain CandidateCapabilityRequirement values"
+        )
     candidates = cast(tuple[CandidateCapabilityRequirement, ...], value)
     identities = [candidate.identity for candidate in candidates]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate candidate identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate candidate identities"
+        )
     return tuple(sorted(candidates, key=lambda candidate: str(candidate.identity)))
 
 
@@ -298,7 +304,10 @@ class AdmittedCapabilityRequirement(_CanonicalCapabilityRequirementAdmissionReco
     candidate_inputs: tuple[CandidateCapabilityRequirement, ...] = ()
 
     def __post_init__(self) -> None:
-        if type(self.admission_attribution) is not CapabilityRequirementAdmissionAttribution:
+        if (
+            type(self.admission_attribution)
+            is not CapabilityRequirementAdmissionAttribution
+        ):
             raise ValidationError(
                 "AdmittedCapabilityRequirement.admission_attribution must be a "
                 "CapabilityRequirementAdmissionAttribution"
@@ -308,7 +317,8 @@ class AdmittedCapabilityRequirement(_CanonicalCapabilityRequirementAdmissionReco
                 "AdmittedCapabilityRequirement.requirement must be a CapabilityRequirement"
             )
         candidates = _normalize_candidates(
-            self.candidate_inputs, field="AdmittedCapabilityRequirement.candidate_inputs"
+            self.candidate_inputs,
+            field="AdmittedCapabilityRequirement.candidate_inputs",
         )
         _validate_candidate_targets(
             candidates,
@@ -404,7 +414,10 @@ class CapabilityRequirementAdmissionFrontier:
             )
 
         output = self.admitted_requirement
-        if self.kind is CapabilityRequirementAdmissionFrontierKind.PROPOSAL_INPUT_REQUIRED:
+        if (
+            self.kind
+            is CapabilityRequirementAdmissionFrontierKind.PROPOSAL_INPUT_REQUIRED
+        ):
             if candidates or output is not None:
                 raise ValidationError(
                     "proposal_input_required frontier cannot contain candidates or output"
@@ -425,7 +438,10 @@ class CapabilityRequirementAdmissionFrontier:
                 )
             return
 
-        if self.kind is CapabilityRequirementAdmissionFrontierKind.REQUIREMENT_OUTPUT_AVAILABLE:
+        if (
+            self.kind
+            is CapabilityRequirementAdmissionFrontierKind.REQUIREMENT_OUTPUT_AVAILABLE
+        ):
             if type(output) is not AdmittedCapabilityRequirement:
                 raise ValidationError(
                     "requirement_output_available requires AdmittedCapabilityRequirement"
@@ -494,7 +510,9 @@ def orchestrate_capability_requirement_admission(
 
     if type(admitted_outputs) is not tuple:
         raise ValidationError("admitted_outputs must be a tuple")
-    if not all(type(item) is AdmittedCapabilityRequirement for item in admitted_outputs):
+    if not all(
+        type(item) is AdmittedCapabilityRequirement for item in admitted_outputs
+    ):
         raise ValidationError(
             "admitted_outputs must contain AdmittedCapabilityRequirement values"
         )

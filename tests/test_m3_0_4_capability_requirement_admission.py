@@ -113,7 +113,9 @@ def _candidate(
 ) -> CandidateCapabilityRequirement:
     return CandidateCapabilityRequirement(
         attribution=CapabilityRequirementProposalAttribution(
-            proposer_ref=_ref("irr.capability_requirement_proposer", f"planner:{label}"),
+            proposer_ref=_ref(
+                "irr.capability_requirement_proposer", f"planner:{label}"
+            ),
             proposal_event_ref=_ref(
                 "irr.capability_requirement_proposal",
                 f"proposal:{label}",
@@ -213,7 +215,9 @@ def test_same_requirement_with_different_provenance_is_not_voting() -> None:
         plan.steps[0].step_ref,
         candidate_inputs=(second, first),
     )
-    assert frontier.kind is CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED
+    assert (
+        frontier.kind is CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED
+    )
     assert frontier.admitted_requirement is None
     assert {item.identity for item in frontier.candidate_inputs} == {
         first.identity,
@@ -268,7 +272,9 @@ def test_explicit_admission_is_required_for_active_requirement() -> None:
     )
     admitted = _admit_exact(plan, candidate)
 
-    assert unresolved.kind is CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED
+    assert (
+        unresolved.kind is CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED
+    )
     assert unresolved.admitted_requirement is None
     assert (
         admitted.kind
