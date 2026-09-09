@@ -436,6 +436,12 @@ class CapabilityRequirementAdmissionFrontier:
                 raise ValidationError(
                     f"{self.kind.value} frontier cannot contain admitted output"
                 )
+            expected_kind = _unresolved_kind(candidates)
+            if self.kind is not expected_kind:
+                raise ValidationError(
+                    "unresolved capability requirement frontier kind must match "
+                    "exact candidate semantics"
+                )
             return
 
         if (
