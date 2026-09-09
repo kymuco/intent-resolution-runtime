@@ -404,6 +404,27 @@ class CapabilityRequirementAdmissionFrontier:
             )
 
         output = self.admitted_requirement
+        if self.kind is CapabilityRequirementAdmissionFrontierKind.PROPOSAL_INPUT_REQUIRED:
+            if candidates or output is not None:
+                raise ValidationError(
+                    "proposal_input_required frontier cannot contain candidates or output"
+                )
+            return
+
+        if self.kind in (
+            CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED,
+            CapabilityRequirementAdmissionFrontierKind.ADJUDICATION_REQUIRED,
+        ):
+            if not candidates:
+                raise ValidationError(
+                    f"{self.kind.value} frontier requires explicit candidate material"
+                )
+            if output is not None:
+                raise ValidationError(
+                    f"{self.kind.value} frontier cannot contain admitted output"
+                )
+            return
+
         if self.kind is CapabilityRequirementAdmissionFrontierKind.REQUIREMENT_OUTPUT_AVAILABLE:
             if type(output) is not AdmittedCapabilityRequirement:
                 raise ValidationError(
@@ -415,14 +436,12 @@ class CapabilityRequirementAdmissionFrontier:
                 raise ValidationError("admitted requirement changed the exact WorkStep")
             if output.candidate_inputs != candidates:
                 raise ValidationError(
-                    "admitted requirement must preserve exact candidate provenance"
+                    "requirement_output_available candidate_inputs must equal exact "
+                    "output provenance"
                 )
             return
 
-        if output is not None:
-            raise ValidationError(
-                "unresolved capability requirement frontier cannot contain admitted output"
-            )
+        raise AssertionError("unsupported CapabilityRequirementAdmissionFrontierKind")
 
 
 CapabilityRequirementAdmitter: TypeAlias = Callable[
@@ -465,9 +484,7 @@ def orchestrate_capability_requirement_admission(
     """
 
     step = _step_for(work_plan, step_ref)
-    candidates = _normalize_candidates(
-        candidate_inputs, field="candidate_inputs"
-    )
+    candidates = _normalize_candidates(candidate_inputs, field="candidate_inputs")
     _validate_candidate_targets(
         candidates,
         work_plan=work_plan,
@@ -483,27 +500,30 @@ def orchestrate_capability_requirement_admission(
         )
     outputs = cast(tuple[AdmittedCapabilityRequirement, ...], admitted_outputs)
     if len(outputs) > 1:
-        raise ValidationError(
-            "competing admitted capability requirements fail closed"
-        )
+        raise ValidationError("competing admitted capability requirements fail closed")
+
     if outputs:
         output = outputs[0]
         if output.requirement.work_plan != work_plan:
             raise ValidationError("admitted output belongs to a foreign WorkPlan")
         if output.requirement.step_ref != step_ref:
             raise ValidationError("admitted output belongs to a foreign WorkStep")
-        if output.candidate_inputs != candidates:
-            raise ValidationError(
-                "admitted output must preserve the exact supplied candidate set"
-            )
         if admitter is not None or admission_attribution is not None:
             raise ValidationError(
                 "admitted-output replay cannot also invoke a new admitter"
             )
+        admitted_candidate_identities = {
+            candidate.identity for candidate in output.candidate_inputs
+        }
+        supplied_candidate_identities = {candidate.identity for candidate in candidates}
+        if not supplied_candidate_identities.issubset(admitted_candidate_identities):
+            raise ValidationError(
+                "candidate material outside admitted requirement provenance is orphaned"
+            )
         return CapabilityRequirementAdmissionFrontier(
             work_plan=work_plan,
             step_ref=step_ref,
-            candidate_inputs=candidates,
+            candidate_inputs=output.candidate_inputs,
             kind=CapabilityRequirementAdmissionFrontierKind.REQUIREMENT_OUTPUT_AVAILABLE,
             admitted_requirement=output,
         )
@@ -532,7 +552,8 @@ def orchestrate_capability_requirement_admission(
         return unresolved
     if type(admitted) is not AdmittedCapabilityRequirement:
         raise ValidationError(
-            "capability requirement admitter must return AdmittedCapabilityRequirement or None"
+            "capability requirement admitter must return "
+            "AdmittedCapabilityRequirement or None"
         )
     if admitted.admission_attribution != admission_attribution:
         raise ValidationError("admitter changed the exact admission attribution")
@@ -558,7 +579,6 @@ __all__ = (
     "CapabilityRequirementAdmissionAttribution",
     "CapabilityRequirementAdmissionFrontier",
     "CapabilityRequirementAdmissionFrontierKind",
-    "CapabilityRequirementAdmitter",
     "CapabilityRequirementProposalAttribution",
     "orchestrate_capability_requirement_admission",
 )
