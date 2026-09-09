@@ -72,6 +72,14 @@ from .capability_match_evaluation import (
     CapabilityMismatchReason,
     evaluate_capability_match_evaluation,
 )
+from .capability_match_evaluation_admission import (
+    AdmittedCapabilityMatchEvaluation,
+    CandidateCapabilityMatchEvaluation,
+    CapabilityMatchEvaluationAdmissionAttribution,
+    CapabilityMatchEvaluationAdmissionFrontier,
+    CapabilityMatchEvaluationAdmissionFrontierKind,
+    orchestrate_capability_match_evaluation_admission,
+)
 from .capability_requirement_admission import (
     AdmittedCapabilityRequirement,
     CandidateCapabilityRequirement,
@@ -294,6 +302,9 @@ for _ir_type in (
     CapabilityIncompatibleDescriptorAssessment,
     CapabilityMatchEvaluation,
     CapabilityMatchIssue,
+    CapabilityMatchEvaluationAdmissionAttribution,
+    CandidateCapabilityMatchEvaluation,
+    AdmittedCapabilityMatchEvaluation,
     CapabilityRequirementProposalAttribution,
     CapabilityRequirementAdmissionAttribution,
     CandidateCapabilityRequirement,
@@ -327,6 +338,7 @@ del _ir_type, _seal_ir_type
 
 __all__ = [
     "AdmittedBindingRule",
+    "AdmittedCapabilityMatchEvaluation",
     "AdmittedCapabilityRequirement",
     "AdmittedWorkPlan",
     "AssumptionKind",
@@ -354,6 +366,7 @@ __all__ = [
     "BoundValue",
     "CandidateAttribution",
     "CandidateBindingRule",
+    "CandidateCapabilityMatchEvaluation",
     "CandidateCapabilityRequirement",
     "CandidateResolution",
     "CandidateWorkDisposition",
@@ -375,6 +388,9 @@ __all__ = [
     "CapabilityMatch",
     "CapabilityMatchAttribution",
     "CapabilityMatchEvaluation",
+    "CapabilityMatchEvaluationAdmissionAttribution",
+    "CapabilityMatchEvaluationAdmissionFrontier",
+    "CapabilityMatchEvaluationAdmissionFrontierKind",
     "CapabilityMatchEvaluationAttribution",
     "CapabilityMatchEvaluationResult",
     "CapabilityMatchIssue",
@@ -487,6 +503,7 @@ __all__ = [
     "orchestrate_attempt_outcome_continuation",
     "orchestrate_binding_rule_admission",
     "orchestrate_capability_governance",
+    "orchestrate_capability_match_evaluation_admission",
     "orchestrate_capability_requirement_admission",
     "orchestrate_initial_resolution",
     "orchestrate_work_binding",
