@@ -61,6 +61,17 @@ from .capability_match import (
     CapabilityRequirement,
     CapabilityScopeMatch,
 )
+from .capability_match_engine import (
+    IRR_CAPABILITY_MATCH_ENGINE_CONTRACT_VERSION,
+    IRR_CAPABILITY_MATCH_EVENT_NAMESPACE,
+    IRR_MECHANICAL_CAPABILITY_EVALUATOR_NAMESPACE,
+    IRR_MECHANICAL_CAPABILITY_EVALUATOR_VALUE,
+    IRR_MECHANICAL_CAPABILITY_MATCHER_NAMESPACE,
+    IRR_MECHANICAL_CAPABILITY_MATCHER_VALUE,
+    build_capability_match_evaluation,
+    mechanical_capability_evaluator_ref,
+    mechanical_capability_matcher_ref,
+)
 from .capability_match_evaluation import (
     CapabilityIncompatibleDescriptorAssessment,
     CapabilityMatchEvaluation,
@@ -326,6 +337,12 @@ del _ir_type, _seal_ir_type
 
 
 __all__ = [
+    "IRR_CAPABILITY_MATCH_ENGINE_CONTRACT_VERSION",
+    "IRR_CAPABILITY_MATCH_EVENT_NAMESPACE",
+    "IRR_MECHANICAL_CAPABILITY_EVALUATOR_NAMESPACE",
+    "IRR_MECHANICAL_CAPABILITY_EVALUATOR_VALUE",
+    "IRR_MECHANICAL_CAPABILITY_MATCHER_NAMESPACE",
+    "IRR_MECHANICAL_CAPABILITY_MATCHER_VALUE",
     "AdmittedBindingRule",
     "AdmittedCapabilityRequirement",
     "AdmittedWorkPlan",
@@ -482,8 +499,11 @@ __all__ = [
     "WorkerResultAttribution",
     "WorkerResultMaterial",
     "WorkerResultMaterialRole",
+    "build_capability_match_evaluation",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
+    "mechanical_capability_evaluator_ref",
+    "mechanical_capability_matcher_ref",
     "orchestrate_attempt_outcome_continuation",
     "orchestrate_binding_rule_admission",
     "orchestrate_capability_governance",
