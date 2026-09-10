@@ -14,8 +14,6 @@ from .capability_match import (
     CapabilityMatch,
     CapabilityMatchAttribution,
     CapabilityOutputMatch,
-    CapabilityRequestedEffect,
-    CapabilityRequestedScope,
     CapabilityRequirement,
     CapabilityScopeMatch,
 )
@@ -479,7 +477,9 @@ def build_capability_match_evaluation(
         elif isinstance(result, CapabilityIncompatibleDescriptorAssessment):
             incompatible.append(result)
         else:  # pragma: no cover - closed internal union guard
-            raise RuntimeError("Capability match engine returned an unsupported result type.")
+            raise RuntimeError(
+                "Capability match engine returned an unsupported result type."
+            )
 
     return CapabilityMatchEvaluation(
         attribution=CapabilityMatchEvaluationAttribution(
