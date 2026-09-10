@@ -337,6 +337,12 @@ del _ir_type, _seal_ir_type
 
 
 __all__ = [
+    "IRR_CAPABILITY_MATCH_ENGINE_CONTRACT_VERSION",
+    "IRR_CAPABILITY_MATCH_EVENT_NAMESPACE",
+    "IRR_MECHANICAL_CAPABILITY_EVALUATOR_NAMESPACE",
+    "IRR_MECHANICAL_CAPABILITY_EVALUATOR_VALUE",
+    "IRR_MECHANICAL_CAPABILITY_MATCHER_NAMESPACE",
+    "IRR_MECHANICAL_CAPABILITY_MATCHER_VALUE",
     "AdmittedBindingRule",
     "AdmittedCapabilityRequirement",
     "AdmittedWorkPlan",
@@ -433,12 +439,6 @@ __all__ = [
     "GovernanceDecisionComponent",
     "GovernanceDecisionKind",
     "GovernanceDirective",
-    "IRR_CAPABILITY_MATCH_ENGINE_CONTRACT_VERSION",
-    "IRR_CAPABILITY_MATCH_EVENT_NAMESPACE",
-    "IRR_MECHANICAL_CAPABILITY_EVALUATOR_NAMESPACE",
-    "IRR_MECHANICAL_CAPABILITY_EVALUATOR_VALUE",
-    "IRR_MECHANICAL_CAPABILITY_MATCHER_NAMESPACE",
-    "IRR_MECHANICAL_CAPABILITY_MATCHER_VALUE",
     "InformationNeed",
     "InformationNeedProposal",
     "InitialResolutionFrontier",

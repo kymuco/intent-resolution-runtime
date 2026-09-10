@@ -28,7 +28,6 @@ from .errors import ValidationError
 from .intent import StableRef
 from .work import WorkLiteralInput, WorkSymbolicInput
 
-
 IRR_CAPABILITY_MATCH_ENGINE_CONTRACT_VERSION = "1"
 IRR_MECHANICAL_CAPABILITY_MATCHER_NAMESPACE = "irr.matcher"
 IRR_MECHANICAL_CAPABILITY_MATCHER_VALUE = "exact-structural-v1"
@@ -65,7 +64,7 @@ def _match_event_ref(
         f"{evaluation_event_ref.namespace}\0{evaluation_event_ref.value}\0"
         f"{descriptor.capability_ref.namespace}\0{descriptor.capability_ref.value}\0"
         f"{descriptor.identity.algorithm}\0{descriptor.identity.digest}"
-    ).encode("utf-8")
+    ).encode()
     return StableRef(
         namespace=IRR_CAPABILITY_MATCH_EVENT_NAMESPACE,
         value=sha256(payload).hexdigest(),
@@ -238,7 +237,9 @@ def _evaluate_descriptor(
     scope_matches = tuple(
         CapabilityScopeMatch(
             requested_scope_ref=requested.scope_ref,
-            descriptor_scope_requirement_ref=descriptor_scopes[descriptor_index].requirement_ref,
+            descriptor_scope_requirement_ref=descriptor_scopes[
+                descriptor_index
+            ].requirement_ref,
         )
         for requested, descriptor_index in zip(
             requested_scopes, scope_mapping, strict=True
@@ -303,9 +304,7 @@ def _evaluate_descriptor(
                 ].scope_requirement_refs
             ),
         )
-        for work_input, descriptor_index in zip(
-            work_inputs, input_mapping, strict=True
-        )
+        for work_input, descriptor_index in zip(work_inputs, input_mapping, strict=True)
     )
 
     work_outputs = tuple(sorted(step.outputs, key=lambda item: item.name))
@@ -477,7 +476,7 @@ def build_capability_match_evaluation(
         elif isinstance(result, CapabilityIncompatibleDescriptorAssessment):
             incompatible.append(result)
         else:  # pragma: no cover - closed internal union guard
-            raise RuntimeError(
+            raise TypeError(
                 "Capability match engine returned an unsupported result type."
             )
 

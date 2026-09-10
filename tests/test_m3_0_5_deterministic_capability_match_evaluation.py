@@ -36,7 +36,6 @@ from intent_resolution_runtime.capability_match_engine import (
     mechanical_capability_matcher_ref,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "7" * 64)
 
 
@@ -184,7 +183,10 @@ def test_single_exact_descriptor_produces_one_exact_match() -> None:
     assert result == evaluation.compatible_matches[0]
     assert result.capability_ref == descriptor.capability_ref
     assert result.attribution.matcher_ref == mechanical_capability_matcher_ref()
-    assert result.attribution.match_event_ref.namespace == IRR_CAPABILITY_MATCH_EVENT_NAMESPACE
+    assert (
+        result.attribution.match_event_ref.namespace
+        == IRR_CAPABILITY_MATCH_EVENT_NAMESPACE
+    )
 
 
 def test_empty_catalog_is_bounded_no_match_not_global_impossibility() -> None:

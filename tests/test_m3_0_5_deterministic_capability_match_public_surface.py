@@ -17,7 +17,9 @@ def test_m3_0_5_public_surface_is_narrow_and_top_level_exported() -> None:
         "catalog_snapshot",
         "evaluation_event_ref",
     )
-    assert tuple(inspect.signature(mechanical_capability_evaluator_ref).parameters) == ()
+    assert (
+        tuple(inspect.signature(mechanical_capability_evaluator_ref).parameters) == ()
+    )
     assert tuple(inspect.signature(mechanical_capability_matcher_ref).parameters) == ()
 
     parameters = inspect.signature(build_capability_match_evaluation).parameters
