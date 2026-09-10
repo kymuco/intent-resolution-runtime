@@ -30,7 +30,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 SOURCE_ID = RecordIdentity("sha256", "4" * 64)
 AUTHORITY_CONTEXT_ID = RecordIdentity("sha256", "5" * 64)
@@ -226,7 +225,9 @@ def test_m16c2_governance_authorization_golden_round_trip_preserves_identity() -
         component.canonical_bytes()
     )
     decoded_decision = GovernanceDecision.from_json_bytes(decision.canonical_bytes())
-    decoded_authorization = Authorization.from_json_bytes(authorization.canonical_bytes())
+    decoded_authorization = Authorization.from_json_bytes(
+        authorization.canonical_bytes()
+    )
 
     assert decoded_attribution == attribution
     assert decoded_attribution.identity == attribution.identity

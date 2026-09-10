@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import json
 from dataclasses import FrozenInstanceError
 
-import json
 import pytest
 
 from intent_resolution_runtime import (
@@ -16,18 +16,19 @@ from intent_resolution_runtime import (
     ValidationError,
 )
 
-
 GOLDEN_BYTES = (
     '{"expression":{"text":"Стоит проверить последние логи."},'
     '"origin":{"actor_ref":{"namespace":"character_os.actor","value":"kaguya"},'
     '"kind":"companion","source_event_ref":{"namespace":"hde.event","value":"evt-001"}},'
     '"principal_ref":{"namespace":"hde.principal","value":"user:self"},'
     '"schema":"irr.intent_request.v1"}'
-).encode("utf-8")
+).encode()
 GOLDEN_SHA256 = "bedad2f962490352db8d156a3e39cbd40c2cbc6071a0bfc64899607fdd2967e8"
 
 
-def make_request(*, source_event: str = "evt-001", text: str = "Стоит проверить последние логи.") -> IntentRequest:
+def make_request(
+    *, source_event: str = "evt-001", text: str = "Стоит проверить последние логи."
+) -> IntentRequest:
     return IntentRequest(
         origin=OriginAttribution(
             kind=OriginKind.COMPANION,
@@ -103,7 +104,9 @@ def test_material_input_changes_change_identity(mutator) -> None:
     mutator(primitive)
 
     changed = IntentRequest.from_json_bytes(
-        json.dumps(primitive, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        json.dumps(
+            primitive, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
     )
     assert changed.identity != request.identity
 

@@ -26,8 +26,9 @@ from intent_resolution_runtime import (
     WorkProposalAttribution,
     WorkStep,
 )
-from intent_resolution_runtime.capability_governance import orchestrate_capability_governance
-
+from intent_resolution_runtime.capability_governance import (
+    orchestrate_capability_governance,
+)
 
 RESOLVED = RecordIdentity("sha256", "6" * 64)
 AUTHORITY_CONTEXT = RecordIdentity("sha256", "7" * 64)
@@ -144,16 +145,16 @@ def requirement_and_evaluation(
     return requirement, evaluation
 
 
-def proposal(plan: WorkPlan, evaluation: CapabilityMatchEvaluation, name: str) -> WorkProposal:
+def proposal(
+    plan: WorkPlan, evaluation: CapabilityMatchEvaluation, name: str
+) -> WorkProposal:
     return WorkProposal(
         attribution=WorkProposalAttribution(
             proposer_ref=ref("irr.proposer", "test"),
             proposal_event_ref=ref("irr.event", f"proposal-{name}"),
         ),
         work_plan=plan,
-        proposed_steps=(
-            ProposedWorkStep(evaluation.requirement.step_ref, evaluation),
-        ),
+        proposed_steps=(ProposedWorkStep(evaluation.requirement.step_ref, evaluation),),
         authority_material=(),
         description=f"Proposal for {name}.",
     )
@@ -181,7 +182,9 @@ def decision(proposal_value: WorkProposal, name: str) -> GovernanceDecision:
     )
 
 
-def test_same_component_ref_in_distinct_decisions_preserves_exact_authorization_identity() -> None:
+def test_same_component_ref_in_distinct_decisions_preserves_exact_authorization_identity() -> (
+    None
+):
     plan = build_plan()
     alpha_req, alpha_eval = requirement_and_evaluation(plan, "alpha")
     beta_req, beta_eval = requirement_and_evaluation(plan, "beta")
@@ -201,8 +204,12 @@ def test_same_component_ref_in_distinct_decisions_preserves_exact_authorization_
     expected = tuple(
         sorted(
             (
-                Authorization(alpha_decision, ref("irr.governance_component", "authorize")),
-                Authorization(beta_decision, ref("irr.governance_component", "authorize")),
+                Authorization(
+                    alpha_decision, ref("irr.governance_component", "authorize")
+                ),
+                Authorization(
+                    beta_decision, ref("irr.governance_component", "authorize")
+                ),
             ),
             key=lambda item: str(item.identity),
         )
@@ -220,4 +227,7 @@ def test_same_component_ref_in_distinct_decisions_preserves_exact_authorization_
         authorizations=(admitted,),
     )
     assert len(partially_materialized.authorization_materialization_frontier) == 1
-    assert partially_materialized.authorization_materialization_frontier[0].identity != admitted.identity
+    assert (
+        partially_materialized.authorization_materialization_frontier[0].identity
+        != admitted.identity
+    )

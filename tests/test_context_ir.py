@@ -121,7 +121,9 @@ def test_context_envelope_is_explicit_and_occurrence_attributable() -> None:
     assert first.identity != second.identity
 
 
-def test_boundary_source_is_identity_material_not_inferred_from_event_namespace() -> None:
+def test_boundary_source_is_identity_material_not_inferred_from_event_namespace() -> (
+    None
+):
     first = make_context()
     second = ContextEnvelope(
         intent_request_identity=first.intent_request_identity,
@@ -148,9 +150,13 @@ def test_record_order_is_not_implicit_precedence() -> None:
 
 def test_claim_evidence_and_attribution_evidence_remain_distinct() -> None:
     envelope = make_context()
-    claim = next(record for record in envelope.records if isinstance(record, ClaimRecord))
+    claim = next(
+        record for record in envelope.records if isinstance(record, ClaimRecord)
+    )
     evidence = [
-        record for record in envelope.records if isinstance(record, EvidenceRecord)
+        record
+        for record in envelope.records
+        if isinstance(record, EvidenceRecord)
         and record.target_identity == claim.identity
     ]
     assert {record.target_kind for record in evidence} == {

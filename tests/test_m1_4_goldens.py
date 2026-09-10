@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from intent_resolution_runtime import (
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingIssue,
@@ -18,7 +18,6 @@ from intent_resolution_runtime import (
     SymbolicReference,
     evaluate_binding,
 )
-
 
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 SOURCE = RecordIdentity("sha256", "2" * 64)
@@ -159,4 +158,7 @@ def test_m14_golden_bound_value_retains_selected_scope_and_full_input_set() -> N
     assert result.selected_input_identity == newer.identity
     assert result.selection_scope == SELECTION_SCOPE
     assert result.value_scope == r"D:\Backups\backup-b.zip"
-    assert {item.identity for item in result.binding_inputs} == {older.identity, newer.identity}
+    assert {item.identity for item in result.binding_inputs} == {
+        older.identity,
+        newer.identity,
+    }

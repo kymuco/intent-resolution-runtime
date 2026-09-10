@@ -4,7 +4,6 @@ from pathlib import Path
 
 import intent_resolution_runtime as irr
 
-
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 DOC = ROOT / "docs" / "m2_1_initial_resolution_orchestrator.md"
@@ -23,13 +22,24 @@ def test_readme_preserves_frozen_m1_m2_0_and_m2_1_history() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
-    assert "**M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.**" in text
+    assert (
+        "**M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.**"
+        in text
+    )
     assert "**M2.1 — Initial Resolution Orchestrator" in text
-    assert "[M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)" in text
-    assert "[M2.1 Initial Resolution Orchestrator](docs/m2_1_initial_resolution_orchestrator.md)" in text
+    assert (
+        "[M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)"
+        in text
+    )
+    assert (
+        "[M2.1 Initial Resolution Orchestrator](docs/m2_1_initial_resolution_orchestrator.md)"
+        in text
+    )
 
 
-def test_m2_1_doc_freezes_independent_admission_and_noncanonical_frontier_boundaries() -> None:
+def test_m2_1_doc_freezes_independent_admission_and_noncanonical_frontier_boundaries() -> (
+    None
+):
     text = DOC.read_text(encoding="utf-8")
 
     for invariant in (

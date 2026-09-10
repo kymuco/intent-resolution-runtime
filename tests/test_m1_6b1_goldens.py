@@ -31,7 +31,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 
 
@@ -70,7 +69,9 @@ def _fixture() -> tuple[
         operation="archive.extract",
         scope="workspace:project",
         inputs=(
-            WorkLiteralInput("archive", "archive.path", "workspace:project/archive.zip"),
+            WorkLiteralInput(
+                "archive", "archive.path", "workspace:project/archive.zip"
+            ),
             WorkLiteralInput("destination", "filesystem.path", "workspace:out"),
         ),
         outputs=(
@@ -247,7 +248,9 @@ def _fixture() -> tuple[
         "files", cap_files.output_ref, (req_destination.scope_ref,)
     )
     effect_read_match = CapabilityEffectMatch(req_read.effect_ref, cap_read.effect_ref)
-    effect_write_match = CapabilityEffectMatch(req_write.effect_ref, cap_write.effect_ref)
+    effect_write_match = CapabilityEffectMatch(
+        req_write.effect_ref, cap_write.effect_ref
+    )
     attribution = CapabilityMatchAttribution(
         _ref("irr.matcher", "semantic-match-v1"),
         _ref("irr.event", "match-001"),

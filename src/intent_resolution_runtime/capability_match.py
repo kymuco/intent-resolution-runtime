@@ -13,7 +13,14 @@ from .capability import (
 from .errors import SerializationError, ValidationError
 from .identity import RecordIdentity, identity_for_bytes
 from .intent import StableRef
-from .work import WorkInput, WorkLiteralInput, WorkOutput, WorkPlan, WorkStep, WorkSymbolicInput
+from .work import (
+    WorkInput,
+    WorkLiteralInput,
+    WorkOutput,
+    WorkPlan,
+    WorkStep,
+    WorkSymbolicInput,
+)
 
 
 def _reject_surrogates(value: str, *, field: str) -> None:
@@ -40,7 +47,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -56,7 +65,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -98,8 +109,12 @@ class CapabilityRequestedScope(_CanonicalCapabilityMatchRecord):
 
     def __post_init__(self) -> None:
         if type(self.scope_ref) is not StableRef:
-            raise ValidationError("CapabilityRequestedScope.scope_ref must be a StableRef")
-        _require_token(self.semantic_type, field="CapabilityRequestedScope.semantic_type")
+            raise ValidationError(
+                "CapabilityRequestedScope.scope_ref must be a StableRef"
+            )
+        _require_token(
+            self.semantic_type, field="CapabilityRequestedScope.semantic_type"
+        )
         _require_text(self.value, field="CapabilityRequestedScope.value")
         _require_text(self.description, field="CapabilityRequestedScope.description")
 
@@ -115,7 +130,7 @@ class CapabilityRequestedScope(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityRequestedScope"
-    ) -> "CapabilityRequestedScope":
+    ) -> CapabilityRequestedScope:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -139,7 +154,7 @@ class CapabilityRequestedScope(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityRequestedScope":
+    ) -> CapabilityRequestedScope:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -154,8 +169,12 @@ class CapabilityRequestedEffect(_CanonicalCapabilityMatchRecord):
 
     def __post_init__(self) -> None:
         if type(self.effect_ref) is not StableRef:
-            raise ValidationError("CapabilityRequestedEffect.effect_ref must be a StableRef")
-        _require_token(self.semantic_type, field="CapabilityRequestedEffect.semantic_type")
+            raise ValidationError(
+                "CapabilityRequestedEffect.effect_ref must be a StableRef"
+            )
+        _require_token(
+            self.semantic_type, field="CapabilityRequestedEffect.semantic_type"
+        )
         if type(self.requested_scope_refs) is not tuple:
             raise ValidationError(
                 "CapabilityRequestedEffect.requested_scope_refs must be a tuple"
@@ -189,7 +208,7 @@ class CapabilityRequestedEffect(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityRequestedEffect"
-    ) -> "CapabilityRequestedEffect":
+    ) -> CapabilityRequestedEffect:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -227,7 +246,7 @@ class CapabilityRequestedEffect(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityRequestedEffect":
+    ) -> CapabilityRequestedEffect:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -268,7 +287,7 @@ class CapabilityExecutionBoundaryRequirement(_CanonicalCapabilityMatchRecord):
         value: object,
         *,
         field: str = "CapabilityExecutionBoundaryRequirement",
-    ) -> "CapabilityExecutionBoundaryRequirement":
+    ) -> CapabilityExecutionBoundaryRequirement:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "kind", "boundary_ref", "description"}, field=field
@@ -295,7 +314,7 @@ class CapabilityExecutionBoundaryRequirement(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityExecutionBoundaryRequirement":
+    ) -> CapabilityExecutionBoundaryRequirement:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -334,9 +353,7 @@ def _normalize_boundary_requirements(
 ) -> tuple[CapabilityExecutionBoundaryRequirement, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
-    if not all(
-        type(item) is CapabilityExecutionBoundaryRequirement for item in value
-    ):
+    if not all(type(item) is CapabilityExecutionBoundaryRequirement for item in value):
         raise ValidationError(
             f"{field} must contain CapabilityExecutionBoundaryRequirement values"
         )
@@ -363,9 +380,7 @@ class CapabilityRequirement(_CanonicalCapabilityMatchRecord):
     primary_scope_ref: StableRef
     requested_scopes: tuple[CapabilityRequestedScope, ...]
     requested_effects: tuple[CapabilityRequestedEffect, ...]
-    execution_boundary_requirements: tuple[
-        CapabilityExecutionBoundaryRequirement, ...
-    ]
+    execution_boundary_requirements: tuple[CapabilityExecutionBoundaryRequirement, ...]
     description: str
 
     def __post_init__(self) -> None:
@@ -438,9 +453,7 @@ class CapabilityRequirement(_CanonicalCapabilityMatchRecord):
             "requested_effects": [
                 item.to_primitive() for item in self.requested_effects
             ],
-            "requested_scopes": [
-                item.to_primitive() for item in self.requested_scopes
-            ],
+            "requested_scopes": [item.to_primitive() for item in self.requested_scopes],
             "schema": self.SCHEMA,
             "step_ref": self.step_ref.to_primitive(),
             "work_plan": self.work_plan.to_primitive(),
@@ -449,7 +462,7 @@ class CapabilityRequirement(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityRequirement"
-    ) -> "CapabilityRequirement":
+    ) -> CapabilityRequirement:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -513,7 +526,7 @@ class CapabilityRequirement(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityRequirement":
+    ) -> CapabilityRequirement:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -546,7 +559,7 @@ class CapabilityScopeMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityScopeMatch"
-    ) -> "CapabilityScopeMatch":
+    ) -> CapabilityScopeMatch:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -576,7 +589,7 @@ class CapabilityScopeMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityScopeMatch":
+    ) -> CapabilityScopeMatch:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -589,7 +602,9 @@ class CapabilityInputMatch(_CanonicalCapabilityMatchRecord):
     requested_scope_refs: tuple[StableRef, ...]
 
     def __post_init__(self) -> None:
-        _require_token(self.work_input_name, field="CapabilityInputMatch.work_input_name")
+        _require_token(
+            self.work_input_name, field="CapabilityInputMatch.work_input_name"
+        )
         if type(self.descriptor_input_ref) is not StableRef:
             raise ValidationError(
                 "CapabilityInputMatch.descriptor_input_ref must be a StableRef"
@@ -625,7 +640,7 @@ class CapabilityInputMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityInputMatch"
-    ) -> "CapabilityInputMatch":
+    ) -> CapabilityInputMatch:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -662,7 +677,7 @@ class CapabilityInputMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityInputMatch":
+    ) -> CapabilityInputMatch:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -713,7 +728,7 @@ class CapabilityOutputMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityOutputMatch"
-    ) -> "CapabilityOutputMatch":
+    ) -> CapabilityOutputMatch:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -750,7 +765,7 @@ class CapabilityOutputMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityOutputMatch":
+    ) -> CapabilityOutputMatch:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -781,7 +796,7 @@ class CapabilityEffectMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityEffectMatch"
-    ) -> "CapabilityEffectMatch":
+    ) -> CapabilityEffectMatch:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -807,7 +822,7 @@ class CapabilityEffectMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityEffectMatch":
+    ) -> CapabilityEffectMatch:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -838,7 +853,7 @@ class CapabilityMatchAttribution(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityMatchAttribution"
-    ) -> "CapabilityMatchAttribution":
+    ) -> CapabilityMatchAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "matcher_ref", "match_event_ref"}, field=field
@@ -860,7 +875,7 @@ class CapabilityMatchAttribution(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityMatchAttribution":
+    ) -> CapabilityMatchAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -917,7 +932,9 @@ def _normalize_output_matches(
     names = [item.work_output_name for item in items]
     refs = [item.descriptor_output_ref for item in items]
     if len(set(names)) != len(names):
-        raise ValidationError(f"{field} must not map one WorkStep output more than once")
+        raise ValidationError(
+            f"{field} must not map one WorkStep output more than once"
+        )
     if len(set(refs)) != len(refs):
         raise ValidationError(
             f"{field} must not map one descriptor output contract more than once"
@@ -1041,11 +1058,11 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
             raise ValidationError(
                 "CapabilityMatch must satisfy every descriptor scope requirement exactly once"
             )
-        for match in scope_matches:
+        for scope_match in scope_matches:
             if (
-                requested_scopes[match.requested_scope_ref].semantic_type
+                requested_scopes[scope_match.requested_scope_ref].semantic_type
                 != descriptor_scopes[
-                    match.descriptor_scope_requirement_ref
+                    scope_match.descriptor_scope_requirement_ref
                 ].semantic_type
             ):
                 raise ValidationError(
@@ -1058,7 +1075,9 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
         }
 
         work_inputs = {item.name: item for item in step.inputs}
-        descriptor_inputs = {item.input_ref: item for item in descriptor.input_contracts}
+        descriptor_inputs = {
+            item.input_ref: item for item in descriptor.input_contracts
+        }
         input_matches = _normalize_input_matches(
             self.input_matches, field="CapabilityMatch.input_matches"
         )
@@ -1072,24 +1091,24 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
             raise ValidationError(
                 "CapabilityMatch must satisfy every descriptor input contract exactly once"
             )
-        for match in input_matches:
-            work_input = work_inputs[match.work_input_name]
-            descriptor_input = descriptor_inputs[match.descriptor_input_ref]
+        for input_match in input_matches:
+            work_input = work_inputs[input_match.work_input_name]
+            descriptor_input = descriptor_inputs[input_match.descriptor_input_ref]
             if _work_input_semantic_type(work_input) != descriptor_input.semantic_type:
                 raise ValidationError(
                     "CapabilityMatch input semantic types must match exactly in v1"
                 )
-            if any(ref not in requested_scopes for ref in match.requested_scope_refs):
+            if any(
+                ref not in requested_scopes for ref in input_match.requested_scope_refs
+            ):
                 raise ValidationError(
                     "CapabilityMatch input mapping must reference admitted requested scopes"
                 )
             mapped_descriptor_scopes = {
                 requested_to_descriptor_scope[ref]
-                for ref in match.requested_scope_refs
+                for ref in input_match.requested_scope_refs
             }
-            if mapped_descriptor_scopes != set(
-                descriptor_input.scope_requirement_refs
-            ):
+            if mapped_descriptor_scopes != set(descriptor_input.scope_requirement_refs):
                 raise ValidationError(
                     "CapabilityMatch input scope mapping must exactly cover the "
                     "descriptor input scope requirements"
@@ -1114,20 +1133,25 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
             raise ValidationError(
                 "CapabilityMatch output mapping must reference descriptor output contracts"
             )
-        for match in output_matches:
-            work_output = work_outputs[match.work_output_name]
-            descriptor_output = descriptor_outputs[match.descriptor_output_ref]
-            if _work_output_semantic_type(work_output) != descriptor_output.semantic_type:
+        for output_match in output_matches:
+            work_output = work_outputs[output_match.work_output_name]
+            descriptor_output = descriptor_outputs[output_match.descriptor_output_ref]
+            if (
+                _work_output_semantic_type(work_output)
+                != descriptor_output.semantic_type
+            ):
                 raise ValidationError(
                     "CapabilityMatch output semantic types must match exactly in v1"
                 )
-            if any(ref not in requested_scopes for ref in match.requested_scope_refs):
+            if any(
+                ref not in requested_scopes for ref in output_match.requested_scope_refs
+            ):
                 raise ValidationError(
                     "CapabilityMatch output mapping must reference admitted requested scopes"
                 )
             mapped_descriptor_scopes = {
                 requested_to_descriptor_scope[ref]
-                for ref in match.requested_scope_refs
+                for ref in output_match.requested_scope_refs
             }
             if mapped_descriptor_scopes != set(
                 descriptor_output.scope_requirement_refs
@@ -1170,9 +1194,9 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
             raise ValidationError(
                 "CapabilityMatch cannot hide an unavoidable descriptor effect"
             )
-        for match in effect_matches:
-            requested_effect = requested_effects[match.requested_effect_ref]
-            descriptor_effect = descriptor_effects[match.descriptor_effect_ref]
+        for effect_match in effect_matches:
+            requested_effect = requested_effects[effect_match.requested_effect_ref]
+            descriptor_effect = descriptor_effects[effect_match.descriptor_effect_ref]
             if requested_effect.semantic_type != descriptor_effect.semantic_type:
                 raise ValidationError(
                     "CapabilityMatch effect semantic types must match exactly in v1"
@@ -1194,7 +1218,10 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
             (item.kind, item.boundary_ref) for item in descriptor.execution_boundaries
         }
         for requirement in self.requirement.execution_boundary_requirements:
-            if (requirement.kind, requirement.boundary_ref) not in descriptor_boundaries:
+            if (
+                requirement.kind,
+                requirement.boundary_ref,
+            ) not in descriptor_boundaries:
                 raise ValidationError(
                     "CapabilityMatch descriptor does not satisfy an explicit execution "
                     "boundary requirement"
@@ -1229,7 +1256,7 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityMatch"
-    ) -> "CapabilityMatch":
+    ) -> CapabilityMatch:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -1310,7 +1337,5 @@ class CapabilityMatch(_CanonicalCapabilityMatchRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityMatch":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> CapabilityMatch:
         return cls.from_primitive(parse_json_object(data))

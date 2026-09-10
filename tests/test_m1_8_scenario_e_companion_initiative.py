@@ -12,12 +12,12 @@ from intent_resolution_runtime import (
     CapabilityMatchAttribution,
     CapabilityMatchEvaluation,
     CapabilityMatchEvaluationAttribution,
+    CapabilityOutcome,
+    CapabilityOutcomeAttribution,
     CapabilityRequestedScope,
     CapabilityRequirement,
     CapabilityScopeMatch,
     CapabilityScopeRequirement,
-    CapabilityOutcome,
-    CapabilityOutcomeAttribution,
     EvidenceRelation,
     IntentExpression,
     IntentRequest,
@@ -40,7 +40,6 @@ from intent_resolution_runtime import (
     WorkStep,
     evaluate_capability_match_evaluation,
 )
-
 
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 OUTCOME_SOURCE_CONTRACT_IDENTITY = RecordIdentity("sha256", "3" * 64)
@@ -157,7 +156,11 @@ def _fixture() -> dict[str, object]:
         snapshot,
         descriptor.capability_ref,
         descriptor.identity,
-        (CapabilityScopeMatch(requested_scope.scope_ref, descriptor_scope.requirement_ref),),
+        (
+            CapabilityScopeMatch(
+                requested_scope.scope_ref, descriptor_scope.requirement_ref
+            ),
+        ),
         (
             CapabilityInputMatch(
                 "scope",
@@ -259,7 +262,9 @@ def test_scenario_e_companion_origin_remains_distinct_from_user_principal() -> N
     assert request.origin.actor_ref != request.principal_ref
 
 
-def test_scenario_e_companion_initiative_does_not_create_authority_or_ambient_scope() -> None:
+def test_scenario_e_companion_initiative_does_not_create_authority_or_ambient_scope() -> (
+    None
+):
     fixture = _fixture()
     plan = fixture["plan"]
     attempt = fixture["attempt"]
@@ -283,7 +288,9 @@ def test_scenario_e_companion_initiative_does_not_create_authority_or_ambient_sc
         assert forbidden not in keys
 
 
-def test_scenario_e_result_provenance_remains_with_actual_executor_not_companion_or_human() -> None:
+def test_scenario_e_result_provenance_remains_with_actual_executor_not_companion_or_human() -> (
+    None
+):
     fixture = _fixture()
     request = fixture["request"]
     attempt = fixture["attempt"]
@@ -292,7 +299,9 @@ def test_scenario_e_result_provenance_remains_with_actual_executor_not_companion
     assert isinstance(attempt, CapabilityAttempt)
     assert isinstance(outcome, CapabilityOutcome)
 
-    assert attempt.attribution.executor_ref == _ref("irr.executor", "local-log-inspector")
+    assert attempt.attribution.executor_ref == _ref(
+        "irr.executor", "local-log-inspector"
+    )
     assert attempt.attribution.executor_ref != request.origin.actor_ref
     assert outcome.evidence[0].attribution.source_ref == _ref(
         "executor.source", "local-log-inspector"

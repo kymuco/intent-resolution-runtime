@@ -12,7 +12,6 @@ from intent_resolution_runtime import (
     WorkSymbolicInput,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 PLAN_REF = StableRef("irr.work_plan", "backup-inspection")
 

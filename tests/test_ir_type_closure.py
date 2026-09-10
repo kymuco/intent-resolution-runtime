@@ -18,7 +18,6 @@ from intent_resolution_runtime import (
 )
 from intent_resolution_runtime.intent import IntentRequest as DirectIntentRequest
 
-
 _CLOSED_IR_TYPES = (
     StableRef,
     OriginAttribution,

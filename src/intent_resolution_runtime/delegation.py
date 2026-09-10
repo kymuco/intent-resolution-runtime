@@ -34,7 +34,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -50,7 +52,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -149,7 +153,7 @@ class DelegatedScope(_CanonicalDelegationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "DelegatedScope"
-    ) -> "DelegatedScope":
+    ) -> DelegatedScope:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -171,7 +175,7 @@ class DelegatedScope(_CanonicalDelegationRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "DelegatedScope":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> DelegatedScope:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -205,9 +209,7 @@ class DelegatedContextReference(_CanonicalDelegationRecord):
                 field="DelegatedContextReference.source_identity_refs",
             ),
         )
-        _require_text(
-            self.description, field="DelegatedContextReference.description"
-        )
+        _require_text(self.description, field="DelegatedContextReference.description")
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -224,7 +226,7 @@ class DelegatedContextReference(_CanonicalDelegationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "DelegatedContextReference"
-    ) -> "DelegatedContextReference":
+    ) -> DelegatedContextReference:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -266,7 +268,7 @@ class DelegatedContextReference(_CanonicalDelegationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "DelegatedContextReference":
+    ) -> DelegatedContextReference:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -300,7 +302,7 @@ class DelegationConstraint(_CanonicalDelegationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "DelegationConstraint"
-    ) -> "DelegationConstraint":
+    ) -> DelegationConstraint:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "constraint_ref", "kind", "statement"}, field=field
@@ -327,7 +329,7 @@ class DelegationConstraint(_CanonicalDelegationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "DelegationConstraint":
+    ) -> DelegationConstraint:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -362,7 +364,7 @@ class ExpectedDeliverable(_CanonicalDelegationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "ExpectedDeliverable"
-    ) -> "ExpectedDeliverable":
+    ) -> ExpectedDeliverable:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -388,7 +390,7 @@ class ExpectedDeliverable(_CanonicalDelegationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "ExpectedDeliverable":
+    ) -> ExpectedDeliverable:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -444,7 +446,7 @@ class DelegatedCapabilityAllowance(_CanonicalDelegationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "DelegatedCapabilityAllowance"
-    ) -> "DelegatedCapabilityAllowance":
+    ) -> DelegatedCapabilityAllowance:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -474,9 +476,7 @@ class DelegatedCapabilityAllowance(_CanonicalDelegationRecord):
                     field=f"{field}.capability_contract_identity",
                 ),
                 scope_refs=tuple(
-                    StableRef.from_primitive(
-                        item, field=f"{field}.scope_refs[{index}]"
-                    )
+                    StableRef.from_primitive(item, field=f"{field}.scope_refs[{index}]")
                     for index, item in enumerate(scopes)
                 ),
                 description=obj["description"],
@@ -487,7 +487,7 @@ class DelegatedCapabilityAllowance(_CanonicalDelegationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "DelegatedCapabilityAllowance":
+    ) -> DelegatedCapabilityAllowance:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -511,9 +511,7 @@ def _normalize_capability_allowances(
         raise ValidationError(
             f"{field} must not contain duplicate capability_ref values"
         )
-    return tuple(
-        sorted(items, key=lambda item: _stable_ref_key(item.allowance_ref))
-    )
+    return tuple(sorted(items, key=lambda item: _stable_ref_key(item.allowance_ref)))
 
 
 def _normalize_scopes(
@@ -538,9 +536,7 @@ def _normalize_context_refs(
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is DelegatedContextReference for item in value):
-        raise ValidationError(
-            f"{field} must contain DelegatedContextReference values"
-        )
+        raise ValidationError(f"{field} must contain DelegatedContextReference values")
     items = cast(tuple[DelegatedContextReference, ...], value)
     refs = [item.context_ref for item in items]
     if len(set(refs)) != len(refs):
@@ -645,9 +641,7 @@ class DelegatedWork(_CanonicalDelegationRecord):
         object.__setattr__(
             self,
             "constraints",
-            _normalize_constraints(
-                self.constraints, field="DelegatedWork.constraints"
-            ),
+            _normalize_constraints(self.constraints, field="DelegatedWork.constraints"),
         )
         deliverables = _normalize_deliverables(
             self.expected_deliverables,
@@ -687,7 +681,7 @@ class DelegatedWork(_CanonicalDelegationRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "DelegatedWork":
+    def from_primitive(cls, value: object) -> DelegatedWork:
         obj = _expect_object(value, field="DelegatedWork")
         _expect_exact_keys(
             obj,
@@ -783,7 +777,7 @@ class DelegatedWork(_CanonicalDelegationRecord):
             raise SerializationError("invalid DelegatedWork") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "DelegatedWork":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> DelegatedWork:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -820,7 +814,7 @@ class DelegationHandoffAttribution(_CanonicalDelegationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "DelegationHandoffAttribution"
-    ) -> "DelegationHandoffAttribution":
+    ) -> DelegationHandoffAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -847,7 +841,7 @@ class DelegationHandoffAttribution(_CanonicalDelegationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "DelegationHandoffAttribution":
+    ) -> DelegationHandoffAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -876,10 +870,12 @@ class DelegatedWorkHandoff(_CanonicalDelegationRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "DelegatedWorkHandoff":
+    def from_primitive(cls, value: object) -> DelegatedWorkHandoff:
         obj = _expect_object(value, field="DelegatedWorkHandoff")
         _expect_exact_keys(
-            obj, {"schema", "attribution", "delegated_work"}, field="DelegatedWorkHandoff"
+            obj,
+            {"schema", "attribution", "delegated_work"},
+            field="DelegatedWorkHandoff",
         )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(
@@ -898,5 +894,5 @@ class DelegatedWorkHandoff(_CanonicalDelegationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "DelegatedWorkHandoff":
+    ) -> DelegatedWorkHandoff:
         return cls.from_primitive(parse_json_object(data))

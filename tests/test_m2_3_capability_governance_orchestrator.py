@@ -39,7 +39,6 @@ from intent_resolution_runtime.capability_governance import (
     orchestrate_capability_governance,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 AUTHORITY_CONTEXT = RecordIdentity("sha256", "5" * 64)
 
@@ -101,11 +100,15 @@ def _requirement(plan: WorkPlan, name: str) -> CapabilityRequirement:
     )
 
 
-def _descriptor(plan: WorkPlan, name: str, *, capability_name: str | None = None) -> CapabilityDescriptor:
+def _descriptor(
+    plan: WorkPlan, name: str, *, capability_name: str | None = None
+) -> CapabilityDescriptor:
     step = _step(plan, name)
     capability_name = capability_name or f"{name}.local"
     scope = CapabilityScopeRequirement(
-        requirement_ref=_ref("irr.capability_scope_requirement", f"{name}-{capability_name}"),
+        requirement_ref=_ref(
+            "irr.capability_scope_requirement", f"{name}-{capability_name}"
+        ),
         semantic_type="filesystem.path_scope",
         statement=f"Invocation must remain inside the bounded {name} scope.",
     )
@@ -158,7 +161,9 @@ def _match(
         scope_matches=(
             CapabilityScopeMatch(
                 requested_scope_ref=requirement.requested_scopes[0].scope_ref,
-                descriptor_scope_requirement_ref=descriptor.scope_requirements[0].requirement_ref,
+                descriptor_scope_requirement_ref=descriptor.scope_requirements[
+                    0
+                ].requirement_ref,
             ),
         ),
         input_matches=(),
@@ -168,7 +173,9 @@ def _match(
     )
 
 
-def _incompatible(descriptor: CapabilityDescriptor, *, name: str) -> CapabilityIncompatibleDescriptorAssessment:
+def _incompatible(
+    descriptor: CapabilityDescriptor, *, name: str
+) -> CapabilityIncompatibleDescriptorAssessment:
     return CapabilityIncompatibleDescriptorAssessment(
         capability_ref=descriptor.capability_ref,
         capability_contract_identity=descriptor.identity,
@@ -206,7 +213,9 @@ def _unique_evaluation(
     return requirement, evaluation
 
 
-def _no_match_evaluation(plan: WorkPlan, name: str) -> tuple[CapabilityRequirement, CapabilityMatchEvaluation]:
+def _no_match_evaluation(
+    plan: WorkPlan, name: str
+) -> tuple[CapabilityRequirement, CapabilityMatchEvaluation]:
     requirement = _requirement(plan, name)
     snapshot = _snapshot((), event=f"catalog-empty-{name}")
     evaluation = CapabilityMatchEvaluation(
@@ -223,7 +232,9 @@ def _no_match_evaluation(plan: WorkPlan, name: str) -> tuple[CapabilityRequireme
     return requirement, evaluation
 
 
-def _multiple_match_evaluation(plan: WorkPlan, name: str) -> tuple[CapabilityRequirement, CapabilityMatchEvaluation]:
+def _multiple_match_evaluation(
+    plan: WorkPlan, name: str
+) -> tuple[CapabilityRequirement, CapabilityMatchEvaluation]:
     requirement = _requirement(plan, name)
     first = _descriptor(plan, name, capability_name=f"{name}.a")
     second = _descriptor(plan, name, capability_name=f"{name}.b")
@@ -328,7 +339,10 @@ def _component(
     label: str,
 ) -> GovernanceDecisionComponent:
     directives = ()
-    if kind in (GovernanceDecisionKind.CONSTRAIN, GovernanceDecisionKind.REQUIRE_REVIEW):
+    if kind in (
+        GovernanceDecisionKind.CONSTRAIN,
+        GovernanceDecisionKind.REQUIRE_REVIEW,
+    ):
         directives = (_directive(label),)
     return GovernanceDecisionComponent(
         component_ref=_ref("irr.governance_component", label),
@@ -339,12 +353,16 @@ def _component(
     )
 
 
-def test_no_requirements_is_neutral_capability_disposition_not_missing_capability() -> None:
+def test_no_requirements_is_neutral_capability_disposition_not_missing_capability() -> (
+    None
+):
     plan = _plan("inspect")
 
     frontier = orchestrate_capability_governance(plan)
 
-    assert frontier.capability_disposition_required_step_refs == (_ref("irr.work_step", "inspect"),)
+    assert frontier.capability_disposition_required_step_refs == (
+        _ref("irr.work_step", "inspect"),
+    )
     assert frontier.pending_capability_requirements == ()
     assert frontier.capability_matches == ()
     assert frontier.capability_issues == ()
@@ -359,7 +377,9 @@ def test_frontier_is_noncanonical_and_constructor_revalidates_exact_graph() -> N
     assert frontier.capability_disposition_required_step_refs
 
 
-def test_requirement_without_evaluation_is_pending_without_implying_unavailability() -> None:
+def test_requirement_without_evaluation_is_pending_without_implying_unavailability() -> (
+    None
+):
     plan = _plan("inspect")
     requirement = _requirement(plan, "inspect")
 
@@ -374,7 +394,9 @@ def test_requirement_without_evaluation_is_pending_without_implying_unavailabili
     assert frontier.capability_issues == ()
 
 
-def test_unique_evaluation_surfaces_match_without_implying_availability_or_authority() -> None:
+def test_unique_evaluation_surfaces_match_without_implying_availability_or_authority() -> (
+    None
+):
     plan = _plan("inspect")
     requirement, evaluation = _unique_evaluation(plan, "inspect")
 
@@ -386,11 +408,15 @@ def test_unique_evaluation_surfaces_match_without_implying_availability_or_autho
 
     assert frontier.capability_matches == (evaluation.compatible_matches[0],)
     assert frontier.capability_issues == ()
-    assert frontier.proposal_disposition_required_step_refs == (_ref("irr.work_step", "inspect"),)
+    assert frontier.proposal_disposition_required_step_refs == (
+        _ref("irr.work_step", "inspect"),
+    )
     assert frontier.materialized_authorized_step_refs == ()
 
 
-def test_zero_and_multiple_match_results_remain_capability_issues_not_hidden_selection() -> None:
+def test_zero_and_multiple_match_results_remain_capability_issues_not_hidden_selection() -> (
+    None
+):
     no_plan = _plan("inspect", label="no-match")
     no_req, no_eval = _no_match_evaluation(no_plan, "inspect")
     no_frontier = orchestrate_capability_governance(
@@ -398,7 +424,10 @@ def test_zero_and_multiple_match_results_remain_capability_issues_not_hidden_sel
         capability_requirements=(no_req,),
         capability_evaluations=(no_eval,),
     )
-    assert no_frontier.capability_issues[0].kind is CapabilityMatchIssueKind.NO_COMPATIBLE_CAPABILITY
+    assert (
+        no_frontier.capability_issues[0].kind
+        is CapabilityMatchIssueKind.NO_COMPATIBLE_CAPABILITY
+    )
     assert no_frontier.proposal_disposition_required_step_refs == ()
 
     multi_plan = _plan("inspect", label="multi-match")
@@ -408,7 +437,10 @@ def test_zero_and_multiple_match_results_remain_capability_issues_not_hidden_sel
         capability_requirements=(multi_req,),
         capability_evaluations=(multi_eval,),
     )
-    assert multi_frontier.capability_issues[0].kind is CapabilityMatchIssueKind.MULTIPLE_COMPATIBLE_MATCHES
+    assert (
+        multi_frontier.capability_issues[0].kind
+        is CapabilityMatchIssueKind.MULTIPLE_COMPATIBLE_MATCHES
+    )
     assert multi_frontier.proposal_disposition_required_step_refs == ()
 
 
@@ -441,12 +473,16 @@ def test_foreign_or_competing_requirement_fails_closed() -> None:
 def test_orphan_or_competing_evaluation_fails_closed() -> None:
     plan = _plan("inspect")
     requirement, evaluation = _unique_evaluation(plan, "inspect", event="first")
-    with pytest.raises(ValidationError, match="orphaned from the active CapabilityRequirement"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the active CapabilityRequirement"
+    ):
         orchestrate_capability_governance(plan, capability_evaluations=(evaluation,))
 
     _, second = _unique_evaluation(plan, "inspect", event="second")
     assert second.requirement == requirement
-    with pytest.raises(ValidationError, match="competing active CapabilityMatchEvaluation"):
+    with pytest.raises(
+        ValidationError, match="competing active CapabilityMatchEvaluation"
+    ):
         orchestrate_capability_governance(
             plan,
             capability_requirements=(requirement,),
@@ -464,7 +500,9 @@ def test_matched_step_without_proposal_is_neutral_proposal_disposition() -> None
         capability_evaluations=(evaluation,),
     )
 
-    assert frontier.proposal_disposition_required_step_refs == (_ref("irr.work_step", "inspect"),)
+    assert frontier.proposal_disposition_required_step_refs == (
+        _ref("irr.work_step", "inspect"),
+    )
     assert frontier.governance_pending_proposals == ()
 
 
@@ -501,7 +539,9 @@ def test_overlapping_active_proposals_for_one_step_fail_closed() -> None:
         )
 
 
-def test_governance_omission_is_unmentioned_and_authorize_component_is_exact_transition_candidate() -> None:
+def test_governance_omission_is_unmentioned_and_authorize_component_is_exact_transition_candidate() -> (
+    None
+):
     plan = _plan("alpha", "beta", label="partial")
     requirements, evaluations = _two_step_evaluations(plan)
     proposal = _proposal(plan, evaluations, event="proposal-both")
@@ -535,7 +575,9 @@ def test_governance_omission_is_unmentioned_and_authorize_component_is_exact_tra
     )
 
 
-def test_authorize_decision_exposes_idempotent_authorization_transition_until_record_is_admitted() -> None:
+def test_authorize_decision_exposes_idempotent_authorization_transition_until_record_is_admitted() -> (
+    None
+):
     plan = _plan("inspect")
     requirement, evaluation = _unique_evaluation(plan, "inspect")
     proposal = _proposal(plan, (evaluation,), event="proposal-auth")
@@ -571,10 +613,14 @@ def test_authorize_decision_exposes_idempotent_authorization_transition_until_re
         authorizations=(exact_projection,),
     )
     assert materialized.authorization_materialization_frontier == ()
-    assert materialized.materialized_authorized_step_refs == (_ref("irr.work_step", "inspect"),)
+    assert materialized.materialized_authorized_step_refs == (
+        _ref("irr.work_step", "inspect"),
+    )
 
 
-def test_deny_constrain_require_review_remain_distinct_and_do_not_create_authorization_transition() -> None:
+def test_deny_constrain_require_review_remain_distinct_and_do_not_create_authorization_transition() -> (
+    None
+):
     for kind, expected_attr in (
         (GovernanceDecisionKind.DENY, "denied_step_refs"),
         (GovernanceDecisionKind.CONSTRAIN, "constrained_step_refs"),
@@ -653,7 +699,9 @@ def test_orphan_authorization_fails_closed() -> None:
     )
     orphan = Authorization(other_decision, component.component_ref)
 
-    with pytest.raises(ValidationError, match="orphaned from the active GovernanceDecision"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the active GovernanceDecision"
+    ):
         orchestrate_capability_governance(
             plan,
             capability_requirements=(requirement,),

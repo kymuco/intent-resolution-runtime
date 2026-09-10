@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 
 from intent_resolution_runtime import (
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingIssue,
@@ -37,7 +37,6 @@ from intent_resolution_runtime import (
     ValidationError,
     evaluate_binding,
 )
-
 
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 SEARCH_RESULT_IDENTITY = RecordIdentity("sha256", "3" * 64)
@@ -210,7 +209,9 @@ def test_scenario_h_equal_newest_search_results_stop_mechanical_binding() -> Non
     assert isinstance(binding, BindingIssue)
 
     assert rule.selection_policy.mode is BindingSelectionMode.MAX_ATTRIBUTE
-    assert rule.selection_policy.interchangeable_choice is InterchangeableChoicePolicy.NONE
+    assert (
+        rule.selection_policy.interchangeable_choice is InterchangeableChoicePolicy.NONE
+    )
     assert binding.kind is BindingIssueKind.TIE
     assert {item.value for item in binding.binding_inputs} == {BACKUP_A, BACKUP_B}
 
@@ -250,7 +251,9 @@ def test_scenario_h_tie_cannot_be_laundered_into_a_hidden_bound_value() -> None:
     assert "canonical_identity_min" not in repr(primitive)
 
 
-def test_scenario_h_material_choice_reenters_irr_and_yields_successor_clarification() -> None:
+def test_scenario_h_material_choice_reenters_irr_and_yields_successor_clarification() -> (
+    None
+):
     fixture = _fixture()
     predecessor = fixture["predecessor"]
     binding = fixture["binding"]
@@ -272,18 +275,26 @@ def test_scenario_h_material_choice_reenters_irr_and_yields_successor_clarificat
     assert lineage.continuation_inputs == (continuation,)
     assert lineage.successor_kind is SuccessorResolutionKind.CLARIFICATION_NEED
     assert lineage.successor == clarification
-    assert clarification.blocking_issues[0].kind is ResolutionIssueKind.MATERIAL_AMBIGUITY
-    assert clarification.blocking_issues[0].alternatives == tuple(sorted((BACKUP_A, BACKUP_B)))
+    assert (
+        clarification.blocking_issues[0].kind is ResolutionIssueKind.MATERIAL_AMBIGUITY
+    )
+    assert clarification.blocking_issues[0].alternatives == tuple(
+        sorted((BACKUP_A, BACKUP_B))
+    )
 
 
-def test_scenario_h_returned_data_does_not_create_authority_or_silent_next_plan() -> None:
+def test_scenario_h_returned_data_does_not_create_authority_or_silent_next_plan() -> (
+    None
+):
     fixture = _fixture()
     continuation = fixture["continuation"]
     clarification = fixture["clarification"]
     assert isinstance(continuation, ContinuationInput)
     assert isinstance(clarification, ClarificationNeed)
 
-    keys = _all_keys(clarification.to_primitive()) | _all_keys(continuation.to_primitive())
+    keys = _all_keys(clarification.to_primitive()) | _all_keys(
+        continuation.to_primitive()
+    )
     for forbidden in (
         "authorization",
         "authorized",
@@ -298,7 +309,9 @@ def test_scenario_h_returned_data_does_not_create_authority_or_silent_next_plan(
     assert "observation" not in keys
 
 
-def test_scenario_h_successor_lineage_round_trip_preserves_exact_material_choice() -> None:
+def test_scenario_h_successor_lineage_round_trip_preserves_exact_material_choice() -> (
+    None
+):
     fixture = _fixture()
     lineage = fixture["lineage"]
     assert isinstance(lineage, SuccessorResolutionLineage)
@@ -308,4 +321,6 @@ def test_scenario_h_successor_lineage_round_trip_preserves_exact_material_choice
     assert decoded.identity == lineage.identity
     assert decoded.successor_kind is SuccessorResolutionKind.CLARIFICATION_NEED
     assert isinstance(decoded.successor, ClarificationNeed)
-    assert decoded.successor.blocking_issues[0].alternatives == tuple(sorted((BACKUP_A, BACKUP_B)))
+    assert decoded.successor.blocking_issues[0].alternatives == tuple(
+        sorted((BACKUP_A, BACKUP_B))
+    )

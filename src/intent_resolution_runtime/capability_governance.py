@@ -45,7 +45,9 @@ def _normalize_requirements(
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate requirement identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate requirement identities"
+        )
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
@@ -59,7 +61,9 @@ def _normalize_evaluations(
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate evaluation identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate evaluation identities"
+        )
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
@@ -71,7 +75,9 @@ def _normalize_proposals(value: object, *, field: str) -> tuple[WorkProposal, ..
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate WorkProposal identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate WorkProposal identities"
+        )
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
@@ -85,7 +91,9 @@ def _normalize_decisions(
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate GovernanceDecision identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate GovernanceDecision identities"
+        )
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
@@ -99,7 +107,9 @@ def _normalize_authorizations(
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate Authorization identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate Authorization identities"
+        )
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
@@ -148,7 +158,9 @@ def _derive_state(
     matches: list[CapabilityMatch] = []
     issues: list[CapabilityMatchIssue] = []
     for evaluation in evaluations:
-        active_requirement = requirements_by_identity.get(evaluation.requirement.identity)
+        active_requirement = requirements_by_identity.get(
+            evaluation.requirement.identity
+        )
         if active_requirement is None:
             raise ValidationError(
                 "CapabilityMatchEvaluation is orphaned from the active CapabilityRequirement set"
@@ -164,10 +176,14 @@ def _derive_state(
         evaluations_by_requirement[evaluation.requirement.identity] = evaluation
         active_evaluation_by_step[evaluation.requirement.step_ref] = evaluation
         result = evaluate_capability_match_evaluation(evaluation)
-        if type(result) is CapabilityMatch:
+        if isinstance(result, CapabilityMatch):
             matches.append(result)
-        else:
+        elif isinstance(result, CapabilityMatchIssue):
             issues.append(result)
+        else:  # pragma: no cover - closed result union guard
+            raise TypeError(
+                "capability match evaluation returned an unsupported result type"
+            )
 
     pending_requirements = tuple(
         requirement
@@ -183,7 +199,9 @@ def _derive_state(
     proposals_by_identity = {proposal.identity: proposal for proposal in proposals}
     for proposal in proposals:
         if proposal.work_plan != work_plan:
-            raise ValidationError("WorkProposal must preserve the exact active WorkPlan")
+            raise ValidationError(
+                "WorkProposal must preserve the exact active WorkPlan"
+            )
         for proposed_step in proposal.proposed_steps:
             active_evaluation = active_evaluation_by_step.get(proposed_step.step_ref)
             if active_evaluation is None:
@@ -222,7 +240,9 @@ def _derive_state(
         decisions_by_proposal[decision.proposal.identity] = decision
 
     governance_pending = tuple(
-        proposal for proposal in proposals if proposal.identity not in decisions_by_proposal
+        proposal
+        for proposal in proposals
+        if proposal.identity not in decisions_by_proposal
     )
 
     unmentioned: set[StableRef] = set()
@@ -281,7 +301,8 @@ def _derive_state(
 
     return _CapabilityGovernanceState(
         capability_disposition_required_step_refs=_normalize_refs(
-            tuple(capability_disposition), field="capability_disposition_required_step_refs"
+            tuple(capability_disposition),
+            field="capability_disposition_required_step_refs",
         ),
         pending_capability_requirements=tuple(
             sorted(pending_requirements, key=lambda item: str(item.identity))
@@ -327,7 +348,9 @@ class CapabilityGovernanceFrontier:
 
     def __post_init__(self) -> None:
         if type(self.work_plan) is not WorkPlan:
-            raise ValidationError("CapabilityGovernanceFrontier.work_plan must be a WorkPlan")
+            raise ValidationError(
+                "CapabilityGovernanceFrontier.work_plan must be a WorkPlan"
+            )
         requirements = _normalize_requirements(
             self.capability_requirements,
             field="CapabilityGovernanceFrontier.capability_requirements",
@@ -434,7 +457,9 @@ def orchestrate_capability_governance(
     """
 
     if type(work_plan) is not WorkPlan:
-        raise ValidationError("orchestrate_capability_governance.work_plan must be a WorkPlan")
+        raise ValidationError(
+            "orchestrate_capability_governance.work_plan must be a WorkPlan"
+        )
     return CapabilityGovernanceFrontier(
         work_plan=work_plan,
         capability_requirements=capability_requirements,

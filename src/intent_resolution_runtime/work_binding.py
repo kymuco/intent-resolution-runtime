@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .binding import BindingEvaluation, BindingIssue, BindingRule, BoundValue, SymbolicReference
+from .binding import (
+    BindingEvaluation,
+    BindingIssue,
+    BindingRule,
+    BoundValue,
+    SymbolicReference,
+)
 from .errors import ValidationError
 from .identity import RecordIdentity
 from .resolution import ResolvedIntent
@@ -29,7 +35,9 @@ def _normalize_rules(value: object, *, field: str) -> tuple[BindingRule, ...]:
     rules = tuple(value)
     identities = [rule.identity for rule in rules]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate BindingRule identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate BindingRule identities"
+        )
     return tuple(sorted(rules, key=lambda rule: str(rule.identity)))
 
 
@@ -43,7 +51,9 @@ def _normalize_evaluations(
     evaluations = tuple(value)
     identities = [evaluation.identity for evaluation in evaluations]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate BindingEvaluation identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate BindingEvaluation identities"
+        )
     return tuple(sorted(evaluations, key=lambda evaluation: str(evaluation.identity)))
 
 
@@ -71,9 +81,7 @@ def _normalize_symbolic_references(
 
 def _external_symbolic_references(work_plan: WorkPlan) -> tuple[SymbolicReference, ...]:
     produced_slots = {
-        output.reference.slot_ref
-        for step in work_plan.steps
-        for output in step.outputs
+        output.reference.slot_ref for step in work_plan.steps for output in step.outputs
     }
     external_by_slot: dict[object, SymbolicReference] = {}
     for step in work_plan.steps:
@@ -144,9 +152,13 @@ class WorkBindingFrontier:
             field="WorkBindingFrontier.binding_issues",
         )
         if not all(type(item) is BoundValue for item in bound):
-            raise ValidationError("WorkBindingFrontier.bound_values must contain BoundValue values")
+            raise ValidationError(
+                "WorkBindingFrontier.bound_values must contain BoundValue values"
+            )
         if not all(type(item) is BindingIssue for item in issues):
-            raise ValidationError("WorkBindingFrontier.binding_issues must contain BindingIssue values")
+            raise ValidationError(
+                "WorkBindingFrontier.binding_issues must contain BindingIssue values"
+            )
 
         object.__setattr__(self, "external_symbolic_references", external)
         object.__setattr__(self, "missing_rule_references", missing)
@@ -170,7 +182,9 @@ class WorkBindingFrontier:
             return
 
         if type(self.work_plan) is not WorkPlan:
-            raise ValidationError("WorkBindingFrontier.work_plan must be a WorkPlan or None")
+            raise ValidationError(
+                "WorkBindingFrontier.work_plan must be a WorkPlan or None"
+            )
         if self.work_plan.resolved_intent_identity != self.resolved_intent_identity:
             raise ValidationError(
                 "WorkBindingFrontier WorkPlan must belong to the exact ResolvedIntent"
@@ -199,7 +213,10 @@ class WorkBindingFrontier:
 
         for rule in pending:
             expected = external_by_slot.get(rule.symbolic_reference.slot_ref)
-            if expected is None or expected.identity != rule.symbolic_reference.identity:
+            if (
+                expected is None
+                or expected.identity != rule.symbolic_reference.identity
+            ):
                 raise ValidationError(
                     "WorkBindingFrontier pending rule must target an exact external WorkPlan symbol"
                 )
@@ -207,7 +224,10 @@ class WorkBindingFrontier:
 
         for evaluation in (*bound, *issues):
             expected = external_by_slot.get(evaluation.rule.symbolic_reference.slot_ref)
-            if expected is None or expected.identity != evaluation.rule.symbolic_reference.identity:
+            if (
+                expected is None
+                or expected.identity != evaluation.rule.symbolic_reference.identity
+            ):
                 raise ValidationError(
                     "WorkBindingFrontier evaluation must target an exact external WorkPlan symbol"
                 )
@@ -222,7 +242,9 @@ class WorkBindingFrontier:
                 "WorkBindingFrontier must expose one active binding state for every external symbolic slot"
             )
 
-        expected_complete = bool(self.work_plan) and not missing and not pending and not issues
+        expected_complete = (
+            bool(self.work_plan) and not missing and not pending and not issues
+        )
         if not external:
             expected_complete = True
         if self.external_binding_complete != expected_complete:
@@ -325,24 +347,14 @@ def orchestrate_work_binding(
         evaluations_by_rule[evaluation.rule.identity] = evaluation
 
     missing = tuple(
-        reference
-        for reference in external
-        if reference.slot_ref not in rules_by_slot
+        reference for reference in external if reference.slot_ref not in rules_by_slot
     )
-    pending = tuple(
-        rule
-        for rule in rules
-        if rule.identity not in evaluations_by_rule
-    )
+    pending = tuple(rule for rule in rules if rule.identity not in evaluations_by_rule)
     bound = tuple(
-        evaluation
-        for evaluation in evaluations
-        if type(evaluation) is BoundValue
+        evaluation for evaluation in evaluations if type(evaluation) is BoundValue
     )
     issues = tuple(
-        evaluation
-        for evaluation in evaluations
-        if type(evaluation) is BindingIssue
+        evaluation for evaluation in evaluations if type(evaluation) is BindingIssue
     )
     complete = not missing and not pending and not issues
     if not external:

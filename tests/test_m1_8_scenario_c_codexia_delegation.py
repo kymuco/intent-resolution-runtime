@@ -20,7 +20,6 @@ from intent_resolution_runtime import (
     WorkerResultMaterialRole,
 )
 
-
 REQUEST_IDENTITY = RecordIdentity("sha256", "1" * 64)
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 CG242_EVIDENCE_IDENTITY = RecordIdentity("sha256", "3" * 64)
@@ -79,10 +78,16 @@ def _fixture() -> dict[str, object]:
             statement=statement,
         )
         for name, statement in (
-            ("no-repository-mutation", "Repository mutation is outside this delegation."),
+            (
+                "no-repository-mutation",
+                "Repository mutation is outside this delegation.",
+            ),
             ("no-commit", "Creating commits is outside this delegation."),
             ("no-push", "Pushing repository state is outside this delegation."),
-            ("no-external-publication", "External publication is outside this delegation."),
+            (
+                "no-external-publication",
+                "External publication is outside this delegation.",
+            ),
         )
     )
 
@@ -143,7 +148,9 @@ def _fixture() -> dict[str, object]:
         handoff=handoff,
         materials=(
             WorkerResultMaterial(
-                material_ref=_ref("irr.worker_result_material", "experiment-candidates"),
+                material_ref=_ref(
+                    "irr.worker_result_material", "experiment-candidates"
+                ),
                 role=WorkerResultMaterialRole.DELIVERABLE,
                 semantic_type="experiment.candidate_set",
                 scope_refs=(evidence_scope.scope_ref,),
@@ -254,7 +261,9 @@ def test_scenario_c_uses_explicit_delegated_work_not_hidden_ordinary_workstep() 
     assert "work_step" not in _all_keys(primitive)
 
 
-def test_scenario_c_capability_ceiling_and_forbidden_effect_bounds_remain_explicit() -> None:
+def test_scenario_c_capability_ceiling_and_forbidden_effect_bounds_remain_explicit() -> (
+    None
+):
     fixture = _fixture()
     delegated = fixture["delegated"]
     allowance = fixture["allowance"]
@@ -265,7 +274,9 @@ def test_scenario_c_capability_ceiling_and_forbidden_effect_bounds_remain_explic
     assert allowance.capability_contract_identity == ANALYSIS_CAPABILITY_CONTRACT
     assert allowance.scope_refs == (fixture["scope"].scope_ref,)
     assert delegated.allowed_capabilities == (allowance,)
-    assert all(item.kind is DelegationConstraintKind.FORBIDDEN_EFFECT for item in constraints)
+    assert all(
+        item.kind is DelegationConstraintKind.FORBIDDEN_EFFECT for item in constraints
+    )
 
     statements = {item.statement for item in constraints}
     assert "Repository mutation is outside this delegation." in statements
@@ -274,7 +285,9 @@ def test_scenario_c_capability_ceiling_and_forbidden_effect_bounds_remain_explic
     assert "External publication is outside this delegation." in statements
 
 
-def test_scenario_c_worker_result_preserves_deliverables_uncertainty_and_claim_boundaries() -> None:
+def test_scenario_c_worker_result_preserves_deliverables_uncertainty_and_claim_boundaries() -> (
+    None
+):
     fixture = _fixture()
     result = fixture["result"]
     assert isinstance(result, WorkerResult)

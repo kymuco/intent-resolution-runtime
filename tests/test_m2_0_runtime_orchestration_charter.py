@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 CHARTER = ROOT / "docs" / "m2_0_runtime_orchestration_charter.md"
 
 
-def test_m2_0_charter_freezes_record_graph_not_mutable_session_as_canonical_state() -> None:
+def test_m2_0_charter_freezes_record_graph_not_mutable_session_as_canonical_state() -> (
+    None
+):
     text = CHARTER.read_text(encoding="utf-8")
 
     assert "immutable attributable M1 record graph" in text
@@ -17,7 +18,9 @@ def test_m2_0_charter_freezes_record_graph_not_mutable_session_as_canonical_stat
     assert "one global status != complete lifecycle state" in text
 
 
-def test_m2_0_charter_requires_global_lifecycle_graph_admission_not_record_bag_validity() -> None:
+def test_m2_0_charter_requires_global_lifecycle_graph_admission_not_record_bag_validity() -> (
+    None
+):
     text = CHARTER.read_text(encoding="utf-8")
 
     assert "valid individual records != automatically valid lifecycle graph" in text
@@ -41,7 +44,9 @@ def test_m2_0_charter_preserves_orchestration_authority_and_effect_boundaries() 
         assert invariant in text
 
 
-def test_m2_0_charter_separates_replay_semantic_frontier_and_scheduler_selection() -> None:
+def test_m2_0_charter_separates_replay_semantic_frontier_and_scheduler_selection() -> (
+    None
+):
     text = CHARTER.read_text(encoding="utf-8")
 
     assert "M2 is **replayable by design**" in text
@@ -56,5 +61,8 @@ def test_readme_preserves_m2_0_normative_link_without_unfreezing_m1() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
-    assert "[M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)" in text
+    assert (
+        "[M2.0 Runtime Orchestration Charter](docs/m2_0_runtime_orchestration_charter.md)"
+        in text
+    )
     assert "No M2 semantic milestone is declared yet" not in text

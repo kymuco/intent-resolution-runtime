@@ -18,7 +18,6 @@ from .resolution import ResolvedIntent
 from .successor_resolution import SuccessorResolutionLineage
 from .worker_result import WorkerResult
 
-
 _CONTINUATION_SOURCE_TYPES = (
     CapabilityOutcome,
     WorkerResult,
@@ -31,13 +30,17 @@ _CONTINUATION_SOURCE_TYPES = (
 def _identity_key(value: object) -> str:
     identity = getattr(value, "identity", None)
     if type(identity) is not RecordIdentity:
-        raise ValidationError("M2.4 lifecycle material must expose an exact RecordIdentity")
+        raise ValidationError(
+            "M2.4 lifecycle material must expose an exact RecordIdentity"
+        )
     return str(identity)
 
 
 def _normalize_attempts(value: object) -> tuple[CapabilityAttempt, ...]:
     if type(value) is not tuple:
-        raise ValidationError("AttemptOutcomeContinuationFrontier.attempts must be a tuple")
+        raise ValidationError(
+            "AttemptOutcomeContinuationFrontier.attempts must be a tuple"
+        )
     if not all(type(item) is CapabilityAttempt for item in value):
         raise ValidationError(
             "AttemptOutcomeContinuationFrontier.attempts must contain CapabilityAttempt values"
@@ -45,7 +48,9 @@ def _normalize_attempts(value: object) -> tuple[CapabilityAttempt, ...]:
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError("AttemptOutcomeContinuationFrontier.attempts contains duplicate identities")
+        raise ValidationError(
+            "AttemptOutcomeContinuationFrontier.attempts contains duplicate identities"
+        )
 
     occurrences: dict[object, RecordIdentity] = {}
     for item in items:
@@ -61,7 +66,9 @@ def _normalize_attempts(value: object) -> tuple[CapabilityAttempt, ...]:
 
 def _normalize_outcomes(value: object) -> tuple[CapabilityOutcome, ...]:
     if type(value) is not tuple:
-        raise ValidationError("AttemptOutcomeContinuationFrontier.outcomes must be a tuple")
+        raise ValidationError(
+            "AttemptOutcomeContinuationFrontier.outcomes must be a tuple"
+        )
     if not all(type(item) is CapabilityOutcome for item in value):
         raise ValidationError(
             "AttemptOutcomeContinuationFrontier.outcomes must contain CapabilityOutcome values"
@@ -69,7 +76,9 @@ def _normalize_outcomes(value: object) -> tuple[CapabilityOutcome, ...]:
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError("AttemptOutcomeContinuationFrontier.outcomes contains duplicate identities")
+        raise ValidationError(
+            "AttemptOutcomeContinuationFrontier.outcomes contains duplicate identities"
+        )
 
     occurrences: dict[object, RecordIdentity] = {}
     for item in items:
@@ -204,7 +213,10 @@ class AttemptOutcomeContinuationFrontier:
         outcome_attempts: dict[RecordIdentity, CapabilityOutcome] = {}
         for outcome in outcomes:
             attempt_identity = outcome.attempt.identity
-            if attempt_identity not in attempt_map or attempt_map[attempt_identity] != outcome.attempt:
+            if (
+                attempt_identity not in attempt_map
+                or attempt_map[attempt_identity] != outcome.attempt
+            ):
                 raise ValidationError(
                     "CapabilityOutcome is orphaned from the exact supplied CapabilityAttempt history"
                 )
@@ -228,8 +240,8 @@ class AttemptOutcomeContinuationFrontier:
                     "Continuation source occurrence must differ from the predecessor admission occurrence"
                 )
             if type(source) is CapabilityOutcome:
-                admitted = outcome_map.get(source.identity)
-                if admitted is None or admitted != source:
+                admitted_outcome = outcome_map.get(source.identity)
+                if admitted_outcome is None or admitted_outcome != source:
                     raise ValidationError(
                         "CapabilityOutcome continuation source must be present in exact supplied Outcome history"
                     )
@@ -261,8 +273,8 @@ class AttemptOutcomeContinuationFrontier:
                     "SuccessorResolutionLineage must preserve the exact supplied predecessor"
                 )
             for item in lineage.continuation_inputs:
-                admitted = input_map.get(item.identity)
-                if admitted is None or admitted != item:
+                admitted_input = input_map.get(item.identity)
+                if admitted_input is None or admitted_input != item:
                     raise ValidationError(
                         "SuccessorResolutionLineage uses ContinuationInput outside the exact supplied re-entry history"
                     )
@@ -287,20 +299,30 @@ class AttemptOutcomeContinuationFrontier:
 
     @property
     def outcomes_not_selected_for_continuation(self) -> tuple[CapabilityOutcome, ...]:
-        selected = {item.identity for item in self.continuation_sources if type(item) is CapabilityOutcome}
+        selected = {
+            item.identity
+            for item in self.continuation_sources
+            if type(item) is CapabilityOutcome
+        }
         return tuple(item for item in self.outcomes if item.identity not in selected)
 
     @property
     def reentry_pending_sources(self) -> tuple[ContinuationSource, ...]:
         reentered = {item.source_identity for item in self.continuation_inputs}
-        return tuple(item for item in self.continuation_sources if item.identity not in reentered)
+        return tuple(
+            item for item in self.continuation_sources if item.identity not in reentered
+        )
 
     @property
     def reentry_ambiguity_source_identities(self) -> tuple[RecordIdentity, ...]:
         counts: dict[RecordIdentity, int] = {}
         for item in self.continuation_inputs:
             counts[item.source_identity] = counts.get(item.source_identity, 0) + 1
-        return tuple(sorted((identity for identity, count in counts.items() if count > 1), key=str))
+        return tuple(
+            sorted(
+                (identity for identity, count in counts.items() if count > 1), key=str
+            )
+        )
 
     @property
     def unconsumed_continuation_inputs(self) -> tuple[ContinuationInput, ...]:
@@ -309,7 +331,9 @@ class AttemptOutcomeContinuationFrontier:
             for lineage in self.successor_lineages
             for item in lineage.continuation_inputs
         }
-        return tuple(item for item in self.continuation_inputs if item.identity not in consumed)
+        return tuple(
+            item for item in self.continuation_inputs if item.identity not in consumed
+        )
 
     @property
     def successor_lineage(self) -> SuccessorResolutionLineage | None:

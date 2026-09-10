@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from intent_resolution_runtime import (
     AttemptBoundInput,
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingRule,
@@ -33,7 +33,6 @@ from intent_resolution_runtime import (
     WorkStep,
     evaluate_binding,
 )
-
 
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 

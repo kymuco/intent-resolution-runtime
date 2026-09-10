@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
+from dataclasses import replace
 
 import pytest
 
@@ -33,7 +33,6 @@ from intent_resolution_runtime import (
     WorkProposalMaterialKind,
     WorkStep,
 )
-
 
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 SOURCE_ID = RecordIdentity("sha256", "4" * 64)
@@ -85,7 +84,9 @@ def _requirement(plan: WorkPlan) -> CapabilityRequirement:
     )
 
 
-def _descriptor(name: str, *, operation: str = "workspace.inspect") -> CapabilityDescriptor:
+def _descriptor(
+    name: str, *, operation: str = "workspace.inspect"
+) -> CapabilityDescriptor:
     scope = CapabilityScopeRequirement(
         requirement_ref=_ref("irr.capability_scope_requirement", f"workspace-{name}"),
         semantic_type="filesystem.path_scope",
@@ -138,7 +139,9 @@ def _match(
         scope_matches=(
             CapabilityScopeMatch(
                 requested_scope_ref=requirement.requested_scopes[0].scope_ref,
-                descriptor_scope_requirement_ref=descriptor.scope_requirements[0].requirement_ref,
+                descriptor_scope_requirement_ref=descriptor.scope_requirements[
+                    0
+                ].requirement_ref,
             ),
         ),
         input_matches=(),
@@ -148,7 +151,9 @@ def _match(
     )
 
 
-def _incompatible(descriptor: CapabilityDescriptor) -> CapabilityIncompatibleDescriptorAssessment:
+def _incompatible(
+    descriptor: CapabilityDescriptor,
+) -> CapabilityIncompatibleDescriptorAssessment:
     return CapabilityIncompatibleDescriptorAssessment(
         capability_ref=descriptor.capability_ref,
         capability_contract_identity=descriptor.identity,
@@ -202,7 +207,9 @@ def _material(
     return WorkProposalMaterial(
         material_ref=_ref("irr.work_proposal_material", ref),
         kind=kind,
-        step_refs=((_ref("irr.work_step", "inspect") if step_ref is None else step_ref),),
+        step_refs=(
+            (_ref("irr.work_step", "inspect") if step_ref is None else step_ref),
+        ),
         source_ref=_ref("irr.source", "proposal-admission"),
         source_identity=source_identity,
         scope="workspace:project",
@@ -241,8 +248,9 @@ def test_work_proposal_round_trip_preserves_exact_identity() -> None:
     decoded = WorkProposal.from_json_bytes(proposal.canonical_bytes())
     assert decoded == proposal
     assert decoded.identity == proposal.identity
-    assert decoded.proposed_steps[0].capability_match == (
-        decoded.proposed_steps[0].capability_evaluation.compatible_matches[0]
+    assert (
+        decoded.proposed_steps[0].capability_match
+        == (decoded.proposed_steps[0].capability_evaluation.compatible_matches[0])
     )
 
 
@@ -309,7 +317,9 @@ def test_material_source_identity_is_identity_covered_not_truth_amplification() 
     assert first.identity != second.identity
 
 
-def test_empty_extra_authority_material_is_valid_for_exact_semantics_already_in_ir() -> None:
+def test_empty_extra_authority_material_is_valid_for_exact_semantics_already_in_ir() -> (
+    None
+):
     proposal = _proposal(material=())
     assert proposal.authority_material == ()
     assert proposal.proposed_steps[0].capability_match.capability_ref.value == (
@@ -383,20 +393,43 @@ def test_proposal_rejects_mixed_catalog_snapshot_occurrences_across_steps() -> N
     second_ref = _ref("irr.work_step", "inspect-b")
     completion = "Return the bounded workspace inspection result."
     first_step = WorkStep(
-        RESOLVED, plan_ref, first_ref, "workspace.inspect", "workspace:project",
-        (), (), (), WorkContinuationMode.NONE, completion, "Inspect bounded workspace A."
+        RESOLVED,
+        plan_ref,
+        first_ref,
+        "workspace.inspect",
+        "workspace:project",
+        (),
+        (),
+        (),
+        WorkContinuationMode.NONE,
+        completion,
+        "Inspect bounded workspace A.",
     )
     second_step = WorkStep(
-        RESOLVED, plan_ref, second_ref, "workspace.inspect", "workspace:project",
-        (), (), (), WorkContinuationMode.NONE, completion, "Inspect bounded workspace B."
+        RESOLVED,
+        plan_ref,
+        second_ref,
+        "workspace.inspect",
+        "workspace:project",
+        (),
+        (),
+        (),
+        WorkContinuationMode.NONE,
+        completion,
+        "Inspect bounded workspace B.",
     )
     plan = WorkPlan(
-        RESOLVED, plan_ref, (second_step, first_step),
-        "Complete both bounded inspections.", "Two-step inspection plan."
+        RESOLVED,
+        plan_ref,
+        (second_step, first_step),
+        "Complete both bounded inspections.",
+        "Two-step inspection plan.",
     )
     scope = CapabilityRequestedScope(
         _ref("irr.capability_requested_scope", "workspace"),
-        "filesystem.path_scope", "workspace:project", "Bounded workspace scope."
+        "filesystem.path_scope",
+        "workspace:project",
+        "Bounded workspace scope.",
     )
     first_requirement = CapabilityRequirement(
         plan, first_ref, scope.scope_ref, (scope,), (), (), "Requirement A."
@@ -408,12 +441,14 @@ def test_proposal_rejects_mixed_catalog_snapshot_occurrences_across_steps() -> N
     first_snapshot = _snapshot(descriptor, event="catalog-proposal-a")
     second_snapshot = _snapshot(descriptor, event="catalog-proposal-b")
     first_eval = _evaluation(
-        first_requirement, first_snapshot,
+        first_requirement,
+        first_snapshot,
         matches=(_match(first_requirement, first_snapshot, descriptor, "match-a"),),
         event="eval-a",
     )
     second_eval = _evaluation(
-        second_requirement, second_snapshot,
+        second_requirement,
+        second_snapshot,
         matches=(_match(second_requirement, second_snapshot, descriptor, "match-b"),),
         event="eval-b",
     )
@@ -437,25 +472,86 @@ def test_multiple_proposed_steps_share_one_exact_catalog_and_are_canonical() -> 
     first_ref = _ref("irr.work_step", "inspect-a")
     second_ref = _ref("irr.work_step", "inspect-b")
     completion = "Return the bounded workspace inspection result."
-    first_step = WorkStep(RESOLVED, plan_ref, first_ref, "workspace.inspect", "workspace:project", (), (), (), WorkContinuationMode.NONE, completion, "Inspect A.")
-    second_step = WorkStep(RESOLVED, plan_ref, second_ref, "workspace.inspect", "workspace:project", (), (), (), WorkContinuationMode.NONE, completion, "Inspect B.")
-    plan = WorkPlan(RESOLVED, plan_ref, (second_step, first_step), "Complete both inspections.", "Two-step plan.")
-    scope = CapabilityRequestedScope(_ref("irr.capability_requested_scope", "workspace"), "filesystem.path_scope", "workspace:project", "Bounded workspace scope.")
-    first_requirement = CapabilityRequirement(plan, first_ref, scope.scope_ref, (scope,), (), (), "Requirement A.")
-    second_requirement = CapabilityRequirement(plan, second_ref, scope.scope_ref, (scope,), (), (), "Requirement B.")
+    first_step = WorkStep(
+        RESOLVED,
+        plan_ref,
+        first_ref,
+        "workspace.inspect",
+        "workspace:project",
+        (),
+        (),
+        (),
+        WorkContinuationMode.NONE,
+        completion,
+        "Inspect A.",
+    )
+    second_step = WorkStep(
+        RESOLVED,
+        plan_ref,
+        second_ref,
+        "workspace.inspect",
+        "workspace:project",
+        (),
+        (),
+        (),
+        WorkContinuationMode.NONE,
+        completion,
+        "Inspect B.",
+    )
+    plan = WorkPlan(
+        RESOLVED,
+        plan_ref,
+        (second_step, first_step),
+        "Complete both inspections.",
+        "Two-step plan.",
+    )
+    scope = CapabilityRequestedScope(
+        _ref("irr.capability_requested_scope", "workspace"),
+        "filesystem.path_scope",
+        "workspace:project",
+        "Bounded workspace scope.",
+    )
+    first_requirement = CapabilityRequirement(
+        plan, first_ref, scope.scope_ref, (scope,), (), (), "Requirement A."
+    )
+    second_requirement = CapabilityRequirement(
+        plan, second_ref, scope.scope_ref, (scope,), (), (), "Requirement B."
+    )
     descriptor = _descriptor("workspace.inspect.shared-valid")
     snapshot = _snapshot(descriptor, event="catalog-proposal-shared")
-    first_eval = _evaluation(first_requirement, snapshot, matches=(_match(first_requirement, snapshot, descriptor, "match-a-valid"),), event="eval-a-valid")
-    second_eval = _evaluation(second_requirement, snapshot, matches=(_match(second_requirement, snapshot, descriptor, "match-b-valid"),), event="eval-b-valid")
+    first_eval = _evaluation(
+        first_requirement,
+        snapshot,
+        matches=(_match(first_requirement, snapshot, descriptor, "match-a-valid"),),
+        event="eval-a-valid",
+    )
+    second_eval = _evaluation(
+        second_requirement,
+        snapshot,
+        matches=(_match(second_requirement, snapshot, descriptor, "match-b-valid"),),
+        event="eval-b-valid",
+    )
     first = ProposedWorkStep(first_ref, first_eval)
     second = ProposedWorkStep(second_ref, second_eval)
-    left = WorkProposal(WorkProposalAttribution(_ref("irr.proposer", "irr-core"), _ref("irr.event", "proposal-shared")), plan, (second, first), (), "Shared exact Catalog proposal.")
+    left = WorkProposal(
+        WorkProposalAttribution(
+            _ref("irr.proposer", "irr-core"), _ref("irr.event", "proposal-shared")
+        ),
+        plan,
+        (second, first),
+        (),
+        "Shared exact Catalog proposal.",
+    )
     right = WorkProposal(left.attribution, plan, (first, second), (), left.description)
     assert left.identity == right.identity
-    assert [item.step_ref.value for item in left.proposed_steps] == ["inspect-a", "inspect-b"]
+    assert [item.step_ref.value for item in left.proposed_steps] == [
+        "inspect-a",
+        "inspect-b",
+    ]
 
 
 def test_closed_work_proposal_types_reject_subclassing() -> None:
     with pytest.raises(TypeError):
+
         class InvalidProposal(WorkProposal):
             pass

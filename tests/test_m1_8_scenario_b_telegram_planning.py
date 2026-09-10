@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from intent_resolution_runtime import (
     Authorization,
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingIssue,
@@ -512,30 +512,17 @@ def _send_evaluation(
         (search_descriptor, send_descriptor),
         "Bounded Scenario B capability snapshot.",
     )
-    requested = {
-        item.semantic_type: item
-        for item in requirement.requested_effects
-    }
-    offered_effects = {
-        item.semantic_type: item
-        for item in send_descriptor.effects
-    }
-    requested_scopes = {
-        item.value: item
-        for item in requirement.requested_scopes
-    }
+    requested = {item.semantic_type: item for item in requirement.requested_effects}
+    offered_effects = {item.semantic_type: item for item in send_descriptor.effects}
+    requested_scopes = {item.value: item for item in requirement.requested_scopes}
     offered_scopes = {
-        item.semantic_type: item
-        for item in send_descriptor.scope_requirements
+        item.semantic_type: item for item in send_descriptor.scope_requirements
     }
     report_scope = requested_scopes[SELECTED_REPORT]
     recipient_scope = requested_scopes[TELEGRAM_DESTINATION]
     report_requirement = offered_scopes["artifact.path_scope"]
     recipient_requirement = offered_scopes["telegram.destination_scope"]
-    inputs = {
-        item.semantic_type: item
-        for item in send_descriptor.input_contracts
-    }
+    inputs = {item.semantic_type: item for item in send_descriptor.input_contracts}
     match = CapabilityMatch(
         CapabilityMatchAttribution(
             _ref("irr.matcher", "scenario-b-exact"),

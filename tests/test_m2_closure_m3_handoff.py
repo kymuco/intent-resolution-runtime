@@ -4,7 +4,6 @@ from pathlib import Path
 
 import intent_resolution_runtime as irr
 
-
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 DOC = ROOT / "docs" / "m2_closure_m3_handoff.md"
@@ -30,7 +29,9 @@ def test_readme_closes_m2_and_selects_m3_0_charter() -> None:
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
     assert "**M2 — Runtime Orchestration is complete and frozen through M2.6.**" in text
-    assert "**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.**" in text
+    assert (
+        "**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.**" in text
+    )
     assert "**M3.0 — Host Integration Charter** is the next milestone." in text
     assert "[M2 closure & M3 handoff](docs/m2_closure_m3_handoff.md)" in text
     assert (
@@ -75,7 +76,10 @@ def test_m3_follow_on_sequence_is_explicitly_non_normative() -> None:
     text = DOC.read_text(encoding="utf-8")
 
     assert "## 29. Proposed M3 sequence — planning only" in text
-    assert "This sequence is **not yet normative** beyond selecting M3.0 as the next milestone." in text
+    assert (
+        "This sequence is **not yet normative** beyond selecting M3.0 as the next milestone."
+        in text
+    )
     for proposed in (
         "M3.1  Admitted History Repository / Replay Boundary",
         "M3.2  Cognitive Provider Integration Port",

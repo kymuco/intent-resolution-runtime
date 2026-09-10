@@ -43,7 +43,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -75,9 +77,7 @@ def _normalize_refs(
     return tuple(sorted(items, key=_ref_key))
 
 
-def _normalize_identities(
-    value: object, *, field: str
-) -> tuple[RecordIdentity, ...]:
+def _normalize_identities(value: object, *, field: str) -> tuple[RecordIdentity, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is RecordIdentity for item in value):
@@ -157,7 +157,7 @@ class CapabilityOutcomeAttribution(_CanonicalOutcomeRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityOutcomeAttribution"
-    ) -> "CapabilityOutcomeAttribution":
+    ) -> CapabilityOutcomeAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "evaluator_ref", "outcome_event_ref"}, field=field
@@ -179,13 +179,11 @@ class CapabilityOutcomeAttribution(_CanonicalOutcomeRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityOutcomeAttribution":
+    ) -> CapabilityOutcomeAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
-def _normalize_roles(
-    value: object, *, field: str
-) -> tuple[OutcomeEvidenceRole, ...]:
+def _normalize_roles(value: object, *, field: str) -> tuple[OutcomeEvidenceRole, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not value:
@@ -215,11 +213,17 @@ class OutcomeEvidence(_CanonicalOutcomeRecord):
         if type(self.evidence_ref) is not StableRef:
             raise ValidationError("OutcomeEvidence.evidence_ref must be a StableRef")
         if type(self.attribution) is not SourceAttribution:
-            raise ValidationError("OutcomeEvidence.attribution must be a SourceAttribution")
+            raise ValidationError(
+                "OutcomeEvidence.attribution must be a SourceAttribution"
+            )
         if type(self.source_identity) is not RecordIdentity:
-            raise ValidationError("OutcomeEvidence.source_identity must be a RecordIdentity")
+            raise ValidationError(
+                "OutcomeEvidence.source_identity must be a RecordIdentity"
+            )
         if type(self.relation) is not EvidenceRelation:
-            raise ValidationError("OutcomeEvidence.relation must be an EvidenceRelation")
+            raise ValidationError(
+                "OutcomeEvidence.relation must be an EvidenceRelation"
+            )
         object.__setattr__(
             self,
             "roles",
@@ -254,7 +258,7 @@ class OutcomeEvidence(_CanonicalOutcomeRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "OutcomeEvidence"
-    ) -> "OutcomeEvidence":
+    ) -> OutcomeEvidence:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -313,15 +317,11 @@ class OutcomeEvidence(_CanonicalOutcomeRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "OutcomeEvidence":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> OutcomeEvidence:
         return cls.from_primitive(parse_json_object(data))
 
 
-def _normalize_evidence(
-    value: object, *, field: str
-) -> tuple[OutcomeEvidence, ...]:
+def _normalize_evidence(value: object, *, field: str) -> tuple[OutcomeEvidence, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not value:
@@ -370,7 +370,7 @@ class OutcomeLifecycleAssessment(_CanonicalOutcomeRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "OutcomeLifecycleAssessment"
-    ) -> "OutcomeLifecycleAssessment":
+    ) -> OutcomeLifecycleAssessment:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "state", "evidence_refs", "description"}, field=field
@@ -401,7 +401,7 @@ class OutcomeLifecycleAssessment(_CanonicalOutcomeRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "OutcomeLifecycleAssessment":
+    ) -> OutcomeLifecycleAssessment:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -440,7 +440,7 @@ class OutcomeCompletionAssessment(_CanonicalOutcomeRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "OutcomeCompletionAssessment"
-    ) -> "OutcomeCompletionAssessment":
+    ) -> OutcomeCompletionAssessment:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "state", "evidence_refs", "description"}, field=field
@@ -471,7 +471,7 @@ class OutcomeCompletionAssessment(_CanonicalOutcomeRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "OutcomeCompletionAssessment":
+    ) -> OutcomeCompletionAssessment:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -516,7 +516,7 @@ class OutcomeEffectAssessment(_CanonicalOutcomeRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "OutcomeEffectAssessment"
-    ) -> "OutcomeEffectAssessment":
+    ) -> OutcomeEffectAssessment:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -559,7 +559,7 @@ class OutcomeEffectAssessment(_CanonicalOutcomeRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "OutcomeEffectAssessment":
+    ) -> OutcomeEffectAssessment:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -583,11 +583,7 @@ def _evidence_roles_for_refs(
     refs: tuple[StableRef, ...],
     evidence_map: dict[StableRef, OutcomeEvidence],
 ) -> set[OutcomeEvidenceRole]:
-    return {
-        role
-        for ref in refs
-        for role in evidence_map[ref].roles
-    }
+    return {role for ref in refs for role in evidence_map[ref].roles}
 
 
 def _require_assessment_evidence(
@@ -626,7 +622,9 @@ class CapabilityOutcome(_CanonicalOutcomeRecord):
                 "CapabilityOutcome.attribution must be a CapabilityOutcomeAttribution"
             )
         if type(self.attempt) is not CapabilityAttempt:
-            raise ValidationError("CapabilityOutcome.attempt must be a CapabilityAttempt")
+            raise ValidationError(
+                "CapabilityOutcome.attempt must be a CapabilityAttempt"
+            )
         if (
             self.attribution.outcome_event_ref
             == self.attempt.attribution.attempt_event_ref
@@ -635,7 +633,9 @@ class CapabilityOutcome(_CanonicalOutcomeRecord):
                 "CapabilityOutcome occurrence must differ from CapabilityAttempt occurrence"
             )
 
-        evidence = _normalize_evidence(self.evidence, field="CapabilityOutcome.evidence")
+        evidence = _normalize_evidence(
+            self.evidence, field="CapabilityOutcome.evidence"
+        )
         object.__setattr__(self, "evidence", evidence)
         evidence_map = {item.evidence_ref: item for item in evidence}
 
@@ -711,12 +711,9 @@ class CapabilityOutcome(_CanonicalOutcomeRecord):
 
     @property
     def has_material_unknown(self) -> bool:
-        return (
-            self.completion.state is OutcomeCompletionState.UNKNOWN
-            or any(
-                item.certainty is OutcomeEffectCertainty.UNKNOWN
-                for item in self.effect_assessments
-            )
+        return self.completion.state is OutcomeCompletionState.UNKNOWN or any(
+            item.certainty is OutcomeEffectCertainty.UNKNOWN
+            for item in self.effect_assessments
         )
 
     def to_primitive(self) -> dict[str, object]:
@@ -736,7 +733,7 @@ class CapabilityOutcome(_CanonicalOutcomeRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityOutcome"
-    ) -> "CapabilityOutcome":
+    ) -> CapabilityOutcome:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -790,7 +787,5 @@ class CapabilityOutcome(_CanonicalOutcomeRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityOutcome":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> CapabilityOutcome:
         return cls.from_primitive(parse_json_object(data))

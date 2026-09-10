@@ -28,7 +28,9 @@ def candidate(*, request: str = "1", context: str = "2") -> CandidateResolution:
         context_envelope_identity=rid(context),
         attribution=CandidateAttribution(
             provider_ref=StableRef("irr.provider", "llm-a"),
-            invocation_ref=StableRef("irr.provider_invocation", f"inv-{request}-{context}"),
+            invocation_ref=StableRef(
+                "irr.provider_invocation", f"inv-{request}-{context}"
+            ),
         ),
         proposed_semantics="Candidate semantics for lineage hardening regression.",
     )
@@ -50,8 +52,12 @@ def blocking_issue() -> ResolutionIssue:
     )
 
 
-@pytest.mark.parametrize("output_type", (ResolvedIntent, ClarificationNeed, InformationNeed))
-def test_irr_owned_outputs_reject_candidate_from_other_request(output_type: type) -> None:
+@pytest.mark.parametrize(
+    "output_type", (ResolvedIntent, ClarificationNeed, InformationNeed)
+)
+def test_irr_owned_outputs_reject_candidate_from_other_request(
+    output_type: type,
+) -> None:
     kwargs = {
         "intent_request_identity": rid("1"),
         "context_envelope_identity": rid("2"),
@@ -78,8 +84,12 @@ def test_irr_owned_outputs_reject_candidate_from_other_request(output_type: type
         output_type(**kwargs)
 
 
-@pytest.mark.parametrize("output_type", (ResolvedIntent, ClarificationNeed, InformationNeed))
-def test_irr_owned_outputs_reject_candidate_from_other_context(output_type: type) -> None:
+@pytest.mark.parametrize(
+    "output_type", (ResolvedIntent, ClarificationNeed, InformationNeed)
+)
+def test_irr_owned_outputs_reject_candidate_from_other_context(
+    output_type: type,
+) -> None:
     kwargs = {
         "intent_request_identity": rid("1"),
         "context_envelope_identity": rid("2"),

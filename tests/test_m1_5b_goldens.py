@@ -20,7 +20,6 @@ from intent_resolution_runtime import (
     WorkerResultMaterialRole,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 WORK_PLAN = RecordIdentity("sha256", "2" * 64)
 SOURCE_RECORD = RecordIdentity("sha256", "3" * 64)
@@ -59,18 +58,14 @@ def _fixture() -> tuple[
         description="Supplied project evidence.",
     )
     allowance = DelegatedCapabilityAllowance(
-        allowance_ref=_ref(
-            "irr.delegated_capability_allowance", "artifact.read"
-        ),
+        allowance_ref=_ref("irr.delegated_capability_allowance", "artifact.read"),
         capability_ref=_ref("irr.capability", "artifact.read"),
         capability_contract_identity=CAPABILITY_CONTRACT,
         scope_refs=(scope.scope_ref,),
         description="Exact admitted read capability contract.",
     )
     constraint = DelegationConstraint(
-        constraint_ref=_ref(
-            "irr.delegation_constraint", "no-external-disclosure"
-        ),
+        constraint_ref=_ref("irr.delegation_constraint", "no-external-disclosure"),
         kind=DelegationConstraintKind.FORBIDDEN_EFFECT,
         statement="No external disclosure.",
     )
@@ -125,9 +120,7 @@ def _fixture() -> tuple[
         need_ref=_ref("irr.worker_need", "mutation-review"),
         kind=WorkerNeedKind.AUTHORITY,
         related_scope_refs=(scope.scope_ref,),
-        statement=(
-            "Repository mutation would require an external authority decision."
-        ),
+        statement=("Repository mutation would require an external authority decision."),
     )
     result = WorkerResult(
         attribution=result_attribution,
@@ -203,9 +196,16 @@ def test_m15b_delegation_result_golden_digests_are_frozen() -> None:
 
 
 def test_m15b_golden_handoff_and_result_round_trip_preserve_identity() -> None:
-    *_, delegated, handoff_attribution, handoff, result_attribution, material, need, result = (
-        _fixture()
-    )
+    (
+        *_,
+        delegated,
+        _handoff_attribution,
+        handoff,
+        _result_attribution,
+        _material,
+        _need,
+        result,
+    ) = _fixture()
 
     decoded_delegated = DelegatedWork.from_json_bytes(delegated.canonical_bytes())
     decoded_handoff = DelegatedWorkHandoff.from_json_bytes(handoff.canonical_bytes())

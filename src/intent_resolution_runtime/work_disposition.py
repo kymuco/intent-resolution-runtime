@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, TypeAlias, cast
 
 from .canonical import canonical_json_bytes, parse_json_object
 from .errors import SerializationError, ValidationError
@@ -542,7 +542,7 @@ def _validate_output_lineage(
 ) -> WorkDispositionOutput:
     if type(output) not in (NoOperationalWork, AdmittedWorkPlan):
         raise ValidationError(f"{field} must be an exact WorkDispositionOutput type")
-    admitted = output
+    admitted = cast(WorkDispositionOutput, output)
     if admitted.resolved_intent_identity != resolved_intent_identity:
         raise ValidationError(f"{field} belongs to a foreign ResolvedIntent lineage")
     return admitted

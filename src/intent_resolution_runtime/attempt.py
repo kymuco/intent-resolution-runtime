@@ -41,7 +41,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -57,7 +59,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -113,7 +117,7 @@ class CapabilityAttemptAttribution(_CanonicalAttemptRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityAttemptAttribution"
-    ) -> "CapabilityAttemptAttribution":
+    ) -> CapabilityAttemptAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "executor_ref", "attempt_event_ref"}, field=field
@@ -135,7 +139,7 @@ class CapabilityAttemptAttribution(_CanonicalAttemptRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityAttemptAttribution":
+    ) -> CapabilityAttemptAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -163,7 +167,7 @@ class AttemptBoundInput(_CanonicalAttemptRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "AttemptBoundInput"
-    ) -> "AttemptBoundInput":
+    ) -> AttemptBoundInput:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"schema", "input_name", "bound_value"}, field=field)
         if obj["schema"] != cls.SCHEMA:
@@ -177,9 +181,7 @@ class AttemptBoundInput(_CanonicalAttemptRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "AttemptBoundInput":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> AttemptBoundInput:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -337,7 +339,9 @@ class CapabilityAttempt(_CanonicalAttemptRecord):
     def capability_match(self) -> CapabilityMatch:
         result = evaluate_capability_match_evaluation(self.capability_evaluation)
         if type(result) is not CapabilityMatch:
-            raise AssertionError("validated CapabilityAttempt lost its exact CapabilityMatch")
+            raise AssertionError(
+                "validated CapabilityAttempt lost its exact CapabilityMatch"
+            )
         return result
 
     def to_primitive(self) -> dict[str, object]:
@@ -356,7 +360,7 @@ class CapabilityAttempt(_CanonicalAttemptRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityAttempt"
-    ) -> "CapabilityAttempt":
+    ) -> CapabilityAttempt:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -373,9 +377,7 @@ class CapabilityAttempt(_CanonicalAttemptRecord):
         )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
-        bound_inputs = _expect_array(
-            obj["bound_inputs"], field=f"{field}.bound_inputs"
-        )
+        bound_inputs = _expect_array(obj["bound_inputs"], field=f"{field}.bound_inputs")
         authorizations = _expect_array(
             obj["presented_authorizations"],
             field=f"{field}.presented_authorizations",
@@ -410,7 +412,5 @@ class CapabilityAttempt(_CanonicalAttemptRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityAttempt":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> CapabilityAttempt:
         return cls.from_primitive(parse_json_object(data))

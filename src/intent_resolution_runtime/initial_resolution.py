@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, TypeAlias
+from typing import TypeAlias, cast
 
 from .context import ContextEnvelope
 from .errors import ValidationError
@@ -15,7 +16,6 @@ from .resolution import (
     ResolutionAttribution,
     ResolvedIntent,
 )
-
 
 ResolutionOutput: TypeAlias = ResolvedIntent | ClarificationNeed | InformationNeed
 InitialResolutionAdmitter: TypeAlias = Callable[
@@ -123,13 +123,13 @@ def _normalize_candidates(
     candidates = tuple(value)
     identities = [candidate.identity for candidate in candidates]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate candidate identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate candidate identities"
+        )
     return tuple(sorted(candidates, key=lambda candidate: str(candidate.identity)))
 
 
-def _normalize_outputs(
-    value: object, *, field: str
-) -> tuple[ResolutionOutput, ...]:
+def _normalize_outputs(value: object, *, field: str) -> tuple[ResolutionOutput, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     allowed = (ResolvedIntent, ClarificationNeed, InformationNeed)
@@ -164,7 +164,7 @@ def _validate_resolution_output_lineage(
 ) -> ResolutionOutput:
     if type(output) not in (ResolvedIntent, ClarificationNeed, InformationNeed):
         raise ValidationError(f"{field} must be an exact ResolutionOutput type")
-    admitted = output
+    admitted = cast(ResolutionOutput, output)
     if admitted.intent_request_identity != intent_request_identity:
         raise ValidationError(f"{field} belongs to a foreign IntentRequest lineage")
     if admitted.context_envelope_identity != context_envelope_identity:

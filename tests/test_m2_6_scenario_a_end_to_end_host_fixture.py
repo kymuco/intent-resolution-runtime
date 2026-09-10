@@ -3,9 +3,9 @@ from __future__ import annotations
 from intent_resolution_runtime import (
     AttemptBoundInput,
     Authorization,
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingIssue,
@@ -87,10 +87,9 @@ from intent_resolution_runtime import (
     orchestrate_attempt_outcome_continuation,
     orchestrate_capability_governance,
     orchestrate_initial_resolution,
-    orchestrate_worker_lifecycle,
     orchestrate_work_binding,
+    orchestrate_worker_lifecycle,
 )
-
 
 BACKUP_ROOT = r"D:\Backups"
 DESTINATION = r"W:\organism_lab"
@@ -136,9 +135,13 @@ def _request_and_context() -> tuple[IntentRequest, ContextEnvelope]:
         request.identity,
         context_source,
         (
-            ClaimRecord(context_source, f"Backup search root is exactly {BACKUP_ROOT}."),
+            ClaimRecord(
+                context_source, f"Backup search root is exactly {BACKUP_ROOT}."
+            ),
             ClaimRecord(context_source, "Backup family match is exactly organism_lab."),
-            ClaimRecord(context_source, f"Restore destination is exactly {DESTINATION}."),
+            ClaimRecord(
+                context_source, f"Restore destination is exactly {DESTINATION}."
+            ),
             ClaimRecord(
                 context_source,
                 "Latest means the unique greatest admitted modification timestamp within the bounded matching set.",
@@ -320,13 +323,23 @@ def _search_capability_evaluation(
         snapshot,
         descriptor.capability_ref,
         descriptor.identity,
-        (CapabilityScopeMatch(requested_scope.scope_ref, offered_scope.requirement_ref),),
         (
-            CapabilityInputMatch("root", root_input.input_ref, (requested_scope.scope_ref,)),
+            CapabilityScopeMatch(
+                requested_scope.scope_ref, offered_scope.requirement_ref
+            ),
+        ),
+        (
+            CapabilityInputMatch(
+                "root", root_input.input_ref, (requested_scope.scope_ref,)
+            ),
             CapabilityInputMatch("family", family_input.input_ref, ()),
         ),
         (CapabilityOutputMatch("candidates", candidates_output.output_ref, ()),),
-        (CapabilityEffectMatch(requested_effect.effect_ref, offered_effect.effect_ref),),
+        (
+            CapabilityEffectMatch(
+                requested_effect.effect_ref, offered_effect.effect_ref
+            ),
+        ),
         "Exact bounded filesystem.search match.",
     )
     evaluation = CapabilityMatchEvaluation(
@@ -542,14 +555,18 @@ def _extract_capability_evaluation(
         descriptor.capability_ref,
         descriptor.identity,
         (
-            CapabilityScopeMatch(source_scope.scope_ref, source_requirement.requirement_ref),
+            CapabilityScopeMatch(
+                source_scope.scope_ref, source_requirement.requirement_ref
+            ),
             CapabilityScopeMatch(
                 destination_scope.scope_ref,
                 destination_requirement.requirement_ref,
             ),
         ),
         (
-            CapabilityInputMatch("archive", archive_input.input_ref, (source_scope.scope_ref,)),
+            CapabilityInputMatch(
+                "archive", archive_input.input_ref, (source_scope.scope_ref,)
+            ),
             CapabilityInputMatch(
                 "destination",
                 destination_input.input_ref,
@@ -712,7 +729,9 @@ def _partial_outcome(attempt: CapabilityAttempt) -> CapabilityOutcome:
     )
 
 
-def _resolved_fixture() -> tuple[IntentRequest, ContextEnvelope, CandidateResolution, ResolvedIntent]:
+def _resolved_fixture() -> tuple[
+    IntentRequest, ContextEnvelope, CandidateResolution, ResolvedIntent
+]:
     request, context = _request_and_context()
     candidate = _candidate(request, context)
 
@@ -734,7 +753,10 @@ def _resolved_fixture() -> tuple[IntentRequest, ContextEnvelope, CandidateResolu
             _ref("irr.resolution_event", "scenario-a-resolved"),
         ),
     )
-    assert admitted_frontier.kind is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
+    assert (
+        admitted_frontier.kind
+        is InitialResolutionFrontierKind.RESOLUTION_OUTPUT_AVAILABLE
+    )
     resolved = admitted_frontier.resolution_output
     assert type(resolved) is ResolvedIntent
     assert resolved.candidate_inputs == (candidate,)
@@ -761,7 +783,9 @@ def test_m2_6_scenario_a_threads_m2_1_through_m2_5_without_hidden_policy() -> No
     )
     assert len(search_capability.capability_matches) == 1
     assert search_capability.capability_issues == ()
-    assert search_capability.proposal_disposition_required_step_refs == (search_step.step_ref,)
+    assert search_capability.proposal_disposition_required_step_refs == (
+        search_step.step_ref,
+    )
     assert search_capability.materialized_authorized_step_refs == ()
 
     completeness = _search_completeness()
@@ -828,7 +852,9 @@ def test_m2_6_scenario_a_threads_m2_1_through_m2_5_without_hidden_policy() -> No
         work_proposals=(proposal,),
         governance_decisions=(decision,),
     )
-    assert before_authorization.authorization_materialization_frontier == (authorization,)
+    assert before_authorization.authorization_materialization_frontier == (
+        authorization,
+    )
     assert before_authorization.materialized_authorized_step_refs == ()
 
     authorized = orchestrate_capability_governance(

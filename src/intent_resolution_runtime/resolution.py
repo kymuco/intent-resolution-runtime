@@ -36,7 +36,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -103,9 +105,13 @@ class CandidateAttribution:
 
     def __post_init__(self) -> None:
         if type(self.provider_ref) is not StableRef:
-            raise ValidationError("CandidateAttribution.provider_ref must be a StableRef")
+            raise ValidationError(
+                "CandidateAttribution.provider_ref must be a StableRef"
+            )
         if type(self.invocation_ref) is not StableRef:
-            raise ValidationError("CandidateAttribution.invocation_ref must be a StableRef")
+            raise ValidationError(
+                "CandidateAttribution.invocation_ref must be a StableRef"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -114,13 +120,19 @@ class CandidateAttribution:
         }
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "attribution") -> "CandidateAttribution":
+    def from_primitive(
+        cls, value: object, *, field: str = "attribution"
+    ) -> CandidateAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"provider_ref", "invocation_ref"}, field=field)
         try:
             return cls(
-                provider_ref=StableRef.from_primitive(obj["provider_ref"], field=f"{field}.provider_ref"),
-                invocation_ref=StableRef.from_primitive(obj["invocation_ref"], field=f"{field}.invocation_ref"),
+                provider_ref=StableRef.from_primitive(
+                    obj["provider_ref"], field=f"{field}.provider_ref"
+                ),
+                invocation_ref=StableRef.from_primitive(
+                    obj["invocation_ref"], field=f"{field}.invocation_ref"
+                ),
             )
         except ValidationError as exc:
             raise SerializationError(f"invalid {field}") from exc
@@ -135,9 +147,13 @@ class ResolutionAttribution:
 
     def __post_init__(self) -> None:
         if type(self.resolver_ref) is not StableRef:
-            raise ValidationError("ResolutionAttribution.resolver_ref must be a StableRef")
+            raise ValidationError(
+                "ResolutionAttribution.resolver_ref must be a StableRef"
+            )
         if type(self.admission_event_ref) is not StableRef:
-            raise ValidationError("ResolutionAttribution.admission_event_ref must be a StableRef")
+            raise ValidationError(
+                "ResolutionAttribution.admission_event_ref must be a StableRef"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -146,12 +162,16 @@ class ResolutionAttribution:
         }
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "admission_attribution") -> "ResolutionAttribution":
+    def from_primitive(
+        cls, value: object, *, field: str = "admission_attribution"
+    ) -> ResolutionAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"resolver_ref", "admission_event_ref"}, field=field)
         try:
             return cls(
-                resolver_ref=StableRef.from_primitive(obj["resolver_ref"], field=f"{field}.resolver_ref"),
+                resolver_ref=StableRef.from_primitive(
+                    obj["resolver_ref"], field=f"{field}.resolver_ref"
+                ),
                 admission_event_ref=StableRef.from_primitive(
                     obj["admission_event_ref"], field=f"{field}.admission_event_ref"
                 ),
@@ -186,11 +206,17 @@ class AssumptionRecord(_CanonicalResolutionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "AssumptionRecord":
+    def from_primitive(cls, value: object) -> AssumptionRecord:
         obj = _expect_object(value, field="AssumptionRecord")
-        _expect_exact_keys(obj, {"schema", "kind", "statement", "scope", "rationale"}, field="AssumptionRecord")
+        _expect_exact_keys(
+            obj,
+            {"schema", "kind", "statement", "scope", "rationale"},
+            field="AssumptionRecord",
+        )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported AssumptionRecord schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported AssumptionRecord schema: {obj['schema']!r}"
+            )
         if type(obj["kind"]) is not str:
             raise SerializationError("AssumptionRecord.kind must be a string")
         try:
@@ -198,12 +224,17 @@ class AssumptionRecord(_CanonicalResolutionRecord):
         except ValueError as exc:
             raise SerializationError("unsupported AssumptionRecord.kind") from exc
         try:
-            return cls(kind=kind, statement=obj["statement"], scope=obj["scope"], rationale=obj["rationale"])
+            return cls(
+                kind=kind,
+                statement=obj["statement"],
+                scope=obj["scope"],
+                rationale=obj["rationale"],
+            )
         except ValidationError as exc:
             raise SerializationError("invalid AssumptionRecord") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "AssumptionRecord":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> AssumptionRecord:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -221,7 +252,9 @@ class ResolutionIssue(_CanonicalResolutionRecord):
         if type(self.kind) is not ResolutionIssueKind:
             raise ValidationError("ResolutionIssue.kind must be a ResolutionIssueKind")
         if type(self.impact) is not ResolutionIssueImpact:
-            raise ValidationError("ResolutionIssue.impact must be a ResolutionIssueImpact")
+            raise ValidationError(
+                "ResolutionIssue.impact must be a ResolutionIssueImpact"
+            )
         _require_text(self.scope, field="ResolutionIssue.scope")
         _require_text(self.description, field="ResolutionIssue.description")
         if type(self.alternatives) is not tuple:
@@ -231,17 +264,23 @@ class ResolutionIssue(_CanonicalResolutionRecord):
         for index, item in enumerate(self.alternatives):
             _require_text(item, field=f"ResolutionIssue.alternatives[{index}]")
         if len(set(self.alternatives)) != len(self.alternatives):
-            raise ValidationError("ResolutionIssue.alternatives must not contain duplicates")
+            raise ValidationError(
+                "ResolutionIssue.alternatives must not contain duplicates"
+            )
         object.__setattr__(self, "alternatives", tuple(sorted(self.alternatives)))
 
         if self.kind is ResolutionIssueKind.MATERIAL_AMBIGUITY:
             if self.impact is not ResolutionIssueImpact.BLOCKING:
                 raise ValidationError("Material Ambiguity must be blocking")
             if len(self.alternatives) < 2:
-                raise ValidationError("Material Ambiguity must preserve at least two alternatives")
+                raise ValidationError(
+                    "Material Ambiguity must preserve at least two alternatives"
+                )
         elif self.kind is ResolutionIssueKind.CONFLICT:
             if len(self.alternatives) < 2:
-                raise ValidationError("Conflict must preserve at least two alternatives")
+                raise ValidationError(
+                    "Conflict must preserve at least two alternatives"
+                )
         elif self.alternatives:
             raise ValidationError(
                 "Missing Information or Uncertainty must not invent competing alternatives"
@@ -258,19 +297,29 @@ class ResolutionIssue(_CanonicalResolutionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ResolutionIssue":
+    def from_primitive(cls, value: object) -> ResolutionIssue:
         obj = _expect_object(value, field="ResolutionIssue")
-        _expect_exact_keys(obj, {"schema", "kind", "impact", "scope", "description", "alternatives"}, field="ResolutionIssue")
+        _expect_exact_keys(
+            obj,
+            {"schema", "kind", "impact", "scope", "description", "alternatives"},
+            field="ResolutionIssue",
+        )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ResolutionIssue schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported ResolutionIssue schema: {obj['schema']!r}"
+            )
         if type(obj["kind"]) is not str or type(obj["impact"]) is not str:
             raise SerializationError("ResolutionIssue kind and impact must be strings")
         try:
             kind = ResolutionIssueKind(obj["kind"])
             impact = ResolutionIssueImpact(obj["impact"])
         except ValueError as exc:
-            raise SerializationError("unsupported ResolutionIssue kind or impact") from exc
-        alternatives = _expect_array(obj["alternatives"], field="ResolutionIssue.alternatives")
+            raise SerializationError(
+                "unsupported ResolutionIssue kind or impact"
+            ) from exc
+        alternatives = _expect_array(
+            obj["alternatives"], field="ResolutionIssue.alternatives"
+        )
         try:
             return cls(
                 kind=kind,
@@ -283,7 +332,7 @@ class ResolutionIssue(_CanonicalResolutionRecord):
             raise SerializationError("invalid ResolutionIssue") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ResolutionIssue":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ResolutionIssue:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -301,21 +350,36 @@ class ClarificationProposal(_CanonicalResolutionRecord):
         _require_text(self.reason, field="ClarificationProposal.reason")
 
     def to_primitive(self) -> dict[str, object]:
-        return {"question": self.question, "reason": self.reason, "schema": self.SCHEMA, "scope": self.scope}
+        return {
+            "question": self.question,
+            "reason": self.reason,
+            "schema": self.SCHEMA,
+            "scope": self.scope,
+        }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ClarificationProposal":
+    def from_primitive(cls, value: object) -> ClarificationProposal:
         obj = _expect_object(value, field="ClarificationProposal")
-        _expect_exact_keys(obj, {"schema", "question", "scope", "reason"}, field="ClarificationProposal")
+        _expect_exact_keys(
+            obj,
+            {"schema", "question", "scope", "reason"},
+            field="ClarificationProposal",
+        )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ClarificationProposal schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported ClarificationProposal schema: {obj['schema']!r}"
+            )
         try:
-            return cls(question=obj["question"], scope=obj["scope"], reason=obj["reason"])
+            return cls(
+                question=obj["question"], scope=obj["scope"], reason=obj["reason"]
+            )
         except ValidationError as exc:
             raise SerializationError("invalid ClarificationProposal") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ClarificationProposal":
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> ClarificationProposal:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -333,21 +397,36 @@ class InformationNeedProposal(_CanonicalResolutionRecord):
         _require_text(self.reason, field="InformationNeedProposal.reason")
 
     def to_primitive(self) -> dict[str, object]:
-        return {"description": self.description, "reason": self.reason, "schema": self.SCHEMA, "scope": self.scope}
+        return {
+            "description": self.description,
+            "reason": self.reason,
+            "schema": self.SCHEMA,
+            "scope": self.scope,
+        }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "InformationNeedProposal":
+    def from_primitive(cls, value: object) -> InformationNeedProposal:
         obj = _expect_object(value, field="InformationNeedProposal")
-        _expect_exact_keys(obj, {"schema", "description", "scope", "reason"}, field="InformationNeedProposal")
+        _expect_exact_keys(
+            obj,
+            {"schema", "description", "scope", "reason"},
+            field="InformationNeedProposal",
+        )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported InformationNeedProposal schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported InformationNeedProposal schema: {obj['schema']!r}"
+            )
         try:
-            return cls(description=obj["description"], scope=obj["scope"], reason=obj["reason"])
+            return cls(
+                description=obj["description"], scope=obj["scope"], reason=obj["reason"]
+            )
         except ValidationError as exc:
             raise SerializationError("invalid InformationNeedProposal") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "InformationNeedProposal":
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> InformationNeedProposal:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -368,21 +447,37 @@ class CandidateResolution(_CanonicalResolutionRecord):
 
     def __post_init__(self) -> None:
         if type(self.intent_request_identity) is not RecordIdentity:
-            raise ValidationError("CandidateResolution.intent_request_identity must be a RecordIdentity")
+            raise ValidationError(
+                "CandidateResolution.intent_request_identity must be a RecordIdentity"
+            )
         if type(self.context_envelope_identity) is not RecordIdentity:
-            raise ValidationError("CandidateResolution.context_envelope_identity must be a RecordIdentity")
+            raise ValidationError(
+                "CandidateResolution.context_envelope_identity must be a RecordIdentity"
+            )
         if type(self.attribution) is not CandidateAttribution:
-            raise ValidationError("CandidateResolution.attribution must be a CandidateAttribution")
-        _require_text(self.proposed_semantics, field="CandidateResolution.proposed_semantics")
+            raise ValidationError(
+                "CandidateResolution.attribution must be a CandidateAttribution"
+            )
+        _require_text(
+            self.proposed_semantics, field="CandidateResolution.proposed_semantics"
+        )
         object.__setattr__(
             self,
             "assumptions",
-            _normalize_record_tuple(self.assumptions, field="CandidateResolution.assumptions", allowed=(AssumptionRecord,)),
+            _normalize_record_tuple(
+                self.assumptions,
+                field="CandidateResolution.assumptions",
+                allowed=(AssumptionRecord,),
+            ),
         )
         object.__setattr__(
             self,
             "issues",
-            _normalize_record_tuple(self.issues, field="CandidateResolution.issues", allowed=(ResolutionIssue,)),
+            _normalize_record_tuple(
+                self.issues,
+                field="CandidateResolution.issues",
+                allowed=(ResolutionIssue,),
+            ),
         )
         object.__setattr__(
             self,
@@ -407,9 +502,13 @@ class CandidateResolution(_CanonicalResolutionRecord):
         return {
             "assumptions": [item.to_primitive() for item in self.assumptions],
             "attribution": self.attribution.to_primitive(),
-            "clarification_proposals": [item.to_primitive() for item in self.clarification_proposals],
+            "clarification_proposals": [
+                item.to_primitive() for item in self.clarification_proposals
+            ],
             "context_envelope_identity": self.context_envelope_identity.to_primitive(),
-            "information_need_proposals": [item.to_primitive() for item in self.information_need_proposals],
+            "information_need_proposals": [
+                item.to_primitive() for item in self.information_need_proposals
+            ],
             "intent_request_identity": self.intent_request_identity.to_primitive(),
             "issues": [item.to_primitive() for item in self.issues],
             "proposed_semantics": self.proposed_semantics,
@@ -417,7 +516,7 @@ class CandidateResolution(_CanonicalResolutionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "CandidateResolution":
+    def from_primitive(cls, value: object) -> CandidateResolution:
         obj = _expect_object(value, field="CandidateResolution")
         _expect_exact_keys(
             obj,
@@ -435,31 +534,53 @@ class CandidateResolution(_CanonicalResolutionRecord):
             field="CandidateResolution",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported CandidateResolution schema: {obj['schema']!r}")
-        assumptions = _expect_array(obj["assumptions"], field="CandidateResolution.assumptions")
+            raise SerializationError(
+                f"unsupported CandidateResolution schema: {obj['schema']!r}"
+            )
+        assumptions = _expect_array(
+            obj["assumptions"], field="CandidateResolution.assumptions"
+        )
         issues = _expect_array(obj["issues"], field="CandidateResolution.issues")
-        clarifications = _expect_array(obj["clarification_proposals"], field="CandidateResolution.clarification_proposals")
-        information_needs = _expect_array(obj["information_need_proposals"], field="CandidateResolution.information_need_proposals")
+        clarifications = _expect_array(
+            obj["clarification_proposals"],
+            field="CandidateResolution.clarification_proposals",
+        )
+        information_needs = _expect_array(
+            obj["information_need_proposals"],
+            field="CandidateResolution.information_need_proposals",
+        )
         try:
             return cls(
                 intent_request_identity=RecordIdentity.from_primitive(
-                    obj["intent_request_identity"], field="CandidateResolution.intent_request_identity"
+                    obj["intent_request_identity"],
+                    field="CandidateResolution.intent_request_identity",
                 ),
                 context_envelope_identity=RecordIdentity.from_primitive(
-                    obj["context_envelope_identity"], field="CandidateResolution.context_envelope_identity"
+                    obj["context_envelope_identity"],
+                    field="CandidateResolution.context_envelope_identity",
                 ),
                 attribution=CandidateAttribution.from_primitive(obj["attribution"]),
                 proposed_semantics=obj["proposed_semantics"],
-                assumptions=tuple(AssumptionRecord.from_primitive(item) for item in assumptions),
+                assumptions=tuple(
+                    AssumptionRecord.from_primitive(item) for item in assumptions
+                ),
                 issues=tuple(ResolutionIssue.from_primitive(item) for item in issues),
-                clarification_proposals=tuple(ClarificationProposal.from_primitive(item) for item in clarifications),
-                information_need_proposals=tuple(InformationNeedProposal.from_primitive(item) for item in information_needs),
+                clarification_proposals=tuple(
+                    ClarificationProposal.from_primitive(item)
+                    for item in clarifications
+                ),
+                information_need_proposals=tuple(
+                    InformationNeedProposal.from_primitive(item)
+                    for item in information_needs
+                ),
             )
         except ValidationError as exc:
             raise SerializationError("invalid CandidateResolution") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "CandidateResolution":
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> CandidateResolution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -472,11 +593,17 @@ def _validate_common_resolution_output(
     field_prefix: str,
 ) -> tuple[CandidateResolution, ...]:
     if type(intent_request_identity) is not RecordIdentity:
-        raise ValidationError(f"{field_prefix}.intent_request_identity must be a RecordIdentity")
+        raise ValidationError(
+            f"{field_prefix}.intent_request_identity must be a RecordIdentity"
+        )
     if type(context_envelope_identity) is not RecordIdentity:
-        raise ValidationError(f"{field_prefix}.context_envelope_identity must be a RecordIdentity")
+        raise ValidationError(
+            f"{field_prefix}.context_envelope_identity must be a RecordIdentity"
+        )
     if type(admission_attribution) is not ResolutionAttribution:
-        raise ValidationError(f"{field_prefix}.admission_attribution must be a ResolutionAttribution")
+        raise ValidationError(
+            f"{field_prefix}.admission_attribution must be a ResolutionAttribution"
+        )
 
     candidates = cast(
         tuple[CandidateResolution, ...],
@@ -525,16 +652,27 @@ class ResolvedIntent(_CanonicalResolutionRecord):
         object.__setattr__(
             self,
             "assumptions",
-            _normalize_record_tuple(self.assumptions, field="ResolvedIntent.assumptions", allowed=(AssumptionRecord,)),
+            _normalize_record_tuple(
+                self.assumptions,
+                field="ResolvedIntent.assumptions",
+                allowed=(AssumptionRecord,),
+            ),
         )
-        issues = _normalize_record_tuple(
-            self.unresolved_issues,
-            field="ResolvedIntent.unresolved_issues",
-            allowed=(ResolutionIssue,),
+        issues = cast(
+            tuple[ResolutionIssue, ...],
+            _normalize_record_tuple(
+                self.unresolved_issues,
+                field="ResolvedIntent.unresolved_issues",
+                allowed=(ResolutionIssue,),
+            ),
         )
         if any(issue.impact is ResolutionIssueImpact.BLOCKING for issue in issues):
-            raise ValidationError("ResolvedIntent cannot contain unresolved blocking issues")
-        if any(issue.kind is ResolutionIssueKind.MATERIAL_AMBIGUITY for issue in issues):
+            raise ValidationError(
+                "ResolvedIntent cannot contain unresolved blocking issues"
+            )
+        if any(
+            issue.kind is ResolutionIssueKind.MATERIAL_AMBIGUITY for issue in issues
+        ):
             raise ValidationError("ResolvedIntent cannot contain Material Ambiguity")
         object.__setattr__(self, "unresolved_issues", issues)
 
@@ -547,11 +685,13 @@ class ResolvedIntent(_CanonicalResolutionRecord):
             "intent_request_identity": self.intent_request_identity.to_primitive(),
             "schema": self.SCHEMA,
             "semantics": self.semantics,
-            "unresolved_issues": [item.to_primitive() for item in self.unresolved_issues],
+            "unresolved_issues": [
+                item.to_primitive() for item in self.unresolved_issues
+            ],
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ResolvedIntent":
+    def from_primitive(cls, value: object) -> ResolvedIntent:
         obj = _expect_object(value, field="ResolvedIntent")
         _expect_exact_keys(
             obj,
@@ -568,25 +708,48 @@ class ResolvedIntent(_CanonicalResolutionRecord):
             field="ResolvedIntent",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ResolvedIntent schema: {obj['schema']!r}")
-        assumptions = _expect_array(obj["assumptions"], field="ResolvedIntent.assumptions")
-        issues = _expect_array(obj["unresolved_issues"], field="ResolvedIntent.unresolved_issues")
-        candidate_inputs = _expect_array(obj["candidate_inputs"], field="ResolvedIntent.candidate_inputs")
+            raise SerializationError(
+                f"unsupported ResolvedIntent schema: {obj['schema']!r}"
+            )
+        assumptions = _expect_array(
+            obj["assumptions"], field="ResolvedIntent.assumptions"
+        )
+        issues = _expect_array(
+            obj["unresolved_issues"], field="ResolvedIntent.unresolved_issues"
+        )
+        candidate_inputs = _expect_array(
+            obj["candidate_inputs"], field="ResolvedIntent.candidate_inputs"
+        )
         try:
             return cls(
-                intent_request_identity=RecordIdentity.from_primitive(obj["intent_request_identity"], field="ResolvedIntent.intent_request_identity"),
-                context_envelope_identity=RecordIdentity.from_primitive(obj["context_envelope_identity"], field="ResolvedIntent.context_envelope_identity"),
-                admission_attribution=ResolutionAttribution.from_primitive(obj["admission_attribution"]),
+                intent_request_identity=RecordIdentity.from_primitive(
+                    obj["intent_request_identity"],
+                    field="ResolvedIntent.intent_request_identity",
+                ),
+                context_envelope_identity=RecordIdentity.from_primitive(
+                    obj["context_envelope_identity"],
+                    field="ResolvedIntent.context_envelope_identity",
+                ),
+                admission_attribution=ResolutionAttribution.from_primitive(
+                    obj["admission_attribution"]
+                ),
                 semantics=obj["semantics"],
-                assumptions=tuple(AssumptionRecord.from_primitive(item) for item in assumptions),
-                unresolved_issues=tuple(ResolutionIssue.from_primitive(item) for item in issues),
-                candidate_inputs=tuple(CandidateResolution.from_primitive(item) for item in candidate_inputs),
+                assumptions=tuple(
+                    AssumptionRecord.from_primitive(item) for item in assumptions
+                ),
+                unresolved_issues=tuple(
+                    ResolutionIssue.from_primitive(item) for item in issues
+                ),
+                candidate_inputs=tuple(
+                    CandidateResolution.from_primitive(item)
+                    for item in candidate_inputs
+                ),
             )
         except ValidationError as exc:
             raise SerializationError("invalid ResolvedIntent") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ResolvedIntent":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ResolvedIntent:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -615,15 +778,22 @@ class ClarificationNeed(_CanonicalResolutionRecord):
         object.__setattr__(self, "candidate_inputs", refs)
         _require_text(self.question, field="ClarificationNeed.question")
         _require_text(self.scope, field="ClarificationNeed.scope")
-        issues = _normalize_record_tuple(
-            self.blocking_issues,
-            field="ClarificationNeed.blocking_issues",
-            allowed=(ResolutionIssue,),
+        issues = cast(
+            tuple[ResolutionIssue, ...],
+            _normalize_record_tuple(
+                self.blocking_issues,
+                field="ClarificationNeed.blocking_issues",
+                allowed=(ResolutionIssue,),
+            ),
         )
         if not issues:
-            raise ValidationError("ClarificationNeed requires at least one blocking issue")
+            raise ValidationError(
+                "ClarificationNeed requires at least one blocking issue"
+            )
         if any(issue.impact is not ResolutionIssueImpact.BLOCKING for issue in issues):
-            raise ValidationError("ClarificationNeed.blocking_issues must all be blocking")
+            raise ValidationError(
+                "ClarificationNeed.blocking_issues must all be blocking"
+            )
         object.__setattr__(self, "blocking_issues", issues)
 
     def to_primitive(self) -> dict[str, object]:
@@ -639,7 +809,7 @@ class ClarificationNeed(_CanonicalResolutionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ClarificationNeed":
+    def from_primitive(cls, value: object) -> ClarificationNeed:
         obj = _expect_object(value, field="ClarificationNeed")
         _expect_exact_keys(
             obj,
@@ -656,24 +826,43 @@ class ClarificationNeed(_CanonicalResolutionRecord):
             field="ClarificationNeed",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ClarificationNeed schema: {obj['schema']!r}")
-        issues = _expect_array(obj["blocking_issues"], field="ClarificationNeed.blocking_issues")
-        candidate_inputs = _expect_array(obj["candidate_inputs"], field="ClarificationNeed.candidate_inputs")
+            raise SerializationError(
+                f"unsupported ClarificationNeed schema: {obj['schema']!r}"
+            )
+        issues = _expect_array(
+            obj["blocking_issues"], field="ClarificationNeed.blocking_issues"
+        )
+        candidate_inputs = _expect_array(
+            obj["candidate_inputs"], field="ClarificationNeed.candidate_inputs"
+        )
         try:
             return cls(
-                intent_request_identity=RecordIdentity.from_primitive(obj["intent_request_identity"], field="ClarificationNeed.intent_request_identity"),
-                context_envelope_identity=RecordIdentity.from_primitive(obj["context_envelope_identity"], field="ClarificationNeed.context_envelope_identity"),
-                admission_attribution=ResolutionAttribution.from_primitive(obj["admission_attribution"]),
+                intent_request_identity=RecordIdentity.from_primitive(
+                    obj["intent_request_identity"],
+                    field="ClarificationNeed.intent_request_identity",
+                ),
+                context_envelope_identity=RecordIdentity.from_primitive(
+                    obj["context_envelope_identity"],
+                    field="ClarificationNeed.context_envelope_identity",
+                ),
+                admission_attribution=ResolutionAttribution.from_primitive(
+                    obj["admission_attribution"]
+                ),
                 question=obj["question"],
                 scope=obj["scope"],
-                blocking_issues=tuple(ResolutionIssue.from_primitive(item) for item in issues),
-                candidate_inputs=tuple(CandidateResolution.from_primitive(item) for item in candidate_inputs),
+                blocking_issues=tuple(
+                    ResolutionIssue.from_primitive(item) for item in issues
+                ),
+                candidate_inputs=tuple(
+                    CandidateResolution.from_primitive(item)
+                    for item in candidate_inputs
+                ),
             )
         except ValidationError as exc:
             raise SerializationError("invalid ClarificationNeed") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ClarificationNeed":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ClarificationNeed:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -704,15 +893,22 @@ class InformationNeed(_CanonicalResolutionRecord):
         _require_text(self.description, field="InformationNeed.description")
         _require_text(self.scope, field="InformationNeed.scope")
         _require_text(self.reason, field="InformationNeed.reason")
-        issues = _normalize_record_tuple(
-            self.blocking_issues,
-            field="InformationNeed.blocking_issues",
-            allowed=(ResolutionIssue,),
+        issues = cast(
+            tuple[ResolutionIssue, ...],
+            _normalize_record_tuple(
+                self.blocking_issues,
+                field="InformationNeed.blocking_issues",
+                allowed=(ResolutionIssue,),
+            ),
         )
         if not issues:
-            raise ValidationError("InformationNeed requires at least one blocking issue")
+            raise ValidationError(
+                "InformationNeed requires at least one blocking issue"
+            )
         if any(issue.impact is not ResolutionIssueImpact.BLOCKING for issue in issues):
-            raise ValidationError("InformationNeed.blocking_issues must all be blocking")
+            raise ValidationError(
+                "InformationNeed.blocking_issues must all be blocking"
+            )
         object.__setattr__(self, "blocking_issues", issues)
 
     def to_primitive(self) -> dict[str, object]:
@@ -729,7 +925,7 @@ class InformationNeed(_CanonicalResolutionRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "InformationNeed":
+    def from_primitive(cls, value: object) -> InformationNeed:
         obj = _expect_object(value, field="InformationNeed")
         _expect_exact_keys(
             obj,
@@ -747,25 +943,44 @@ class InformationNeed(_CanonicalResolutionRecord):
             field="InformationNeed",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported InformationNeed schema: {obj['schema']!r}")
-        issues = _expect_array(obj["blocking_issues"], field="InformationNeed.blocking_issues")
-        candidate_inputs = _expect_array(obj["candidate_inputs"], field="InformationNeed.candidate_inputs")
+            raise SerializationError(
+                f"unsupported InformationNeed schema: {obj['schema']!r}"
+            )
+        issues = _expect_array(
+            obj["blocking_issues"], field="InformationNeed.blocking_issues"
+        )
+        candidate_inputs = _expect_array(
+            obj["candidate_inputs"], field="InformationNeed.candidate_inputs"
+        )
         try:
             return cls(
-                intent_request_identity=RecordIdentity.from_primitive(obj["intent_request_identity"], field="InformationNeed.intent_request_identity"),
-                context_envelope_identity=RecordIdentity.from_primitive(obj["context_envelope_identity"], field="InformationNeed.context_envelope_identity"),
-                admission_attribution=ResolutionAttribution.from_primitive(obj["admission_attribution"]),
+                intent_request_identity=RecordIdentity.from_primitive(
+                    obj["intent_request_identity"],
+                    field="InformationNeed.intent_request_identity",
+                ),
+                context_envelope_identity=RecordIdentity.from_primitive(
+                    obj["context_envelope_identity"],
+                    field="InformationNeed.context_envelope_identity",
+                ),
+                admission_attribution=ResolutionAttribution.from_primitive(
+                    obj["admission_attribution"]
+                ),
                 description=obj["description"],
                 scope=obj["scope"],
                 reason=obj["reason"],
-                blocking_issues=tuple(ResolutionIssue.from_primitive(item) for item in issues),
-                candidate_inputs=tuple(CandidateResolution.from_primitive(item) for item in candidate_inputs),
+                blocking_issues=tuple(
+                    ResolutionIssue.from_primitive(item) for item in issues
+                ),
+                candidate_inputs=tuple(
+                    CandidateResolution.from_primitive(item)
+                    for item in candidate_inputs
+                ),
             )
         except ValidationError as exc:
             raise SerializationError("invalid InformationNeed") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "InformationNeed":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> InformationNeed:
         return cls.from_primitive(parse_json_object(data))
 
 

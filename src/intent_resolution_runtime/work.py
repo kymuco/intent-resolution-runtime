@@ -11,7 +11,6 @@ from .errors import SerializationError, ValidationError
 from .identity import RecordIdentity, identity_for_bytes
 from .intent import StableRef
 
-
 _OPERATION_PATTERN = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$")
 
 
@@ -39,7 +38,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -64,7 +65,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -138,9 +141,11 @@ class WorkLiteralInput(_CanonicalWorkRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkLiteralInput"
-    ) -> "WorkLiteralInput":
+    ) -> WorkLiteralInput:
         obj = _expect_object(value, field=field)
-        _expect_exact_keys(obj, {"schema", "name", "semantic_type", "value"}, field=field)
+        _expect_exact_keys(
+            obj, {"schema", "name", "semantic_type", "value"}, field=field
+        )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
@@ -153,7 +158,7 @@ class WorkLiteralInput(_CanonicalWorkRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "WorkLiteralInput":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkLiteralInput:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -167,7 +172,9 @@ class WorkSymbolicInput(_CanonicalWorkRecord):
     def __post_init__(self) -> None:
         _require_token(self.name, field="WorkSymbolicInput.name")
         if type(self.reference) is not SymbolicReference:
-            raise ValidationError("WorkSymbolicInput.reference must be a SymbolicReference")
+            raise ValidationError(
+                "WorkSymbolicInput.reference must be a SymbolicReference"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -179,7 +186,7 @@ class WorkSymbolicInput(_CanonicalWorkRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkSymbolicInput"
-    ) -> "WorkSymbolicInput":
+    ) -> WorkSymbolicInput:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"schema", "name", "reference"}, field=field)
         if obj["schema"] != cls.SCHEMA:
@@ -193,7 +200,7 @@ class WorkSymbolicInput(_CanonicalWorkRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "WorkSymbolicInput":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkSymbolicInput:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -230,7 +237,7 @@ class WorkOutput(_CanonicalWorkRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "WorkOutput") -> "WorkOutput":
+    def from_primitive(cls, value: object, *, field: str = "WorkOutput") -> WorkOutput:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"schema", "name", "reference"}, field=field)
         if obj["schema"] != cls.SCHEMA:
@@ -244,7 +251,7 @@ class WorkOutput(_CanonicalWorkRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "WorkOutput":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkOutput:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -295,7 +302,9 @@ class WorkStep(_CanonicalWorkRecord):
 
     def __post_init__(self) -> None:
         if type(self.resolved_intent_identity) is not RecordIdentity:
-            raise ValidationError("WorkStep.resolved_intent_identity must be a RecordIdentity")
+            raise ValidationError(
+                "WorkStep.resolved_intent_identity must be a RecordIdentity"
+            )
         if type(self.work_plan_ref) is not StableRef:
             raise ValidationError("WorkStep.work_plan_ref must be a StableRef")
         if type(self.step_ref) is not StableRef:
@@ -320,18 +329,26 @@ class WorkStep(_CanonicalWorkRecord):
         if self.step_ref in self.depends_on:
             raise ValidationError("WorkStep cannot depend on itself")
         if type(self.continuation) is not WorkContinuationMode:
-            raise ValidationError("WorkStep.continuation must be a WorkContinuationMode")
+            raise ValidationError(
+                "WorkStep.continuation must be a WorkContinuationMode"
+            )
         _require_text(self.completion_contract, field="WorkStep.completion_contract")
         _require_text(self.description, field="WorkStep.description")
 
         for work_input in self.inputs:
-            if type(work_input) is WorkSymbolicInput:
-                if work_input.reference.resolved_intent_identity != self.resolved_intent_identity:
-                    raise ValidationError(
-                        "WorkStep symbolic inputs must belong to the same ResolvedIntent"
-                    )
+            if (
+                type(work_input) is WorkSymbolicInput
+                and work_input.reference.resolved_intent_identity
+                != self.resolved_intent_identity
+            ):
+                raise ValidationError(
+                    "WorkStep symbolic inputs must belong to the same ResolvedIntent"
+                )
         for output in self.outputs:
-            if output.reference.resolved_intent_identity != self.resolved_intent_identity:
+            if (
+                output.reference.resolved_intent_identity
+                != self.resolved_intent_identity
+            ):
                 raise ValidationError(
                     "WorkStep outputs must belong to the same ResolvedIntent"
                 )
@@ -353,7 +370,7 @@ class WorkStep(_CanonicalWorkRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "WorkStep") -> "WorkStep":
+    def from_primitive(cls, value: object, *, field: str = "WorkStep") -> WorkStep:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -394,7 +411,9 @@ class WorkStep(_CanonicalWorkRecord):
                 work_plan_ref=StableRef.from_primitive(
                     obj["work_plan_ref"], field=f"{field}.work_plan_ref"
                 ),
-                step_ref=StableRef.from_primitive(obj["step_ref"], field=f"{field}.step_ref"),
+                step_ref=StableRef.from_primitive(
+                    obj["step_ref"], field=f"{field}.step_ref"
+                ),
                 operation=obj["operation"],
                 scope=obj["scope"],
                 inputs=tuple(
@@ -417,7 +436,7 @@ class WorkStep(_CanonicalWorkRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "WorkStep":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkStep:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -425,7 +444,9 @@ def _topological_order(
     step_map: dict[StableRef, WorkStep],
 ) -> tuple[tuple[StableRef, ...], dict[StableRef, set[StableRef]]]:
     remaining = {step_ref: len(step.depends_on) for step_ref, step in step_map.items()}
-    dependents: dict[StableRef, set[StableRef]] = {step_ref: set() for step_ref in step_map}
+    dependents: dict[StableRef, set[StableRef]] = {
+        step_ref: set() for step_ref in step_map
+    }
     for step_ref, step in step_map.items():
         for dependency in step.depends_on:
             dependents[dependency].add(step_ref)
@@ -481,7 +502,9 @@ class WorkPlan(_CanonicalWorkRecord):
 
     def __post_init__(self) -> None:
         if type(self.resolved_intent_identity) is not RecordIdentity:
-            raise ValidationError("WorkPlan.resolved_intent_identity must be a RecordIdentity")
+            raise ValidationError(
+                "WorkPlan.resolved_intent_identity must be a RecordIdentity"
+            )
         if type(self.plan_ref) is not StableRef:
             raise ValidationError("WorkPlan.plan_ref must be a StableRef")
         if type(self.steps) is not tuple:
@@ -492,18 +515,29 @@ class WorkPlan(_CanonicalWorkRecord):
             raise ValidationError("WorkPlan.steps must contain WorkStep values")
 
         steps = cast(tuple[WorkStep, ...], self.steps)
-        if any(step.resolved_intent_identity != self.resolved_intent_identity for step in steps):
-            raise ValidationError("WorkPlan steps must belong to the same ResolvedIntent")
+        if any(
+            step.resolved_intent_identity != self.resolved_intent_identity
+            for step in steps
+        ):
+            raise ValidationError(
+                "WorkPlan steps must belong to the same ResolvedIntent"
+            )
         if any(step.work_plan_ref != self.plan_ref for step in steps):
             raise ValidationError("WorkPlan steps must belong to the same WorkPlan ref")
 
         refs = [step.step_ref for step in steps]
         if len(set(refs)) != len(refs):
-            raise ValidationError("WorkPlan.steps must not contain duplicate step_ref values")
+            raise ValidationError(
+                "WorkPlan.steps must not contain duplicate step_ref values"
+            )
 
         step_map = {step.step_ref: step for step in steps}
         for step in steps:
-            missing = [dependency for dependency in step.depends_on if dependency not in step_map]
+            missing = [
+                dependency
+                for dependency in step.depends_on
+                if dependency not in step_map
+            ]
             if missing:
                 raise ValidationError(
                     "WorkPlan dependency must reference another step in the same plan"
@@ -583,7 +617,7 @@ class WorkPlan(_CanonicalWorkRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "WorkPlan":
+    def from_primitive(cls, value: object) -> WorkPlan:
         obj = _expect_object(value, field="WorkPlan")
         _expect_exact_keys(
             obj,
@@ -606,7 +640,9 @@ class WorkPlan(_CanonicalWorkRecord):
                     obj["resolved_intent_identity"],
                     field="WorkPlan.resolved_intent_identity",
                 ),
-                plan_ref=StableRef.from_primitive(obj["plan_ref"], field="WorkPlan.plan_ref"),
+                plan_ref=StableRef.from_primitive(
+                    obj["plan_ref"], field="WorkPlan.plan_ref"
+                ),
                 steps=tuple(
                     WorkStep.from_primitive(item, field=f"WorkPlan.steps[{index}]")
                     for index, item in enumerate(steps)
@@ -618,5 +654,5 @@ class WorkPlan(_CanonicalWorkRecord):
             raise SerializationError("invalid WorkPlan") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "WorkPlan":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkPlan:
         return cls.from_primitive(parse_json_object(data))

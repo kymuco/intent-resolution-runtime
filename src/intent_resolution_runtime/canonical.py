@@ -33,7 +33,9 @@ def parse_json_object(data: bytes | bytearray | memoryview) -> dict[str, Any]:
     try:
         text = bytes(data).decode("utf-8")
     except (TypeError, UnicodeDecodeError) as exc:
-        raise SerializationError("canonical JSON input must be valid UTF-8 bytes") from exc
+        raise SerializationError(
+            "canonical JSON input must be valid UTF-8 bytes"
+        ) from exc
     try:
         value = json.loads(
             text,
@@ -75,9 +77,14 @@ def _encode_value(value: object) -> str:
             raise SerializationError("canonical object keys must be strings")
         for key in keys:
             _require_unicode_scalars(key, field="canonical object key")
-        return "{" + ",".join(
-            f"{_encode_string(key)}:{_encode_value(value[key])}" for key in sorted(keys)
-        ) + "}"
+        return (
+            "{"
+            + ",".join(
+                f"{_encode_string(key)}:{_encode_value(value[key])}"
+                for key in sorted(keys)
+            )
+            + "}"
+        )
     if isinstance(value, (list, tuple)):
         return "[" + ",".join(_encode_value(item) for item in value) + "]"
     raise SerializationError(

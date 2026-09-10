@@ -25,7 +25,6 @@ from intent_resolution_runtime import (
     WorkerResultAttribution,
 )
 
-
 REQUEST_IDENTITY = RecordIdentity("sha256", "1" * 64)
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 CG242_EVIDENCE_IDENTITY = RecordIdentity("sha256", "3" * 64)
@@ -99,7 +98,9 @@ def _delegated(predecessor: ResolvedIntent) -> DelegatedWork:
                 statement="External evidence acquisition is outside this delegation.",
             ),
             DelegationConstraint(
-                constraint_ref=_ref("irr.delegation_constraint", "no-repository-mutation"),
+                constraint_ref=_ref(
+                    "irr.delegation_constraint", "no-repository-mutation"
+                ),
                 kind=DelegationConstraintKind.FORBIDDEN_EFFECT,
                 statement="Repository mutation is outside this delegation.",
             ),
@@ -216,7 +217,9 @@ def _all_keys(value: object) -> set[str]:
     return keys
 
 
-def test_scenario_c_worker_escalation_returns_need_without_widening_old_delegation() -> None:
+def test_scenario_c_worker_escalation_returns_need_without_widening_old_delegation() -> (
+    None
+):
     predecessor, result, continuation, _, lineage = _lineage()
     delegated = result.handoff.delegated_work
     original_identity = delegated.identity
@@ -238,7 +241,9 @@ def test_scenario_c_worker_escalation_returns_need_without_widening_old_delegati
     assert "Repository mutation is outside this delegation." in statements
 
 
-def test_scenario_c_authorization_cannot_be_smuggled_in_as_worker_need_or_continuation() -> None:
+def test_scenario_c_authorization_cannot_be_smuggled_in_as_worker_need_or_continuation() -> (
+    None
+):
     _, result, continuation, successor, lineage = _lineage()
 
     for record in (result, continuation, successor, lineage):
@@ -250,7 +255,9 @@ def test_scenario_c_authorization_cannot_be_smuggled_in_as_worker_need_or_contin
         assert "parent_complete" not in keys
 
 
-def test_scenario_c_successor_resolution_is_new_semantics_not_old_envelope_mutation() -> None:
+def test_scenario_c_successor_resolution_is_new_semantics_not_old_envelope_mutation() -> (
+    None
+):
     predecessor, result, continuation, successor, lineage = _lineage()
     delegated = result.handoff.delegated_work
 
@@ -272,7 +279,9 @@ def test_scenario_c_successor_resolution_is_new_semantics_not_old_envelope_mutat
     assert continuation.source_identity == result.identity
 
 
-def test_scenario_c_worker_result_and_continuation_round_trip_preserve_lineage() -> None:
+def test_scenario_c_worker_result_and_continuation_round_trip_preserve_lineage() -> (
+    None
+):
     _, result, continuation, _, _ = _lineage()
 
     decoded_result = WorkerResult.from_json_bytes(result.canonical_bytes())

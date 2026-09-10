@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 DOC = (
     Path(__file__).resolve().parents[1]
     / "docs"
@@ -17,4 +16,6 @@ def test_work_disposition_doc_matches_runtime_equivalence_contract() -> None:
     assert "→ still ADMISSION_REQUIRED" in text
 
     assert "`rationale` all participate in the equivalence signature" not in text
-    assert "same exact WorkPlan + different rationale\n→ ADJUDICATION_REQUIRED" not in text
+    assert (
+        "same exact WorkPlan + different rationale\n→ ADJUDICATION_REQUIRED" not in text
+    )

@@ -176,7 +176,9 @@ def _information_admitter(
     )
 
 
-def test_no_resolution_material_yields_explicit_input_requirement_without_provider_call() -> None:
+def test_no_resolution_material_yields_explicit_input_requirement_without_provider_call() -> (
+    None
+):
     request = _request()
     context = _context(request)
 
@@ -250,7 +252,9 @@ def test_one_provider_candidate_is_not_automatically_admitted() -> None:
     assert frontier.resolution_output is None
 
 
-def test_explicit_irr_admitter_can_admit_candidate_without_becoming_provider_authority() -> None:
+def test_explicit_irr_admitter_can_admit_candidate_without_becoming_provider_authority() -> (
+    None
+):
     request = _request()
     context = _context(request)
     candidate = _candidate(request, context)
@@ -286,7 +290,9 @@ def test_deterministic_irr_path_can_resolve_without_provider_candidate() -> None
     assert frontier.resolution_output.candidate_inputs == ()
 
 
-def test_equivalent_provider_candidates_require_admission_but_not_provider_precedence() -> None:
+def test_equivalent_provider_candidates_require_admission_but_not_provider_precedence() -> (
+    None
+):
     request = _request()
     context = _context(request)
     first = _candidate(request, context, provider="provider-a", invocation="inv-a")
@@ -335,7 +341,9 @@ def test_equivalent_candidates_can_be_admitted_with_all_exact_provenance() -> No
     assert set(a.resolution_output.candidate_inputs) == {first, second}
 
 
-def test_semantically_distinct_candidates_require_adjudication_without_ranking() -> None:
+def test_semantically_distinct_candidates_require_adjudication_without_ranking() -> (
+    None
+):
     request = _request()
     context = _context(request)
     first = _candidate(
@@ -405,7 +413,9 @@ def test_candidate_majority_does_not_become_semantic_authority() -> None:
     assert frontier.resolution_output is None
 
 
-def test_explicit_admitter_can_adjudicate_distinct_candidates_only_with_full_provenance() -> None:
+def test_explicit_admitter_can_adjudicate_distinct_candidates_only_with_full_provenance() -> (
+    None
+):
     request = _request()
     context = _context(request)
     first = _candidate(
@@ -538,7 +548,9 @@ def test_admission_attribution_requires_explicit_admitter() -> None:
     context = _context(request)
     candidate = _candidate(request, context)
 
-    with pytest.raises(ValidationError, match="without an explicit initial-resolution admitter"):
+    with pytest.raises(
+        ValidationError, match="without an explicit initial-resolution admitter"
+    ):
         orchestrate_initial_resolution(
             request,
             context,
@@ -551,7 +563,9 @@ def test_admitter_requires_explicit_irr_admission_occurrence() -> None:
     request = _request()
     context = _context(request)
 
-    with pytest.raises(ValidationError, match="requires explicit ResolutionAttribution"):
+    with pytest.raises(
+        ValidationError, match="requires explicit ResolutionAttribution"
+    ):
         orchestrate_initial_resolution(
             request,
             context,
@@ -608,7 +622,9 @@ def test_admitter_cannot_erase_or_invent_candidate_provenance() -> None:
             candidate_inputs=(candidates[0],),
         )
 
-    with pytest.raises(ValidationError, match="complete exact supplied candidate provenance"):
+    with pytest.raises(
+        ValidationError, match="complete exact supplied candidate provenance"
+    ):
         orchestrate_initial_resolution(
             request,
             context,
@@ -641,7 +657,9 @@ def test_existing_admitted_output_is_reused_without_new_admission_transition() -
     assert frontier.resolution_output is output
     assert frontier.resolution_output.admission_attribution == _admission("historical")
 
-    with pytest.raises(ValidationError, match="cannot be combined with a new admission transition"):
+    with pytest.raises(
+        ValidationError, match="cannot be combined with a new admission transition"
+    ):
         orchestrate_initial_resolution(
             request,
             context,

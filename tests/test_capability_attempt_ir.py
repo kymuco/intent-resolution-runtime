@@ -48,7 +48,6 @@ from intent_resolution_runtime import (
     WorkSymbolicInput,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 SOURCE_ID = RecordIdentity("sha256", "4" * 64)
 AUTHORITY_CONTEXT_ID = RecordIdentity("sha256", "5" * 64)
@@ -360,7 +359,9 @@ def test_attempt_rejects_foreign_work_proposal_step() -> None:
 
 def test_attempt_occurrence_must_differ_from_evaluation_occurrence() -> None:
     attempt, _, _, _, _ = _fixture()
-    with pytest.raises(ValidationError, match="differ from CapabilityMatchEvaluation occurrence"):
+    with pytest.raises(
+        ValidationError, match="differ from CapabilityMatchEvaluation occurrence"
+    ):
         replace(
             attempt,
             attribution=CapabilityAttemptAttribution(
@@ -481,9 +482,11 @@ def test_attempt_attribution_round_trip_preserves_occurrence() -> None:
 
 def test_attempt_public_ir_types_are_closed() -> None:
     with pytest.raises(TypeError, match="closed IR type"):
+
         class _BadAttempt(CapabilityAttempt):
             pass
 
     with pytest.raises(TypeError, match="closed IR type"):
+
         class _BadBoundInput(AttemptBoundInput):
             pass

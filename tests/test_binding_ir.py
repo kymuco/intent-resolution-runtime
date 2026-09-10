@@ -5,9 +5,9 @@ from dataclasses import FrozenInstanceError
 import pytest
 
 from intent_resolution_runtime import (
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingConstraint,
     BindingConstraintOperator,
     BindingInput,
@@ -46,7 +46,9 @@ def _ref(namespace: str, value: str) -> StableRef:
     return StableRef(namespace=namespace, value=value)
 
 
-def _attribution(event: str, *, source_ref: StableRef = SOURCE_REF) -> SourceAttribution:
+def _attribution(
+    event: str, *, source_ref: StableRef = SOURCE_REF
+) -> SourceAttribution:
     return SourceAttribution(
         source_ref=source_ref,
         source_event_ref=_ref("host.event", event),
@@ -240,15 +242,17 @@ def test_extremum_policy_freezes_selector_kind_before_input_arrives() -> None:
 
 def test_newest_timestamp_binds_unique_winner_and_retains_full_input_set() -> None:
     inputs = _inputs()
-    result = evaluate_binding(_rule(), tuple(reversed(inputs)), attribution=_binding_attribution())
+    result = evaluate_binding(
+        _rule(), tuple(reversed(inputs)), attribution=_binding_attribution()
+    )
     assert type(result) is BoundValue
     assert result.value == r"D:\Backups\backup-b.zip"
     assert result.selection_scope == SELECTION_SCOPE
     assert result.value_scope == r"D:\Backups\backup-b.zip"
     assert result.selected_input_identity == inputs[1].identity
-    assert set(item.identity for item in result.binding_inputs) == set(
+    assert {item.identity for item in result.binding_inputs} == {
         item.identity for item in inputs
-    )
+    }
     assert BoundValue.from_json_bytes(result.canonical_bytes()) == result
 
 
@@ -434,7 +438,9 @@ def test_missing_material_completeness_provenance_blocks_binding() -> None:
         mtime="2026-08-30T10:00:00+06:00",
         completeness=(),
     )
-    result = evaluate_binding(_rule(), (incomplete,), attribution=_binding_attribution())
+    result = evaluate_binding(
+        _rule(), (incomplete,), attribution=_binding_attribution()
+    )
     assert type(result) is BindingIssue
     assert result.kind is BindingIssueKind.MISSING_REQUIRED_DATA
 
@@ -478,7 +484,9 @@ def test_missing_material_completeness_provenance_blocks_binding() -> None:
 def test_structurally_plausible_but_semantically_incompatible_input_is_rejected(
     input_value: BindingInput,
 ) -> None:
-    result = evaluate_binding(_rule(), (input_value,), attribution=_binding_attribution())
+    result = evaluate_binding(
+        _rule(), (input_value,), attribution=_binding_attribution()
+    )
     assert type(result) is BindingIssue
     assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
 
@@ -503,7 +511,9 @@ def test_different_value_scope_is_not_selection_scope_incompatibility() -> None:
         mtime="2026-08-30T10:00:00+06:00",
         value_scope="artifact:backup-a@digest-123",
     )
-    result = evaluate_binding(_rule(), (input_value,), attribution=_binding_attribution())
+    result = evaluate_binding(
+        _rule(), (input_value,), attribution=_binding_attribution()
+    )
     assert type(result) is BoundValue
     assert result.value_scope == "artifact:backup-a@digest-123"
 
@@ -530,12 +540,16 @@ def test_selector_kind_is_rule_semantics_not_input_discretion() -> None:
         completeness_refs=(COMPLETE,),
         evidence_refs=(EVIDENCE,),
     )
-    result = evaluate_binding(_rule(), (wrong_kind,), attribution=_binding_attribution())
+    result = evaluate_binding(
+        _rule(), (wrong_kind,), attribution=_binding_attribution()
+    )
     assert type(result) is BindingIssue
     assert result.kind is BindingIssueKind.INCOMPATIBLE_INPUT
 
 
-def test_constraint_attribute_wrong_semantic_kind_is_incompatible_not_zero_match() -> None:
+def test_constraint_attribute_wrong_semantic_kind_is_incompatible_not_zero_match() -> (
+    None
+):
     constraint = BindingConstraint(
         attribute_name="name",
         operator=BindingConstraintOperator.EQUALS,

@@ -25,7 +25,9 @@ def _expect_object(value: object, *, field: str) -> dict[str, Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -90,7 +92,7 @@ class ContinuationInputAttribution(_CanonicalContinuationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "ContinuationInputAttribution"
-    ) -> "ContinuationInputAttribution":
+    ) -> ContinuationInputAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "submitter_ref", "reentry_event_ref"}, field=field
@@ -112,7 +114,7 @@ class ContinuationInputAttribution(_CanonicalContinuationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "ContinuationInputAttribution":
+    ) -> ContinuationInputAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -163,7 +165,7 @@ class GovernanceContinuationMaterial(_CanonicalContinuationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "GovernanceContinuationMaterial"
-    ) -> "GovernanceContinuationMaterial":
+    ) -> GovernanceContinuationMaterial:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"schema", "decision", "component_ref"}, field=field)
         if obj["schema"] != cls.SCHEMA:
@@ -183,7 +185,7 @@ class GovernanceContinuationMaterial(_CanonicalContinuationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "GovernanceContinuationMaterial":
+    ) -> GovernanceContinuationMaterial:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -210,7 +212,9 @@ def _source_kind(source: ContinuationSource) -> ContinuationSourceKind:
             return ContinuationSourceKind.GOVERNANCE_CONSTRAINT
         if source.component.kind is GovernanceDecisionKind.REQUIRE_REVIEW:
             return ContinuationSourceKind.GOVERNANCE_REQUIRE_REVIEW
-        raise AssertionError("validated GovernanceContinuationMaterial lost its admitted kind")
+        raise AssertionError(
+            "validated GovernanceContinuationMaterial lost its admitted kind"
+        )
     raise ValidationError("ContinuationInput.source has unsupported IR type")
 
 
@@ -230,9 +234,7 @@ def _source_event_ref(source: ContinuationSource) -> StableRef:
 
 def _resolved_intent_identity(source: ContinuationSource) -> RecordIdentity:
     if type(source) is CapabilityOutcome:
-        return (
-            source.attempt.capability_evaluation.requirement.work_plan.resolved_intent_identity
-        )
+        return source.attempt.capability_evaluation.requirement.work_plan.resolved_intent_identity
     if type(source) is WorkerResult:
         return source.handoff.delegated_work.resolved_intent_identity
     if type(source) is BindingIssue:
@@ -315,7 +317,7 @@ class ContinuationInput(_CanonicalContinuationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "ContinuationInput"
-    ) -> "ContinuationInput":
+    ) -> ContinuationInput:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "attribution", "source_kind", "source"}, field=field
@@ -340,7 +342,5 @@ class ContinuationInput(_CanonicalContinuationRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "ContinuationInput":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ContinuationInput:
         return cls.from_primitive(parse_json_object(data))

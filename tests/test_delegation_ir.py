@@ -18,7 +18,6 @@ from intent_resolution_runtime import (
     ValidationError,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 WORK_PLAN = RecordIdentity("sha256", "2" * 64)
 OTHER_WORK_PLAN = RecordIdentity("sha256", "3" * 64)
@@ -105,8 +104,13 @@ def _delegated_work(
     )
     constraints = (
         (
-            _constraint("no-external-disclosure", DelegationConstraintKind.FORBIDDEN_EFFECT),
-            _constraint("review-required-before-mutation", DelegationConstraintKind.AUTHORITY_REQUIREMENT),
+            _constraint(
+                "no-external-disclosure", DelegationConstraintKind.FORBIDDEN_EFFECT
+            ),
+            _constraint(
+                "review-required-before-mutation",
+                DelegationConstraintKind.AUTHORITY_REQUIREMENT,
+            ),
         )
         if constraints is None
         else constraints
@@ -222,11 +226,15 @@ def test_delegated_work_requires_at_least_one_scope_and_deliverable() -> None:
         )
 
     project = _scope("project")
-    with pytest.raises(ValidationError, match="expected_deliverables must not be empty"):
+    with pytest.raises(
+        ValidationError, match="expected_deliverables must not be empty"
+    ):
         _delegated_work(scopes=(project,), expected_deliverables=())
 
 
-def test_allowed_capabilities_are_exact_contract_ceiling_not_unrestricted_default() -> None:
+def test_allowed_capabilities_are_exact_contract_ceiling_not_unrestricted_default() -> (
+    None
+):
     delegated = _delegated_work(allowed_capabilities=())
     assert delegated.allowed_capabilities == ()
     assert "allowed_capabilities" in delegated.to_primitive()
@@ -239,7 +247,9 @@ def test_capability_allowance_identity_and_scope_are_material() -> None:
     assert first.identity != changed_contract.identity
 
     delegated_first = _delegated_work(scopes=(project,), allowed_capabilities=(first,))
-    delegated_changed = _delegated_work(scopes=(project,), allowed_capabilities=(changed_contract,))
+    delegated_changed = _delegated_work(
+        scopes=(project,), allowed_capabilities=(changed_contract,)
+    )
     assert delegated_first.identity != delegated_changed.identity
 
 
@@ -251,7 +261,9 @@ def test_capability_allowance_must_reference_admitted_scope() -> None:
         _delegated_work(scopes=(project,), allowed_capabilities=(allowance,))
 
 
-def test_duplicate_scope_context_capability_constraint_and_deliverable_refs_fail_closed() -> None:
+def test_duplicate_scope_context_capability_constraint_and_deliverable_refs_fail_closed() -> (
+    None
+):
     project = _scope("project")
     duplicate_scope = DelegatedScope(
         scope_ref=project.scope_ref,
@@ -282,7 +294,9 @@ def test_duplicate_scope_context_capability_constraint_and_deliverable_refs_fail
         description="Duplicate allowance ref.",
     )
     with pytest.raises(ValidationError, match="duplicate allowance_ref"):
-        _delegated_work(scopes=(project,), allowed_capabilities=(capability, duplicate_allowance))
+        _delegated_work(
+            scopes=(project,), allowed_capabilities=(capability, duplicate_allowance)
+        )
 
     same_capability_other_allowance = DelegatedCapabilityAllowance(
         allowance_ref=_ref("irr.delegated_capability_allowance", "second"),
@@ -292,7 +306,10 @@ def test_duplicate_scope_context_capability_constraint_and_deliverable_refs_fail
         description="Same logical capability with conflicting contract identity.",
     )
     with pytest.raises(ValidationError, match="duplicate capability_ref"):
-        _delegated_work(scopes=(project,), allowed_capabilities=(capability, same_capability_other_allowance))
+        _delegated_work(
+            scopes=(project,),
+            allowed_capabilities=(capability, same_capability_other_allowance),
+        )
 
     constraint = _constraint("no-network", DelegationConstraintKind.FORBIDDEN_EFFECT)
     duplicate_constraint = DelegationConstraint(
@@ -301,7 +318,9 @@ def test_duplicate_scope_context_capability_constraint_and_deliverable_refs_fail
         statement="Different statement under the same ref.",
     )
     with pytest.raises(ValidationError, match="duplicate constraint_ref"):
-        _delegated_work(scopes=(project,), constraints=(constraint, duplicate_constraint))
+        _delegated_work(
+            scopes=(project,), constraints=(constraint, duplicate_constraint)
+        )
 
     deliverable = _deliverable("report", project.scope_ref)
     duplicate_deliverable = ExpectedDeliverable(
@@ -311,13 +330,20 @@ def test_duplicate_scope_context_capability_constraint_and_deliverable_refs_fail
         description="Duplicate deliverable ref.",
     )
     with pytest.raises(ValidationError, match="duplicate deliverable_ref"):
-        _delegated_work(scopes=(project,), expected_deliverables=(deliverable, duplicate_deliverable))
+        _delegated_work(
+            scopes=(project,),
+            expected_deliverables=(deliverable, duplicate_deliverable),
+        )
 
 
-def test_constraint_kinds_keep_forbidden_effect_and_authority_requirement_distinct() -> None:
+def test_constraint_kinds_keep_forbidden_effect_and_authority_requirement_distinct() -> (
+    None
+):
     project = _scope("project")
     forbidden = _constraint("no-mutation", DelegationConstraintKind.FORBIDDEN_EFFECT)
-    authority = _constraint("mutation-needs-review", DelegationConstraintKind.AUTHORITY_REQUIREMENT)
+    authority = _constraint(
+        "mutation-needs-review", DelegationConstraintKind.AUTHORITY_REQUIREMENT
+    )
     delegated = _delegated_work(scopes=(project,), constraints=(authority, forbidden))
     kinds = {item.kind for item in delegated.constraints}
     assert kinds == {
@@ -338,7 +364,9 @@ def test_context_reference_preserves_source_identity_lineage() -> None:
         description="Selected evidence with preserved source identities.",
     )
     assert context.source_identity_refs == (source_a, source_b)
-    assert DelegatedContextReference.from_json_bytes(context.canonical_bytes()) == context
+    assert (
+        DelegatedContextReference.from_json_bytes(context.canonical_bytes()) == context
+    )
 
 
 def test_handoff_is_attributable_and_embeds_exact_delegated_work() -> None:
@@ -350,7 +378,9 @@ def test_handoff_is_attributable_and_embeds_exact_delegated_work() -> None:
     assert DelegatedWorkHandoff.from_json_bytes(handoff.canonical_bytes()) == handoff
 
 
-def test_worker_substitution_changes_handoff_identity_without_rewriting_delegated_work() -> None:
+def test_worker_substitution_changes_handoff_identity_without_rewriting_delegated_work() -> (
+    None
+):
     delegated = _delegated_work()
     first = _handoff(delegated, worker="research-worker-v1")
     second = _handoff(delegated, worker="research-worker-v2")
@@ -363,13 +393,25 @@ def test_delegated_work_handoff_has_no_authorization_surface() -> None:
 
     def walk_keys(value: object) -> list[str]:
         if isinstance(value, dict):
-            return list(value) + [key for child in value.values() for key in walk_keys(child)]
+            return list(value) + [
+                key for child in value.values() for key in walk_keys(child)
+            ]
         if isinstance(value, list):
             return [key for child in value for key in walk_keys(child)]
         return []
 
     keys = set(walk_keys(primitive))
-    assert not {"authorized", "authorization", "approved", "permission", "permission_granted", "safe"} & keys
+    assert (
+        not {
+            "authorized",
+            "authorization",
+            "approved",
+            "permission",
+            "permission_granted",
+            "safe",
+        }
+        & keys
+    )
 
 
 def test_unknown_wire_fields_fail_closed() -> None:
@@ -388,9 +430,11 @@ def test_unknown_wire_fields_fail_closed() -> None:
 
 def test_public_delegation_records_are_closed_ir_types() -> None:
     with pytest.raises(TypeError, match="closed IR type"):
+
         class InvalidDelegatedWork(DelegatedWork):
             pass
 
     with pytest.raises(TypeError, match="closed IR type"):
+
         class InvalidHandoff(DelegatedWorkHandoff):
             pass

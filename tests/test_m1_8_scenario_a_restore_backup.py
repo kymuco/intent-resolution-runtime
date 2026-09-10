@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from intent_resolution_runtime import (
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingIssue,
@@ -413,7 +413,11 @@ def _evaluation(
         snapshot,
         descriptor.capability_ref,
         descriptor.identity,
-        (CapabilityScopeMatch(requested_scope.scope_ref, offered_scope.requirement_ref),),
+        (
+            CapabilityScopeMatch(
+                requested_scope.scope_ref, offered_scope.requirement_ref
+            ),
+        ),
         tuple(
             CapabilityInputMatch(
                 item.name,
@@ -478,7 +482,9 @@ def _fixture() -> dict[str, object]:
         _descriptor(step) for step in restore_steps.values()
     )
     snapshot = _catalog(*descriptors)
-    by_operation = {descriptor.operation: descriptor for descriptor in snapshot.descriptors}
+    by_operation = {
+        descriptor.operation: descriptor for descriptor in snapshot.descriptors
+    }
     candidates = (
         _candidate(
             resolved,
@@ -563,10 +569,13 @@ def test_scenario_a_separates_source_contract_capability_and_occurrence() -> Non
         "workspace.inspect",
         "process.launch",
     }
-    assert {descriptor.operation for descriptor in snapshot.descriptors} == set(_EFFECTS)
+    assert {descriptor.operation for descriptor in snapshot.descriptors} == set(
+        _EFFECTS
+    )
     for evaluation in fixture["evaluations"].values():
-        assert evaluate_capability_match_evaluation(evaluation) == (
-            evaluation.compatible_matches[0]
+        assert (
+            evaluate_capability_match_evaluation(evaluation)
+            == (evaluation.compatible_matches[0])
         )
 
 

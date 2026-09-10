@@ -35,7 +35,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -51,7 +53,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -128,7 +132,7 @@ class GovernanceDecisionAttribution(_CanonicalGovernanceRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "GovernanceDecisionAttribution"
-    ) -> "GovernanceDecisionAttribution":
+    ) -> GovernanceDecisionAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -165,7 +169,7 @@ class GovernanceDecisionAttribution(_CanonicalGovernanceRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "GovernanceDecisionAttribution":
+    ) -> GovernanceDecisionAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -180,7 +184,9 @@ class GovernanceDirective(_CanonicalGovernanceRecord):
 
     def __post_init__(self) -> None:
         if type(self.directive_ref) is not StableRef:
-            raise ValidationError("GovernanceDirective.directive_ref must be a StableRef")
+            raise ValidationError(
+                "GovernanceDirective.directive_ref must be a StableRef"
+            )
         _require_token(self.semantic_type, field="GovernanceDirective.semantic_type")
         _require_text(self.scope, field="GovernanceDirective.scope")
         _require_text(self.statement, field="GovernanceDirective.statement")
@@ -197,7 +203,7 @@ class GovernanceDirective(_CanonicalGovernanceRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "GovernanceDirective"
-    ) -> "GovernanceDirective":
+    ) -> GovernanceDirective:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -221,7 +227,7 @@ class GovernanceDirective(_CanonicalGovernanceRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "GovernanceDirective":
+    ) -> GovernanceDirective:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -248,7 +254,9 @@ def _normalize_directives(
     items = cast(tuple[GovernanceDirective, ...], value)
     refs = [item.directive_ref for item in items]
     if len(set(refs)) != len(refs):
-        raise ValidationError(f"{field} must not contain duplicate directive_ref values")
+        raise ValidationError(
+            f"{field} must not contain duplicate directive_ref values"
+        )
     return tuple(sorted(items, key=lambda item: _ref_key(item.directive_ref)))
 
 
@@ -281,10 +289,14 @@ class GovernanceDecisionComponent(_CanonicalGovernanceRecord):
         directives = _normalize_directives(
             self.directives, field="GovernanceDecisionComponent.directives"
         )
-        if self.kind in (
-            GovernanceDecisionKind.CONSTRAIN,
-            GovernanceDecisionKind.REQUIRE_REVIEW,
-        ) and not directives:
+        if (
+            self.kind
+            in (
+                GovernanceDecisionKind.CONSTRAIN,
+                GovernanceDecisionKind.REQUIRE_REVIEW,
+            )
+            and not directives
+        ):
             raise ValidationError(
                 "constrain and require_review components must contain at least one directive"
             )
@@ -308,7 +320,7 @@ class GovernanceDecisionComponent(_CanonicalGovernanceRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "GovernanceDecisionComponent"
-    ) -> "GovernanceDecisionComponent":
+    ) -> GovernanceDecisionComponent:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -332,9 +344,7 @@ class GovernanceDecisionComponent(_CanonicalGovernanceRecord):
                 ),
                 kind=kind,
                 step_refs=tuple(
-                    StableRef.from_primitive(
-                        item, field=f"{field}.step_refs[{index}]"
-                    )
+                    StableRef.from_primitive(item, field=f"{field}.step_refs[{index}]")
                     for index, item in enumerate(step_refs)
                 ),
                 directives=tuple(
@@ -351,7 +361,7 @@ class GovernanceDecisionComponent(_CanonicalGovernanceRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "GovernanceDecisionComponent":
+    ) -> GovernanceDecisionComponent:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -363,11 +373,15 @@ def _normalize_components(
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if not all(type(item) is GovernanceDecisionComponent for item in value):
-        raise ValidationError(f"{field} must contain GovernanceDecisionComponent values")
+        raise ValidationError(
+            f"{field} must contain GovernanceDecisionComponent values"
+        )
     items = cast(tuple[GovernanceDecisionComponent, ...], value)
     refs = [item.component_ref for item in items]
     if len(set(refs)) != len(refs):
-        raise ValidationError(f"{field} must not contain duplicate component_ref values")
+        raise ValidationError(
+            f"{field} must not contain duplicate component_ref values"
+        )
     return tuple(sorted(items, key=lambda item: _ref_key(item.component_ref)))
 
 
@@ -427,7 +441,7 @@ class GovernanceDecision(_CanonicalGovernanceRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "GovernanceDecision"
-    ) -> "GovernanceDecision":
+    ) -> GovernanceDecision:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -459,7 +473,7 @@ class GovernanceDecision(_CanonicalGovernanceRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "GovernanceDecision":
+    ) -> GovernanceDecision:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -482,7 +496,10 @@ class Authorization(_CanonicalGovernanceRecord):
             raise ValidationError(
                 "Authorization.component_ref must identify a component of the exact GovernanceDecision"
             )
-        if component_map[self.component_ref].kind is not GovernanceDecisionKind.AUTHORIZE:
+        if (
+            component_map[self.component_ref].kind
+            is not GovernanceDecisionKind.AUTHORIZE
+        ):
             raise ValidationError(
                 "Authorization may materialize only an authorize GovernanceDecision component"
             )
@@ -512,7 +529,7 @@ class Authorization(_CanonicalGovernanceRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "Authorization"
-    ) -> "Authorization":
+    ) -> Authorization:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -534,7 +551,5 @@ class Authorization(_CanonicalGovernanceRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "Authorization":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> Authorization:
         return cls.from_primitive(parse_json_object(data))
