@@ -25,6 +25,8 @@ def _require_record_type(value: object, *, field: str) -> str:
         raise ValidationError(f"{field} must be a string")
     if not value or value != value.strip():
         raise ValidationError(f"{field} must be a non-empty trimmed string")
+    if not value.startswith("irr."):
+        raise ValidationError(f"{field} must use the irr.* record namespace")
     return value
 
 
@@ -128,7 +130,10 @@ class HistoryQuery:
             )
         if self.record_type is not None:
             _require_record_type(self.record_type, field="HistoryQuery.record_type")
-        if self.after_identity is not None and type(self.after_identity) is not RecordIdentity:
+        if (
+            self.after_identity is not None
+            and type(self.after_identity) is not RecordIdentity
+        ):
             raise ValidationError(
                 "HistoryQuery.after_identity must be a RecordIdentity or None"
             )
