@@ -90,7 +90,9 @@ class HistoryRecord:
         try:
             raw = bytes(data)
         except (TypeError, ValueError) as exc:
-            raise HistoryIntegrityError("history record input must be bytes-like") from exc
+            raise HistoryIntegrityError(
+                "history record input must be bytes-like"
+            ) from exc
         if not raw:
             raise HistoryIntegrityError("history record bytes must not be empty")
         try:
@@ -150,13 +152,18 @@ class HistoryPage:
         if type(self.records) is not tuple or not all(
             type(record) is HistoryRecord for record in self.records
         ):
-            raise ValidationError("HistoryPage.records must contain HistoryRecord values")
+            raise ValidationError(
+                "HistoryPage.records must contain HistoryRecord values"
+            )
         identities = [record.identity for record in self.records]
         if len(set(identities)) != len(identities):
-            raise ValidationError("HistoryPage.records must not contain duplicate identities")
-        if self.next_after_identity is not None and type(
-            self.next_after_identity
-        ) is not RecordIdentity:
+            raise ValidationError(
+                "HistoryPage.records must not contain duplicate identities"
+            )
+        if (
+            self.next_after_identity is not None
+            and type(self.next_after_identity) is not RecordIdentity
+        ):
             raise ValidationError(
                 "HistoryPage.next_after_identity must be a RecordIdentity or None"
             )
