@@ -4,24 +4,23 @@ from inspect import signature
 
 import pytest
 
-from intent_resolution_runtime.context import ClaimRecord, SourceAttribution
-from intent_resolution_runtime.errors import ValidationError
-from intent_resolution_runtime.history import (
+from intent_resolution_runtime import (
     MAX_HISTORY_PAGE_SIZE,
     AdmittedHistoryRepository,
+    ClaimRecord,
     HistoryIntegrityError,
     HistoryPersistResult,
     HistoryQuery,
     HistoryRecord,
     InMemoryAdmittedHistoryRepository,
-)
-from intent_resolution_runtime.identity import RecordIdentity
-from intent_resolution_runtime.intent import (
     IntentExpression,
     IntentRequest,
     OriginAttribution,
     OriginKind,
+    RecordIdentity,
+    SourceAttribution,
     StableRef,
+    ValidationError,
 )
 
 
@@ -51,9 +50,8 @@ def _claim(label: str) -> ClaimRecord:
     )
 
 
-def _history_record(record: object) -> HistoryRecord:
-    canonical_bytes = getattr(record, "canonical_bytes")
-    return HistoryRecord.from_canonical_bytes(canonical_bytes())
+def _history_record(record: IntentRequest | ClaimRecord) -> HistoryRecord:
+    return HistoryRecord.from_canonical_bytes(record.canonical_bytes())
 
 
 def _all_records(
@@ -87,6 +85,11 @@ def test_history_record_rejects_noncanonical_bytes_even_when_json_is_valid() -> 
 def test_history_record_rejects_missing_top_level_schema() -> None:
     with pytest.raises(HistoryIntegrityError, match="top-level string schema"):
         HistoryRecord.from_canonical_bytes(b'{"value":"x"}')
+
+
+def test_history_record_rejects_non_irr_record_namespace() -> None:
+    with pytest.raises(ValidationError, match=r"irr\.\*"):
+        HistoryRecord.from_canonical_bytes(b'{"schema":"foreign.record.v1"}')
 
 
 def test_history_record_rejects_declared_identity_content_mismatch() -> None:
@@ -171,7 +174,9 @@ def test_history_query_rejects_unbounded_or_excessive_pages() -> None:
 
 
 def test_scan_order_is_independent_of_insertion_order() -> None:
-    records = tuple(_history_record(_request(label)) for label in ("one", "two", "three"))
+    records = tuple(
+        _history_record(_request(label)) for label in ("one", "two", "three")
+    )
     forward = InMemoryAdmittedHistoryRepository()
     reverse = InMemoryAdmittedHistoryRepository()
 
