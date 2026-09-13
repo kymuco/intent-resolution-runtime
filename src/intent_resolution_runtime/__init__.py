@@ -144,6 +144,16 @@ from .governance import (
     GovernanceDecisionKind,
     GovernanceDirective,
 )
+from .history import (
+    MAX_HISTORY_PAGE_SIZE,
+    AdmittedHistoryRepository,
+    HistoryIntegrityError,
+    HistoryPage,
+    HistoryPersistResult,
+    HistoryQuery,
+    HistoryRecord,
+    InMemoryAdmittedHistoryRepository,
+)
 from .identity import RecordIdentity
 from .initial_resolution import (
     InitialResolutionFrontier,
@@ -361,9 +371,11 @@ __all__ = [
     "IRR_MECHANICAL_CAPABILITY_EVALUATOR_VALUE",
     "IRR_MECHANICAL_CAPABILITY_MATCHER_NAMESPACE",
     "IRR_MECHANICAL_CAPABILITY_MATCHER_VALUE",
+    "MAX_HISTORY_PAGE_SIZE",
     "AdmittedBindingRule",
     "AdmittedCapabilityCatalogSnapshot",
     "AdmittedCapabilityRequirement",
+    "AdmittedHistoryRepository",
     "AdmittedWorkPlan",
     "AssumptionKind",
     "AssumptionRecord",
@@ -463,6 +475,12 @@ __all__ = [
     "GovernanceDecisionComponent",
     "GovernanceDecisionKind",
     "GovernanceDirective",
+    "HistoryIntegrityError",
+    "HistoryPage",
+    "HistoryPersistResult",
+    "HistoryQuery",
+    "HistoryRecord",
+    "InMemoryAdmittedHistoryRepository",
     "InformationNeed",
     "InformationNeedProposal",
     "InitialResolutionFrontier",
