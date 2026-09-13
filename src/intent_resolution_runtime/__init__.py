@@ -54,6 +54,10 @@ from .capability_catalog_admission import (
     CapabilityCatalogSnapshotProposalAttribution,
     orchestrate_capability_catalog_snapshot_admission,
 )
+from .capability_evaluation_derivation import (
+    MechanicallyDerivedCapabilityMatchEvaluation,
+    derive_mechanical_capability_match_evaluation,
+)
 from .capability_governance import (
     CapabilityGovernanceFrontier,
     orchestrate_capability_governance,
@@ -317,6 +321,7 @@ for _ir_type in (
     CapabilityMismatchReason,
     CapabilityIncompatibleDescriptorAssessment,
     CapabilityMatchEvaluation,
+    MechanicallyDerivedCapabilityMatchEvaluation,
     CapabilityMatchIssue,
     CapabilityRequirementProposalAttribution,
     CapabilityRequirementAdmissionAttribution,
@@ -466,6 +471,7 @@ __all__ = [
     "IntentIRError",
     "IntentRequest",
     "InterchangeableChoicePolicy",
+    "MechanicallyDerivedCapabilityMatchEvaluation",
     "NoOperationalWork",
     "OriginAttribution",
     "OriginKind",
@@ -519,6 +525,7 @@ __all__ = [
     "WorkerResultMaterial",
     "WorkerResultMaterialRole",
     "build_capability_match_evaluation",
+    "derive_mechanical_capability_match_evaluation",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "mechanical_capability_evaluator_ref",
