@@ -276,13 +276,13 @@ def _normalize_candidates(
 
 @dataclass(frozen=True, slots=True)
 class AdmittedCapabilityCatalogSnapshot(_CanonicalCapabilityCatalogAdmissionRecord):
-    """Explicit admission of one exact bounded catalog; never capability selection."""
+    """Explicit admission of one exact proposed catalog; never capability selection."""
 
     SCHEMA: ClassVar[str] = "irr.admitted_capability_catalog_snapshot.v1"
 
     admission_attribution: CapabilityCatalogSnapshotAdmissionAttribution
     snapshot: CapabilityCatalogSnapshot
-    candidate_inputs: tuple[CandidateCapabilityCatalogSnapshot, ...] = ()
+    candidate_inputs: tuple[CandidateCapabilityCatalogSnapshot, ...]
 
     def __post_init__(self) -> None:
         if (
@@ -298,14 +298,21 @@ class AdmittedCapabilityCatalogSnapshot(_CanonicalCapabilityCatalogAdmissionReco
                 "AdmittedCapabilityCatalogSnapshot.snapshot must be a "
                 "CapabilityCatalogSnapshot"
             )
-        object.__setattr__(
-            self,
-            "candidate_inputs",
-            _normalize_candidates(
-                self.candidate_inputs,
-                field="AdmittedCapabilityCatalogSnapshot.candidate_inputs",
-            ),
+        candidates = _normalize_candidates(
+            self.candidate_inputs,
+            field="AdmittedCapabilityCatalogSnapshot.candidate_inputs",
         )
+        if not candidates:
+            raise ValidationError(
+                "AdmittedCapabilityCatalogSnapshot requires explicit candidate provenance"
+            )
+        if self.snapshot.identity not in {
+            candidate.snapshot.identity for candidate in candidates
+        }:
+            raise ValidationError(
+                "admitted catalog snapshot must equal one exact proposed snapshot"
+            )
+        object.__setattr__(self, "candidate_inputs", candidates)
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -468,10 +475,9 @@ def orchestrate_capability_catalog_snapshot_admission(
     """Derive or explicitly advance one bounded catalog-snapshot admission frontier.
 
     Proposal provenance never votes. Catalog construction is not admission. The explicit
-    admitter may adjudicate or synthesize one exact snapshot, but the resulting record
-    preserves the complete supplied candidate set. Admission does not imply live
-    availability, global completeness, capability selection, Governance, Authorization,
-    Attempt, or execution.
+    admitter may choose one exact proposed snapshot and must preserve the complete
+    supplied candidate set. Admission does not imply live availability, global
+    completeness, capability selection, Governance, Authorization, Attempt, or execution.
     """
 
     candidates = _normalize_candidates(candidate_inputs, field="candidate_inputs")
@@ -522,6 +528,10 @@ def orchestrate_capability_catalog_snapshot_admission(
                 "admission_attribution requires an explicit catalog admitter"
             )
         return unresolved
+    if not candidates:
+        raise ValidationError(
+            "catalog admission requires explicit candidate snapshot material"
+        )
     if not callable(admitter):
         raise ValidationError("admitter must be callable")
     if type(admission_attribution) is not CapabilityCatalogSnapshotAdmissionAttribution:
