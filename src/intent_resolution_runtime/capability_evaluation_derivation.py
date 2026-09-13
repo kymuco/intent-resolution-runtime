@@ -60,9 +60,7 @@ class MechanicallyDerivedCapabilityMatchEvaluation(
     admitted requirement and catalog snapshot recorded here.
     """
 
-    SCHEMA: ClassVar[str] = (
-        "irr.mechanically_derived_capability_match_evaluation.v1"
-    )
+    SCHEMA: ClassVar[str] = "irr.mechanically_derived_capability_match_evaluation.v1"
 
     admitted_requirement: AdmittedCapabilityRequirement
     admitted_catalog: AdmittedCapabilityCatalogSnapshot
