@@ -19,17 +19,15 @@ from intent_resolution_runtime import (
     CapabilityRequirementAdmissionAttribution,
     CapabilityRequestedScope,
     CapabilityScopeRequirement,
+    MechanicallyDerivedCapabilityMatchEvaluation,
     RecordIdentity,
     StableRef,
     ValidationError,
     WorkContinuationMode,
     WorkPlan,
     WorkStep,
-    evaluate_capability_match_evaluation,
-)
-from intent_resolution_runtime.capability_evaluation_derivation import (
-    MechanicallyDerivedCapabilityMatchEvaluation,
     derive_mechanical_capability_match_evaluation,
+    evaluate_capability_match_evaluation,
 )
 from intent_resolution_runtime.capability_match_engine import (
     mechanical_capability_evaluator_ref,
@@ -260,6 +258,41 @@ def test_same_exact_inputs_and_event_replay_to_same_identity() -> None:
     assert second == first
     assert second.identity == first.identity
     assert second.canonical_bytes() == first.canonical_bytes()
+
+
+def test_distinct_admission_provenance_remains_distinct_with_same_evaluation() -> None:
+    requirement = _requirement()
+    first_admission = AdmittedCapabilityRequirement(
+        admission_attribution=CapabilityRequirementAdmissionAttribution(
+            resolver_ref=_ref("irr.capability_requirement_resolver", "test"),
+            admission_event_ref=_ref("irr.capability_requirement_admission", "first"),
+        ),
+        requirement=requirement,
+    )
+    second_admission = AdmittedCapabilityRequirement(
+        admission_attribution=CapabilityRequirementAdmissionAttribution(
+            resolver_ref=_ref("irr.capability_requirement_resolver", "test"),
+            admission_event_ref=_ref("irr.capability_requirement_admission", "second"),
+        ),
+        requirement=requirement,
+    )
+    catalog = _admitted_catalog()
+    event_ref = _ref("irr.capability_evaluation", "same-semantics")
+
+    first = derive_mechanical_capability_match_evaluation(
+        first_admission,
+        catalog,
+        evaluation_event_ref=event_ref,
+    )
+    second = derive_mechanical_capability_match_evaluation(
+        second_admission,
+        catalog,
+        evaluation_event_ref=event_ref,
+    )
+
+    assert second.evaluation == first.evaluation
+    assert second.identity != first.identity
+    assert second.canonical_bytes() != first.canonical_bytes()
 
 
 def test_round_trip_revalidates_mechanical_derivation() -> None:
