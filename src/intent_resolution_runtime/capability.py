@@ -10,7 +10,6 @@ from .errors import SerializationError, ValidationError
 from .identity import RecordIdentity, identity_for_bytes
 from .intent import StableRef
 
-
 _OPERATION_PATTERN = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$")
 
 
@@ -38,7 +37,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -63,7 +64,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -80,9 +83,7 @@ def _stable_ref_key(value: StableRef) -> tuple[str, str]:
     return value.namespace, value.value
 
 
-def _normalize_stable_refs(
-    value: object, *, field: str
-) -> tuple[StableRef, ...]:
+def _normalize_stable_refs(value: object, *, field: str) -> tuple[StableRef, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is StableRef for item in value):
@@ -147,7 +148,7 @@ class CapabilityCatalogAttribution(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityCatalogAttribution"
-    ) -> "CapabilityCatalogAttribution":
+    ) -> CapabilityCatalogAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "supplier_ref", "snapshot_event_ref"}, field=field
@@ -169,7 +170,7 @@ class CapabilityCatalogAttribution(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityCatalogAttribution":
+    ) -> CapabilityCatalogAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -202,7 +203,7 @@ class CapabilityScopeRequirement(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityScopeRequirement"
-    ) -> "CapabilityScopeRequirement":
+    ) -> CapabilityScopeRequirement:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -225,7 +226,7 @@ class CapabilityScopeRequirement(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityScopeRequirement":
+    ) -> CapabilityScopeRequirement:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -240,8 +241,12 @@ class CapabilityInputContract(_CanonicalCapabilityRecord):
 
     def __post_init__(self) -> None:
         if type(self.input_ref) is not StableRef:
-            raise ValidationError("CapabilityInputContract.input_ref must be a StableRef")
-        _require_token(self.semantic_type, field="CapabilityInputContract.semantic_type")
+            raise ValidationError(
+                "CapabilityInputContract.input_ref must be a StableRef"
+            )
+        _require_token(
+            self.semantic_type, field="CapabilityInputContract.semantic_type"
+        )
         object.__setattr__(
             self,
             "scope_requirement_refs",
@@ -266,7 +271,7 @@ class CapabilityInputContract(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityInputContract"
-    ) -> "CapabilityInputContract":
+    ) -> CapabilityInputContract:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -304,7 +309,7 @@ class CapabilityInputContract(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityInputContract":
+    ) -> CapabilityInputContract:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -319,8 +324,12 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
 
     def __post_init__(self) -> None:
         if type(self.output_ref) is not StableRef:
-            raise ValidationError("CapabilityOutputContract.output_ref must be a StableRef")
-        _require_token(self.semantic_type, field="CapabilityOutputContract.semantic_type")
+            raise ValidationError(
+                "CapabilityOutputContract.output_ref must be a StableRef"
+            )
+        _require_token(
+            self.semantic_type, field="CapabilityOutputContract.semantic_type"
+        )
         object.__setattr__(
             self,
             "scope_requirement_refs",
@@ -345,7 +354,7 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityOutputContract"
-    ) -> "CapabilityOutputContract":
+    ) -> CapabilityOutputContract:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -383,7 +392,7 @@ class CapabilityOutputContract(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityOutputContract":
+    ) -> CapabilityOutputContract:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -430,7 +439,7 @@ class CapabilityEffect(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityEffect"
-    ) -> "CapabilityEffect":
+    ) -> CapabilityEffect:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -474,9 +483,7 @@ class CapabilityEffect(_CanonicalCapabilityRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityEffect":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> CapabilityEffect:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -497,9 +504,7 @@ class CapabilityExecutionBoundary(_CanonicalCapabilityRecord):
             raise ValidationError(
                 "CapabilityExecutionBoundary.kind must be a CapabilityExecutionBoundaryKind"
             )
-        _require_text(
-            self.description, field="CapabilityExecutionBoundary.description"
-        )
+        _require_text(self.description, field="CapabilityExecutionBoundary.description")
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -512,7 +517,7 @@ class CapabilityExecutionBoundary(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityExecutionBoundary"
-    ) -> "CapabilityExecutionBoundary":
+    ) -> CapabilityExecutionBoundary:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "boundary_ref", "kind", "description"}, field=field
@@ -539,7 +544,7 @@ class CapabilityExecutionBoundary(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityExecutionBoundary":
+    ) -> CapabilityExecutionBoundary:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -610,9 +615,7 @@ def _normalize_output_contracts(
     return tuple(sorted(items, key=lambda item: _stable_ref_key(item.output_ref)))
 
 
-def _normalize_effects(
-    value: object, *, field: str
-) -> tuple[CapabilityEffect, ...]:
+def _normalize_effects(value: object, *, field: str) -> tuple[CapabilityEffect, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is CapabilityEffect for item in value):
@@ -640,7 +643,9 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
 
     def __post_init__(self) -> None:
         if type(self.capability_ref) is not StableRef:
-            raise ValidationError("CapabilityDescriptor.capability_ref must be a StableRef")
+            raise ValidationError(
+                "CapabilityDescriptor.capability_ref must be a StableRef"
+            )
         _require_operation(self.operation, field="CapabilityDescriptor.operation")
 
         scope_requirements = _normalize_scope_requirements(
@@ -675,11 +680,11 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
             )
         object.__setattr__(self, "output_contracts", output_contracts)
 
-        effects = _normalize_effects(
-            self.effects, field="CapabilityDescriptor.effects"
-        )
+        effects = _normalize_effects(self.effects, field="CapabilityDescriptor.effects")
         if any(
-            ref not in scope_refs for item in effects for ref in item.scope_requirement_refs
+            ref not in scope_refs
+            for item in effects
+            for ref in item.scope_requirement_refs
         ):
             raise ValidationError(
                 "CapabilityDescriptor effects must reference admitted scope requirements"
@@ -720,7 +725,7 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityDescriptor"
-    ) -> "CapabilityDescriptor":
+    ) -> CapabilityDescriptor:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -797,7 +802,7 @@ class CapabilityDescriptor(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityDescriptor":
+    ) -> CapabilityDescriptor:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -811,7 +816,9 @@ def _normalize_descriptors(
     items = cast(tuple[CapabilityDescriptor, ...], value)
     refs = [item.capability_ref for item in items]
     if len(set(refs)) != len(refs):
-        raise ValidationError(f"{field} must not contain duplicate capability_ref values")
+        raise ValidationError(
+            f"{field} must not contain duplicate capability_ref values"
+        )
     return tuple(sorted(items, key=lambda item: _stable_ref_key(item.capability_ref)))
 
 
@@ -859,7 +866,7 @@ class CapabilityCatalogSnapshot(_CanonicalCapabilityRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityCatalogSnapshot"
-    ) -> "CapabilityCatalogSnapshot":
+    ) -> CapabilityCatalogSnapshot:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -899,5 +906,5 @@ class CapabilityCatalogSnapshot(_CanonicalCapabilityRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityCatalogSnapshot":
+    ) -> CapabilityCatalogSnapshot:
         return cls.from_primitive(parse_json_object(data))

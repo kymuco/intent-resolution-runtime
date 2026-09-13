@@ -24,7 +24,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 SOURCE_ID = RecordIdentity("sha256", "4" * 64)
 

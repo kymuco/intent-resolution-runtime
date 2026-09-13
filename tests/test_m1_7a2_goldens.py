@@ -37,7 +37,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "7" * 64)
 SOURCE_IDENTITY = RecordIdentity("sha256", "8" * 64)
 TEMPORAL = RecordIdentity("sha256", "9" * 64)
@@ -294,9 +293,15 @@ def test_m17a2_capability_outcome_golden_digests_are_frozen() -> None:
 
 
 def test_m17a2_capability_outcome_goldens_round_trip() -> None:
-    outcome, attribution, lifecycle_evidence, receipt_evidence, lifecycle, completion, effect = (
-        _outcome_fixture()
-    )
+    (
+        outcome,
+        attribution,
+        lifecycle_evidence,
+        receipt_evidence,
+        lifecycle,
+        completion,
+        effect,
+    ) = _outcome_fixture()
 
     records = (
         (CapabilityOutcomeAttribution, attribution),

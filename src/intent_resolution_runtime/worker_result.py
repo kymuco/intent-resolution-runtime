@@ -35,7 +35,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     return value
 
 
@@ -51,7 +53,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -145,7 +149,9 @@ class WorkerResultAttribution(_CanonicalWorkerResultRecord):
 
     def __post_init__(self) -> None:
         if type(self.worker_ref) is not StableRef:
-            raise ValidationError("WorkerResultAttribution.worker_ref must be a StableRef")
+            raise ValidationError(
+                "WorkerResultAttribution.worker_ref must be a StableRef"
+            )
         if type(self.result_event_ref) is not StableRef:
             raise ValidationError(
                 "WorkerResultAttribution.result_event_ref must be a StableRef"
@@ -161,7 +167,7 @@ class WorkerResultAttribution(_CanonicalWorkerResultRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkerResultAttribution"
-    ) -> "WorkerResultAttribution":
+    ) -> WorkerResultAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "worker_ref", "result_event_ref"}, field=field
@@ -183,7 +189,7 @@ class WorkerResultAttribution(_CanonicalWorkerResultRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "WorkerResultAttribution":
+    ) -> WorkerResultAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -203,7 +209,9 @@ class WorkerResultMaterial(_CanonicalWorkerResultRecord):
 
     def __post_init__(self) -> None:
         if type(self.material_ref) is not StableRef:
-            raise ValidationError("WorkerResultMaterial.material_ref must be a StableRef")
+            raise ValidationError(
+                "WorkerResultMaterial.material_ref must be a StableRef"
+            )
         if type(self.role) is not WorkerResultMaterialRole:
             raise ValidationError(
                 "WorkerResultMaterial.role must be a WorkerResultMaterialRole"
@@ -270,7 +278,7 @@ class WorkerResultMaterial(_CanonicalWorkerResultRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkerResultMaterial"
-    ) -> "WorkerResultMaterial":
+    ) -> WorkerResultMaterial:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -313,9 +321,7 @@ class WorkerResultMaterial(_CanonicalWorkerResultRecord):
                 role=role,
                 semantic_type=obj["semantic_type"],
                 scope_refs=tuple(
-                    StableRef.from_primitive(
-                        item, field=f"{field}.scope_refs[{index}]"
-                    )
+                    StableRef.from_primitive(item, field=f"{field}.scope_refs[{index}]")
                     for index, item in enumerate(scopes)
                 ),
                 expected_deliverable_refs=tuple(
@@ -346,7 +352,7 @@ class WorkerResultMaterial(_CanonicalWorkerResultRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "WorkerResultMaterial":
+    ) -> WorkerResultMaterial:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -385,9 +391,7 @@ class WorkerNeed(_CanonicalWorkerResultRecord):
         }
 
     @classmethod
-    def from_primitive(
-        cls, value: object, *, field: str = "WorkerNeed"
-    ) -> "WorkerNeed":
+    def from_primitive(cls, value: object, *, field: str = "WorkerNeed") -> WorkerNeed:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -423,9 +427,7 @@ class WorkerNeed(_CanonicalWorkerResultRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "WorkerNeed":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkerNeed:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -484,9 +486,7 @@ class WorkerResult(_CanonicalWorkerResultRecord):
                 "WorkerResult result event must be distinct from the handoff event"
             )
 
-        materials = _normalize_materials(
-            self.materials, field="WorkerResult.materials"
-        )
+        materials = _normalize_materials(self.materials, field="WorkerResult.materials")
         needs = _normalize_needs(self.needs, field="WorkerResult.needs")
         if not materials and not needs:
             raise ValidationError(
@@ -500,7 +500,9 @@ class WorkerResult(_CanonicalWorkerResultRecord):
         }
 
         for material in materials:
-            if any(scope_ref not in admitted_scopes for scope_ref in material.scope_refs):
+            if any(
+                scope_ref not in admitted_scopes for scope_ref in material.scope_refs
+            ):
                 raise ValidationError(
                     "WorkerResult materials must reference admitted delegated scopes"
                 )
@@ -546,7 +548,7 @@ class WorkerResult(_CanonicalWorkerResultRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "WorkerResult":
+    def from_primitive(cls, value: object) -> WorkerResult:
         obj = _expect_object(value, field="WorkerResult")
         _expect_exact_keys(
             obj,
@@ -583,7 +585,5 @@ class WorkerResult(_CanonicalWorkerResultRecord):
             raise SerializationError("invalid WorkerResult") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "WorkerResult":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkerResult:
         return cls.from_primitive(parse_json_object(data))

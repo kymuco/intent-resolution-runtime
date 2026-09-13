@@ -11,7 +11,6 @@ from .errors import SerializationError, ValidationError
 from .identity import RecordIdentity, identity_for_bytes
 from .intent import StableRef
 
-
 _RFC3339_PATTERN = re.compile(
     r"^(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})[Tt]"
     r"(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})"
@@ -39,7 +38,9 @@ def _require_token(value: object, *, field: str) -> str:
     if not value:
         raise ValidationError(f"{field} must not be empty")
     if value != value.strip():
-        raise ValidationError(f"{field} must not contain leading or trailing whitespace")
+        raise ValidationError(
+            f"{field} must not contain leading or trailing whitespace"
+        )
     _reject_surrogates(value, field=field)
     return value
 
@@ -56,7 +57,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -149,7 +152,9 @@ def _days_from_civil(year: int, month: int, day: int) -> int:
 def _parse_rfc3339(value: str, *, field: str) -> tuple[int, str]:
     match = _RFC3339_PATTERN.fullmatch(value)
     if match is None:
-        raise ValidationError(f"{field} must be an RFC3339 timestamp with an explicit known offset")
+        raise ValidationError(
+            f"{field} must be an RFC3339 timestamp with an explicit known offset"
+        )
 
     year = int(match.group("year"))
     month = int(match.group("month"))
@@ -163,7 +168,9 @@ def _parse_rfc3339(value: str, *, field: str) -> tuple[int, str]:
     if hour > 23 or minute > 59:
         raise ValidationError(f"{field} has an invalid clock time")
     if second > 59:
-        raise ValidationError(f"{field} leap-second notation is not supported by M1.4 v1")
+        raise ValidationError(
+            f"{field} leap-second notation is not supported by M1.4 v1"
+        )
     try:
         civil_day = _days_from_civil(year, month, day)
     except ValueError as exc:
@@ -181,7 +188,9 @@ def _parse_rfc3339(value: str, *, field: str) -> tuple[int, str]:
             raise ValidationError(f"{field} has an invalid timezone offset")
         offset_seconds = sign * (offset_hour * 3600 + offset_minute * 60)
 
-    whole_seconds = civil_day * 86400 + hour * 3600 + minute * 60 + second - offset_seconds
+    whole_seconds = (
+        civil_day * 86400 + hour * 3600 + minute * 60 + second - offset_seconds
+    )
     fraction_digits = "" if fraction is None else fraction[1:].rstrip("0")
     return whole_seconds, fraction_digits
 
@@ -246,7 +255,9 @@ class BindingAttribute:
     def __post_init__(self) -> None:
         _require_token(self.name, field="BindingAttribute.name")
         if type(self.kind) is not BindingAttributeKind:
-            raise ValidationError("BindingAttribute.kind must be a BindingAttributeKind")
+            raise ValidationError(
+                "BindingAttribute.kind must be a BindingAttributeKind"
+            )
         _require_text(self.value, field="BindingAttribute.value")
         if self.kind is BindingAttributeKind.RFC3339_TIMESTAMP:
             _parse_rfc3339(self.value, field="BindingAttribute.value")
@@ -255,7 +266,9 @@ class BindingAttribute:
         return {"kind": self.kind.value, "name": self.name, "value": self.value}
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "BindingAttribute") -> "BindingAttribute":
+    def from_primitive(
+        cls, value: object, *, field: str = "BindingAttribute"
+    ) -> BindingAttribute:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"name", "kind", "value"}, field=field)
         if type(obj["kind"]) is not str:
@@ -280,12 +293,18 @@ class BindingConstraint:
     def __post_init__(self) -> None:
         _require_token(self.attribute_name, field="BindingConstraint.attribute_name")
         if type(self.operator) is not BindingConstraintOperator:
-            raise ValidationError("BindingConstraint.operator must be a BindingConstraintOperator")
+            raise ValidationError(
+                "BindingConstraint.operator must be a BindingConstraintOperator"
+            )
         if type(self.expected_kind) is not BindingAttributeKind:
-            raise ValidationError("BindingConstraint.expected_kind must be a BindingAttributeKind")
+            raise ValidationError(
+                "BindingConstraint.expected_kind must be a BindingAttributeKind"
+            )
         _require_text(self.expected_value, field="BindingConstraint.expected_value")
         if self.expected_kind is BindingAttributeKind.RFC3339_TIMESTAMP:
-            _parse_rfc3339(self.expected_value, field="BindingConstraint.expected_value")
+            _parse_rfc3339(
+                self.expected_value, field="BindingConstraint.expected_value"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -296,7 +315,9 @@ class BindingConstraint:
         }
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "BindingConstraint") -> "BindingConstraint":
+    def from_primitive(
+        cls, value: object, *, field: str = "BindingConstraint"
+    ) -> BindingConstraint:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -304,12 +325,16 @@ class BindingConstraint:
             field=field,
         )
         if type(obj["operator"]) is not str or type(obj["expected_kind"]) is not str:
-            raise SerializationError(f"{field}.operator and expected_kind must be strings")
+            raise SerializationError(
+                f"{field}.operator and expected_kind must be strings"
+            )
         try:
             operator = BindingConstraintOperator(obj["operator"])
             expected_kind = BindingAttributeKind(obj["expected_kind"])
         except ValueError as exc:
-            raise SerializationError(f"unsupported {field} operator or expected_kind") from exc
+            raise SerializationError(
+                f"unsupported {field} operator or expected_kind"
+            ) from exc
         try:
             return cls(
                 attribute_name=obj["attribute_name"],
@@ -326,11 +351,15 @@ class BindingSelectionPolicy:
     mode: BindingSelectionMode
     selector_attributes: tuple[str, ...] = ()
     selector_kinds: tuple[BindingAttributeKind, ...] = ()
-    interchangeable_choice: InterchangeableChoicePolicy = InterchangeableChoicePolicy.NONE
+    interchangeable_choice: InterchangeableChoicePolicy = (
+        InterchangeableChoicePolicy.NONE
+    )
 
     def __post_init__(self) -> None:
         if type(self.mode) is not BindingSelectionMode:
-            raise ValidationError("BindingSelectionPolicy.mode must be a BindingSelectionMode")
+            raise ValidationError(
+                "BindingSelectionPolicy.mode must be a BindingSelectionMode"
+            )
         if type(self.interchangeable_choice) is not InterchangeableChoicePolicy:
             raise ValidationError(
                 "BindingSelectionPolicy.interchangeable_choice must be an InterchangeableChoicePolicy"
@@ -344,12 +373,17 @@ class BindingSelectionPolicy:
             ),
         )
         if type(self.selector_kinds) is not tuple:
-            raise ValidationError("BindingSelectionPolicy.selector_kinds must be a tuple")
+            raise ValidationError(
+                "BindingSelectionPolicy.selector_kinds must be a tuple"
+            )
         if not all(type(item) is BindingAttributeKind for item in self.selector_kinds):
             raise ValidationError(
                 "BindingSelectionPolicy.selector_kinds must contain BindingAttributeKind values"
             )
-        if self.mode in (BindingSelectionMode.MAX_ATTRIBUTE, BindingSelectionMode.MIN_ATTRIBUTE):
+        if self.mode in (
+            BindingSelectionMode.MAX_ATTRIBUTE,
+            BindingSelectionMode.MIN_ATTRIBUTE,
+        ):
             if len(self.selector_attributes) != 1 or len(self.selector_kinds) != 1:
                 raise ValidationError(
                     "max_attribute/min_attribute selection requires exactly one selector attribute and kind"
@@ -359,13 +393,18 @@ class BindingSelectionPolicy:
                     "max_attribute/min_attribute selection requires rfc3339_timestamp selector kind in M1.4 v1"
                 )
             if self.interchangeable_choice is not InterchangeableChoicePolicy.NONE:
-                raise ValidationError("extremum selection cannot define an interchangeable choice policy")
+                raise ValidationError(
+                    "extremum selection cannot define an interchangeable choice policy"
+                )
         elif self.mode is BindingSelectionMode.ANY_INTERCHANGEABLE:
             if self.selector_attributes or self.selector_kinds:
                 raise ValidationError(
                     "any_interchangeable selection cannot define selector attributes or kinds"
                 )
-            if self.interchangeable_choice is not InterchangeableChoicePolicy.CANONICAL_IDENTITY_MIN:
+            if (
+                self.interchangeable_choice
+                is not InterchangeableChoicePolicy.CANONICAL_IDENTITY_MIN
+            ):
                 raise ValidationError(
                     "any_interchangeable requires canonical_identity_min as its explicit mechanical policy"
                 )
@@ -375,7 +414,9 @@ class BindingSelectionPolicy:
                     "require_unique selection cannot define selector attributes or kinds"
                 )
             if self.interchangeable_choice is not InterchangeableChoicePolicy.NONE:
-                raise ValidationError("require_unique selection cannot define an interchangeable choice policy")
+                raise ValidationError(
+                    "require_unique selection cannot define an interchangeable choice policy"
+                )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -388,21 +429,32 @@ class BindingSelectionPolicy:
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "BindingSelectionPolicy"
-    ) -> "BindingSelectionPolicy":
+    ) -> BindingSelectionPolicy:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
             {"mode", "selector_attributes", "selector_kinds", "interchangeable_choice"},
             field=field,
         )
-        selectors = _expect_array(obj["selector_attributes"], field=f"{field}.selector_attributes")
-        selector_kinds = _expect_array(obj["selector_kinds"], field=f"{field}.selector_kinds")
-        if type(obj["mode"]) is not str or type(obj["interchangeable_choice"]) is not str:
-            raise SerializationError(f"{field}.mode and interchangeable_choice must be strings")
+        selectors = _expect_array(
+            obj["selector_attributes"], field=f"{field}.selector_attributes"
+        )
+        selector_kinds = _expect_array(
+            obj["selector_kinds"], field=f"{field}.selector_kinds"
+        )
+        if (
+            type(obj["mode"]) is not str
+            or type(obj["interchangeable_choice"]) is not str
+        ):
+            raise SerializationError(
+                f"{field}.mode and interchangeable_choice must be strings"
+            )
         try:
             mode = BindingSelectionMode(obj["mode"])
             choice = InterchangeableChoicePolicy(obj["interchangeable_choice"])
-            parsed_selector_kinds = tuple(BindingAttributeKind(item) for item in selector_kinds)
+            parsed_selector_kinds = tuple(
+                BindingAttributeKind(item) for item in selector_kinds
+            )
         except (ValueError, TypeError) as exc:
             raise SerializationError(f"unsupported {field} selection policy") from exc
         try:
@@ -425,9 +477,13 @@ class BindingAttribution:
 
     def __post_init__(self) -> None:
         if type(self.evaluator_ref) is not StableRef:
-            raise ValidationError("BindingAttribution.evaluator_ref must be a StableRef")
+            raise ValidationError(
+                "BindingAttribution.evaluator_ref must be a StableRef"
+            )
         if type(self.binding_event_ref) is not StableRef:
-            raise ValidationError("BindingAttribution.binding_event_ref must be a StableRef")
+            raise ValidationError(
+                "BindingAttribution.binding_event_ref must be a StableRef"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -438,7 +494,7 @@ class BindingAttribution:
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "binding_attribution"
-    ) -> "BindingAttribution":
+    ) -> BindingAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"evaluator_ref", "binding_event_ref"}, field=field)
         try:
@@ -466,7 +522,9 @@ class SymbolicReference(_CanonicalBindingRecord):
 
     def __post_init__(self) -> None:
         if type(self.resolved_intent_identity) is not RecordIdentity:
-            raise ValidationError("SymbolicReference.resolved_intent_identity must be a RecordIdentity")
+            raise ValidationError(
+                "SymbolicReference.resolved_intent_identity must be a RecordIdentity"
+            )
         if type(self.slot_ref) is not StableRef:
             raise ValidationError("SymbolicReference.slot_ref must be a StableRef")
         _require_token(self.semantic_type, field="SymbolicReference.semantic_type")
@@ -484,7 +542,7 @@ class SymbolicReference(_CanonicalBindingRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "SymbolicReference":
+    def from_primitive(cls, value: object) -> SymbolicReference:
         obj = _expect_object(value, field="SymbolicReference")
         _expect_exact_keys(
             obj,
@@ -499,14 +557,18 @@ class SymbolicReference(_CanonicalBindingRecord):
             field="SymbolicReference",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported SymbolicReference schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported SymbolicReference schema: {obj['schema']!r}"
+            )
         try:
             return cls(
                 resolved_intent_identity=RecordIdentity.from_primitive(
                     obj["resolved_intent_identity"],
                     field="SymbolicReference.resolved_intent_identity",
                 ),
-                slot_ref=StableRef.from_primitive(obj["slot_ref"], field="SymbolicReference.slot_ref"),
+                slot_ref=StableRef.from_primitive(
+                    obj["slot_ref"], field="SymbolicReference.slot_ref"
+                ),
                 semantic_type=obj["semantic_type"],
                 selection_scope=obj["selection_scope"],
                 description=obj["description"],
@@ -515,7 +577,7 @@ class SymbolicReference(_CanonicalBindingRecord):
             raise SerializationError("invalid SymbolicReference") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "SymbolicReference":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> SymbolicReference:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -539,15 +601,21 @@ class BindingInput(_CanonicalBindingRecord):
 
     def __post_init__(self) -> None:
         if type(self.resolved_intent_identity) is not RecordIdentity:
-            raise ValidationError("BindingInput.resolved_intent_identity must be a RecordIdentity")
+            raise ValidationError(
+                "BindingInput.resolved_intent_identity must be a RecordIdentity"
+            )
         if type(self.input_ref) is not StableRef:
             raise ValidationError("BindingInput.input_ref must be a StableRef")
         if type(self.attribution) is not SourceAttribution:
-            raise ValidationError("BindingInput.attribution must be a SourceAttribution")
+            raise ValidationError(
+                "BindingInput.attribution must be a SourceAttribution"
+            )
         if type(self.role) is not BindingInputRole:
             raise ValidationError("BindingInput.role must be a BindingInputRole")
         if type(self.source_identity) is not RecordIdentity:
-            raise ValidationError("BindingInput.source_identity must be a RecordIdentity")
+            raise ValidationError(
+                "BindingInput.source_identity must be a RecordIdentity"
+            )
         _require_token(self.semantic_type, field="BindingInput.semantic_type")
         _require_text(self.value, field="BindingInput.value")
         _require_text(self.selection_scope, field="BindingInput.selection_scope")
@@ -555,11 +623,19 @@ class BindingInput(_CanonicalBindingRecord):
         if type(self.attributes) is not tuple:
             raise ValidationError("BindingInput.attributes must be a tuple")
         if not all(type(item) is BindingAttribute for item in self.attributes):
-            raise ValidationError("BindingInput.attributes must contain BindingAttribute values")
+            raise ValidationError(
+                "BindingInput.attributes must contain BindingAttribute values"
+            )
         names = [item.name for item in self.attributes]
         if len(set(names)) != len(names):
-            raise ValidationError("BindingInput.attributes must not contain duplicate names")
-        object.__setattr__(self, "attributes", tuple(sorted(self.attributes, key=lambda item: item.name)))
+            raise ValidationError(
+                "BindingInput.attributes must not contain duplicate names"
+            )
+        object.__setattr__(
+            self,
+            "attributes",
+            tuple(sorted(self.attributes, key=lambda item: item.name)),
+        )
         object.__setattr__(
             self,
             "temporal_basis_refs",
@@ -577,7 +653,9 @@ class BindingInput(_CanonicalBindingRecord):
         object.__setattr__(
             self,
             "evidence_refs",
-            _normalize_identity_tuple(self.evidence_refs, field="BindingInput.evidence_refs"),
+            _normalize_identity_tuple(
+                self.evidence_refs, field="BindingInput.evidence_refs"
+            ),
         )
 
     def attribute_map(self) -> dict[str, BindingAttribute]:
@@ -587,8 +665,12 @@ class BindingInput(_CanonicalBindingRecord):
         return {
             "attributes": [attribute.to_primitive() for attribute in self.attributes],
             "attribution": self.attribution.to_primitive(),
-            "completeness_refs": [identity.to_primitive() for identity in self.completeness_refs],
-            "evidence_refs": [identity.to_primitive() for identity in self.evidence_refs],
+            "completeness_refs": [
+                identity.to_primitive() for identity in self.completeness_refs
+            ],
+            "evidence_refs": [
+                identity.to_primitive() for identity in self.evidence_refs
+            ],
             "input_ref": self.input_ref.to_primitive(),
             "resolved_intent_identity": self.resolved_intent_identity.to_primitive(),
             "role": self.role.value,
@@ -596,13 +678,15 @@ class BindingInput(_CanonicalBindingRecord):
             "selection_scope": self.selection_scope,
             "semantic_type": self.semantic_type,
             "source_identity": self.source_identity.to_primitive(),
-            "temporal_basis_refs": [identity.to_primitive() for identity in self.temporal_basis_refs],
+            "temporal_basis_refs": [
+                identity.to_primitive() for identity in self.temporal_basis_refs
+            ],
             "value": self.value,
             "value_scope": self.value_scope,
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "BindingInput":
+    def from_primitive(cls, value: object) -> BindingInput:
         obj = _expect_object(value, field="BindingInput")
         _expect_exact_keys(
             obj,
@@ -625,7 +709,9 @@ class BindingInput(_CanonicalBindingRecord):
             field="BindingInput",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported BindingInput schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported BindingInput schema: {obj['schema']!r}"
+            )
         if type(obj["role"]) is not str:
             raise SerializationError("BindingInput.role must be a string")
         try:
@@ -633,16 +719,24 @@ class BindingInput(_CanonicalBindingRecord):
         except ValueError as exc:
             raise SerializationError("unsupported BindingInput.role") from exc
         attributes = _expect_array(obj["attributes"], field="BindingInput.attributes")
-        temporal = _expect_array(obj["temporal_basis_refs"], field="BindingInput.temporal_basis_refs")
-        completeness = _expect_array(obj["completeness_refs"], field="BindingInput.completeness_refs")
-        evidence = _expect_array(obj["evidence_refs"], field="BindingInput.evidence_refs")
+        temporal = _expect_array(
+            obj["temporal_basis_refs"], field="BindingInput.temporal_basis_refs"
+        )
+        completeness = _expect_array(
+            obj["completeness_refs"], field="BindingInput.completeness_refs"
+        )
+        evidence = _expect_array(
+            obj["evidence_refs"], field="BindingInput.evidence_refs"
+        )
         try:
             return cls(
                 resolved_intent_identity=RecordIdentity.from_primitive(
                     obj["resolved_intent_identity"],
                     field="BindingInput.resolved_intent_identity",
                 ),
-                input_ref=StableRef.from_primitive(obj["input_ref"], field="BindingInput.input_ref"),
+                input_ref=StableRef.from_primitive(
+                    obj["input_ref"], field="BindingInput.input_ref"
+                ),
                 attribution=SourceAttribution.from_primitive(
                     obj["attribution"], field="BindingInput.attribution"
                 ),
@@ -655,7 +749,9 @@ class BindingInput(_CanonicalBindingRecord):
                 selection_scope=obj["selection_scope"],
                 value_scope=obj["value_scope"],
                 attributes=tuple(
-                    BindingAttribute.from_primitive(item, field=f"BindingInput.attributes[{index}]")
+                    BindingAttribute.from_primitive(
+                        item, field=f"BindingInput.attributes[{index}]"
+                    )
                     for index, item in enumerate(attributes)
                 ),
                 temporal_basis_refs=tuple(
@@ -681,7 +777,7 @@ class BindingInput(_CanonicalBindingRecord):
             raise SerializationError("invalid BindingInput") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "BindingInput":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> BindingInput:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -706,21 +802,34 @@ class BindingRule(_CanonicalBindingRecord):
 
     def __post_init__(self) -> None:
         if type(self.resolved_intent_identity) is not RecordIdentity:
-            raise ValidationError("BindingRule.resolved_intent_identity must be a RecordIdentity")
+            raise ValidationError(
+                "BindingRule.resolved_intent_identity must be a RecordIdentity"
+            )
         if type(self.rule_ref) is not StableRef:
             raise ValidationError("BindingRule.rule_ref must be a StableRef")
         if type(self.symbolic_reference) is not SymbolicReference:
-            raise ValidationError("BindingRule.symbolic_reference must be a SymbolicReference")
-        if self.symbolic_reference.resolved_intent_identity != self.resolved_intent_identity:
-            raise ValidationError("BindingRule symbolic reference must belong to the same ResolvedIntent")
+            raise ValidationError(
+                "BindingRule.symbolic_reference must be a SymbolicReference"
+            )
+        if (
+            self.symbolic_reference.resolved_intent_identity
+            != self.resolved_intent_identity
+        ):
+            raise ValidationError(
+                "BindingRule symbolic reference must belong to the same ResolvedIntent"
+            )
         if type(self.allowed_input_roles) is not tuple:
             raise ValidationError("BindingRule.allowed_input_roles must be a tuple")
         if not self.allowed_input_roles:
             raise ValidationError("BindingRule.allowed_input_roles must not be empty")
         if not all(type(item) is BindingInputRole for item in self.allowed_input_roles):
-            raise ValidationError("BindingRule.allowed_input_roles contains an unsupported role")
+            raise ValidationError(
+                "BindingRule.allowed_input_roles contains an unsupported role"
+            )
         if len(set(self.allowed_input_roles)) != len(self.allowed_input_roles):
-            raise ValidationError("BindingRule.allowed_input_roles must not contain duplicates")
+            raise ValidationError(
+                "BindingRule.allowed_input_roles must not contain duplicates"
+            )
         object.__setattr__(
             self,
             "allowed_input_roles",
@@ -744,7 +853,9 @@ class BindingRule(_CanonicalBindingRecord):
                 nonempty=True,
             ),
         )
-        _require_token(self.input_semantic_type, field="BindingRule.input_semantic_type")
+        _require_token(
+            self.input_semantic_type, field="BindingRule.input_semantic_type"
+        )
         if self.input_semantic_type != self.symbolic_reference.semantic_type:
             raise ValidationError(
                 "BindingRule.input_semantic_type must match SymbolicReference.semantic_type"
@@ -760,10 +871,14 @@ class BindingRule(_CanonicalBindingRecord):
         if type(self.constraints) is not tuple:
             raise ValidationError("BindingRule.constraints must be a tuple")
         if not all(type(item) is BindingConstraint for item in self.constraints):
-            raise ValidationError("BindingRule.constraints must contain BindingConstraint values")
+            raise ValidationError(
+                "BindingRule.constraints must contain BindingConstraint values"
+            )
         names = [item.attribute_name for item in self.constraints]
         if len(set(names)) != len(names):
-            raise ValidationError("BindingRule.constraints must not target the same attribute twice")
+            raise ValidationError(
+                "BindingRule.constraints must not target the same attribute twice"
+            )
         object.__setattr__(
             self,
             "constraints",
@@ -780,7 +895,9 @@ class BindingRule(_CanonicalBindingRecord):
             ),
         )
         if type(self.selection_policy) is not BindingSelectionPolicy:
-            raise ValidationError("BindingRule.selection_policy must be a BindingSelectionPolicy")
+            raise ValidationError(
+                "BindingRule.selection_policy must be a BindingSelectionPolicy"
+            )
         object.__setattr__(
             self,
             "required_temporal_basis_refs",
@@ -813,8 +930,12 @@ class BindingRule(_CanonicalBindingRecord):
             "allowed_source_identities": [
                 identity.to_primitive() for identity in self.allowed_source_identities
             ],
-            "allowed_source_refs": [ref.to_primitive() for ref in self.allowed_source_refs],
-            "constraints": [constraint.to_primitive() for constraint in self.constraints],
+            "allowed_source_refs": [
+                ref.to_primitive() for ref in self.allowed_source_refs
+            ],
+            "constraints": [
+                constraint.to_primitive() for constraint in self.constraints
+            ],
             "description": self.description,
             "input_semantic_type": self.input_semantic_type,
             "required_completeness_refs": [
@@ -825,7 +946,8 @@ class BindingRule(_CanonicalBindingRecord):
             ],
             "required_selection_scope": self.required_selection_scope,
             "required_temporal_basis_refs": [
-                identity.to_primitive() for identity in self.required_temporal_basis_refs
+                identity.to_primitive()
+                for identity in self.required_temporal_basis_refs
             ],
             "resolved_intent_identity": self.resolved_intent_identity.to_primitive(),
             "rule_ref": self.rule_ref.to_primitive(),
@@ -835,7 +957,7 @@ class BindingRule(_CanonicalBindingRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "BindingRule":
+    def from_primitive(cls, value: object) -> BindingRule:
         obj = _expect_object(value, field="BindingRule")
         _expect_exact_keys(
             obj,
@@ -859,18 +981,27 @@ class BindingRule(_CanonicalBindingRecord):
             field="BindingRule",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported BindingRule schema: {obj['schema']!r}")
-        roles = _expect_array(obj["allowed_input_roles"], field="BindingRule.allowed_input_roles")
-        source_refs = _expect_array(obj["allowed_source_refs"], field="BindingRule.allowed_source_refs")
+            raise SerializationError(
+                f"unsupported BindingRule schema: {obj['schema']!r}"
+            )
+        roles = _expect_array(
+            obj["allowed_input_roles"], field="BindingRule.allowed_input_roles"
+        )
+        source_refs = _expect_array(
+            obj["allowed_source_refs"], field="BindingRule.allowed_source_refs"
+        )
         sources = _expect_array(
-            obj["allowed_source_identities"], field="BindingRule.allowed_source_identities"
+            obj["allowed_source_identities"],
+            field="BindingRule.allowed_source_identities",
         )
         constraints = _expect_array(obj["constraints"], field="BindingRule.constraints")
         temporal = _expect_array(
-            obj["required_temporal_basis_refs"], field="BindingRule.required_temporal_basis_refs"
+            obj["required_temporal_basis_refs"],
+            field="BindingRule.required_temporal_basis_refs",
         )
         completeness = _expect_array(
-            obj["required_completeness_refs"], field="BindingRule.required_completeness_refs"
+            obj["required_completeness_refs"],
+            field="BindingRule.required_completeness_refs",
         )
         evidence = _expect_array(
             obj["required_evidence_refs"], field="BindingRule.required_evidence_refs"
@@ -878,15 +1009,21 @@ class BindingRule(_CanonicalBindingRecord):
         try:
             parsed_roles = tuple(BindingInputRole(item) for item in roles)
         except (ValueError, TypeError) as exc:
-            raise SerializationError("unsupported BindingRule.allowed_input_roles") from exc
+            raise SerializationError(
+                "unsupported BindingRule.allowed_input_roles"
+            ) from exc
         try:
             return cls(
                 resolved_intent_identity=RecordIdentity.from_primitive(
                     obj["resolved_intent_identity"],
                     field="BindingRule.resolved_intent_identity",
                 ),
-                rule_ref=StableRef.from_primitive(obj["rule_ref"], field="BindingRule.rule_ref"),
-                symbolic_reference=SymbolicReference.from_primitive(obj["symbolic_reference"]),
+                rule_ref=StableRef.from_primitive(
+                    obj["rule_ref"], field="BindingRule.rule_ref"
+                ),
+                symbolic_reference=SymbolicReference.from_primitive(
+                    obj["symbolic_reference"]
+                ),
                 allowed_input_roles=parsed_roles,
                 allowed_source_refs=tuple(
                     StableRef.from_primitive(
@@ -935,7 +1072,7 @@ class BindingRule(_CanonicalBindingRecord):
             raise SerializationError("invalid BindingRule") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "BindingRule":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> BindingRule:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -962,7 +1099,9 @@ class _SelectionDecision:
 
 def _compare_attribute(attribute: BindingAttribute) -> tuple[int, str]:
     if attribute.kind is BindingAttributeKind.RFC3339_TIMESTAMP:
-        return _parse_rfc3339(attribute.value, field=f"BindingAttribute[{attribute.name}]")
+        return _parse_rfc3339(
+            attribute.value, field=f"BindingAttribute[{attribute.name}]"
+        )
     raise AssertionError("M1.4 v1 extremum comparison supports RFC3339 timestamps only")
 
 
@@ -1076,7 +1215,10 @@ def _determine_selection(
             return _SelectionDecision(BindingIssueKind.MULTIPLE_MATCHES, None)
         return _SelectionDecision(None, compatible[0])
 
-    if policy.mode in (BindingSelectionMode.MAX_ATTRIBUTE, BindingSelectionMode.MIN_ATTRIBUTE):
+    if policy.mode in (
+        BindingSelectionMode.MAX_ATTRIBUTE,
+        BindingSelectionMode.MIN_ATTRIBUTE,
+    ):
         selector_name = policy.selector_attributes[0]
         selector_kind = policy.selector_kinds[0]
         missing_selector = False
@@ -1131,7 +1273,9 @@ class BoundValue(_CanonicalBindingRecord):
 
     def __post_init__(self) -> None:
         if type(self.binding_attribution) is not BindingAttribution:
-            raise ValidationError("BoundValue.binding_attribution must be a BindingAttribution")
+            raise ValidationError(
+                "BoundValue.binding_attribution must be a BindingAttribution"
+            )
         if type(self.rule) is not BindingRule:
             raise ValidationError("BoundValue.rule must be a BindingRule")
         object.__setattr__(
@@ -1142,7 +1286,9 @@ class BoundValue(_CanonicalBindingRecord):
             ),
         )
         if type(self.selected_input_identity) is not RecordIdentity:
-            raise ValidationError("BoundValue.selected_input_identity must be a RecordIdentity")
+            raise ValidationError(
+                "BoundValue.selected_input_identity must be a RecordIdentity"
+            )
         _require_token(self.semantic_type, field="BoundValue.semantic_type")
         _require_text(self.value, field="BoundValue.value")
         _require_text(self.selection_scope, field="BoundValue.selection_scope")
@@ -1155,24 +1301,40 @@ class BoundValue(_CanonicalBindingRecord):
             )
         selected = decision.selected_input
         if selected.identity != self.selected_input_identity:
-            raise ValidationError("BoundValue.selected_input_identity does not match rule evaluation")
+            raise ValidationError(
+                "BoundValue.selected_input_identity does not match rule evaluation"
+            )
         if self.semantic_type != self.rule.symbolic_reference.semantic_type:
-            raise ValidationError("BoundValue.semantic_type must match the SymbolicReference")
+            raise ValidationError(
+                "BoundValue.semantic_type must match the SymbolicReference"
+            )
         if self.semantic_type != selected.semantic_type:
-            raise ValidationError("BoundValue.semantic_type must match the selected BindingInput")
+            raise ValidationError(
+                "BoundValue.semantic_type must match the selected BindingInput"
+            )
         if self.value != selected.value:
-            raise ValidationError("BoundValue.value must equal the selected BindingInput value")
+            raise ValidationError(
+                "BoundValue.value must equal the selected BindingInput value"
+            )
         if self.selection_scope != self.rule.symbolic_reference.selection_scope:
-            raise ValidationError("BoundValue.selection_scope must match the SymbolicReference")
+            raise ValidationError(
+                "BoundValue.selection_scope must match the SymbolicReference"
+            )
         if self.selection_scope != selected.selection_scope:
-            raise ValidationError("BoundValue.selection_scope must match the selected BindingInput")
+            raise ValidationError(
+                "BoundValue.selection_scope must match the selected BindingInput"
+            )
         if self.value_scope != selected.value_scope:
-            raise ValidationError("BoundValue.value_scope must equal the selected BindingInput value_scope")
+            raise ValidationError(
+                "BoundValue.value_scope must equal the selected BindingInput value_scope"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
             "binding_attribution": self.binding_attribution.to_primitive(),
-            "binding_inputs": [binding_input.to_primitive() for binding_input in self.binding_inputs],
+            "binding_inputs": [
+                binding_input.to_primitive() for binding_input in self.binding_inputs
+            ],
             "rule": self.rule.to_primitive(),
             "schema": self.SCHEMA,
             "selected_input_identity": self.selected_input_identity.to_primitive(),
@@ -1183,7 +1345,7 @@ class BoundValue(_CanonicalBindingRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "BoundValue":
+    def from_primitive(cls, value: object) -> BoundValue:
         obj = _expect_object(value, field="BoundValue")
         _expect_exact_keys(
             obj,
@@ -1201,7 +1363,9 @@ class BoundValue(_CanonicalBindingRecord):
             field="BoundValue",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported BoundValue schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported BoundValue schema: {obj['schema']!r}"
+            )
         inputs = _expect_array(obj["binding_inputs"], field="BoundValue.binding_inputs")
         try:
             return cls(
@@ -1209,7 +1373,9 @@ class BoundValue(_CanonicalBindingRecord):
                     obj["binding_attribution"], field="BoundValue.binding_attribution"
                 ),
                 rule=BindingRule.from_primitive(obj["rule"]),
-                binding_inputs=tuple(BindingInput.from_primitive(item) for item in inputs),
+                binding_inputs=tuple(
+                    BindingInput.from_primitive(item) for item in inputs
+                ),
                 selected_input_identity=RecordIdentity.from_primitive(
                     obj["selected_input_identity"],
                     field="BoundValue.selected_input_identity",
@@ -1223,7 +1389,7 @@ class BoundValue(_CanonicalBindingRecord):
             raise SerializationError("invalid BoundValue") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "BoundValue":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> BoundValue:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -1239,13 +1405,17 @@ class BindingIssue(_CanonicalBindingRecord):
 
     def __post_init__(self) -> None:
         if type(self.binding_attribution) is not BindingAttribution:
-            raise ValidationError("BindingIssue.binding_attribution must be a BindingAttribution")
+            raise ValidationError(
+                "BindingIssue.binding_attribution must be a BindingAttribution"
+            )
         if type(self.rule) is not BindingRule:
             raise ValidationError("BindingIssue.rule must be a BindingRule")
         object.__setattr__(
             self,
             "binding_inputs",
-            _normalize_binding_inputs(self.binding_inputs, field="BindingIssue.binding_inputs"),
+            _normalize_binding_inputs(
+                self.binding_inputs, field="BindingIssue.binding_inputs"
+            ),
         )
         if type(self.kind) is not BindingIssueKind:
             raise ValidationError("BindingIssue.kind must be a BindingIssueKind")
@@ -1263,7 +1433,9 @@ class BindingIssue(_CanonicalBindingRecord):
     def to_primitive(self) -> dict[str, object]:
         return {
             "binding_attribution": self.binding_attribution.to_primitive(),
-            "binding_inputs": [binding_input.to_primitive() for binding_input in self.binding_inputs],
+            "binding_inputs": [
+                binding_input.to_primitive() for binding_input in self.binding_inputs
+            ],
             "kind": self.kind.value,
             "rule": self.rule.to_primitive(),
             "schema": self.SCHEMA,
@@ -1271,7 +1443,7 @@ class BindingIssue(_CanonicalBindingRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "BindingIssue":
+    def from_primitive(cls, value: object) -> BindingIssue:
         obj = _expect_object(value, field="BindingIssue")
         _expect_exact_keys(
             obj,
@@ -1286,21 +1458,27 @@ class BindingIssue(_CanonicalBindingRecord):
             field="BindingIssue",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported BindingIssue schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported BindingIssue schema: {obj['schema']!r}"
+            )
         if type(obj["kind"]) is not str:
             raise SerializationError("BindingIssue.kind must be a string")
         try:
             kind = BindingIssueKind(obj["kind"])
         except ValueError as exc:
             raise SerializationError("unsupported BindingIssue.kind") from exc
-        inputs = _expect_array(obj["binding_inputs"], field="BindingIssue.binding_inputs")
+        inputs = _expect_array(
+            obj["binding_inputs"], field="BindingIssue.binding_inputs"
+        )
         try:
             return cls(
                 binding_attribution=BindingAttribution.from_primitive(
                     obj["binding_attribution"], field="BindingIssue.binding_attribution"
                 ),
                 rule=BindingRule.from_primitive(obj["rule"]),
-                binding_inputs=tuple(BindingInput.from_primitive(item) for item in inputs),
+                binding_inputs=tuple(
+                    BindingInput.from_primitive(item) for item in inputs
+                ),
                 kind=kind,
                 selection_scope=obj["selection_scope"],
             )
@@ -1308,7 +1486,7 @@ class BindingIssue(_CanonicalBindingRecord):
             raise SerializationError("invalid BindingIssue") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "BindingIssue":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> BindingIssue:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -1331,7 +1509,9 @@ def evaluate_binding(
     if type(rule) is not BindingRule:
         raise ValidationError("evaluate_binding.rule must be a BindingRule")
     if type(attribution) is not BindingAttribution:
-        raise ValidationError("evaluate_binding.attribution must be a BindingAttribution")
+        raise ValidationError(
+            "evaluate_binding.attribution must be a BindingAttribution"
+        )
     normalized_inputs = _normalize_binding_inputs(
         binding_inputs, field="evaluate_binding.binding_inputs"
     )

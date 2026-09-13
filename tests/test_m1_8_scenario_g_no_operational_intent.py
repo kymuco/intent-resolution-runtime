@@ -17,7 +17,6 @@ from intent_resolution_runtime import (
     WorkPlan,
 )
 
-
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 
 
@@ -83,7 +82,9 @@ def _all_keys(value: object) -> set[str]:
     return keys
 
 
-def test_scenario_g_conversational_evaluation_resolves_without_operational_work() -> None:
+def test_scenario_g_conversational_evaluation_resolves_without_operational_work() -> (
+    None
+):
     request, candidate, resolved = _fixture()
 
     assert request.expression.text == "Как ты думаешь, этот эксперимент хороший?"
@@ -95,7 +96,9 @@ def test_scenario_g_conversational_evaluation_resolves_without_operational_work(
     assert "no operational work" in resolved.semantics.lower()
 
 
-def test_scenario_g_non_operational_resolution_does_not_synthesize_downstream_work_or_authority() -> None:
+def test_scenario_g_non_operational_resolution_does_not_synthesize_downstream_work_or_authority() -> (
+    None
+):
     _, _, resolved = _fixture()
 
     primitive = resolved.to_primitive()

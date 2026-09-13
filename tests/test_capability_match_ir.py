@@ -37,7 +37,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 
 
@@ -64,7 +63,9 @@ def _fixture() -> tuple[
         operation="archive.extract",
         scope="workspace:project",
         inputs=(
-            WorkLiteralInput("archive", "archive.path", "workspace:project/archive.zip"),
+            WorkLiteralInput(
+                "archive", "archive.path", "workspace:project/archive.zip"
+            ),
             WorkLiteralInput("destination", "filesystem.path", "workspace:out"),
         ),
         outputs=(
@@ -232,7 +233,9 @@ def _fixture() -> tuple[
         descriptor.capability_ref,
         descriptor.identity,
         (
-            CapabilityScopeMatch(req_workspace.scope_ref, cap_workspace.requirement_ref),
+            CapabilityScopeMatch(
+                req_workspace.scope_ref, cap_workspace.requirement_ref
+            ),
             CapabilityScopeMatch(
                 req_destination.scope_ref, cap_destination.requirement_ref
             ),
@@ -278,10 +281,14 @@ def _with_descriptor(
 
 def test_round_trip_and_order_independence() -> None:
     requirement, _, _, match = _fixture()
-    assert CapabilityRequirement.from_json_bytes(
-        requirement.canonical_bytes()
-    ).identity == requirement.identity
-    assert CapabilityMatch.from_json_bytes(match.canonical_bytes()).identity == match.identity
+    assert (
+        CapabilityRequirement.from_json_bytes(requirement.canonical_bytes()).identity
+        == requirement.identity
+    )
+    assert (
+        CapabilityMatch.from_json_bytes(match.canonical_bytes()).identity
+        == match.identity
+    )
 
     reordered_requirement = replace(
         requirement,
@@ -321,7 +328,9 @@ def test_requirement_is_bound_to_exact_plan_and_primary_scope() -> None:
         )
 
 
-def test_exact_catalog_membership_operation_contract_and_completion_are_required() -> None:
+def test_exact_catalog_membership_operation_contract_and_completion_are_required() -> (
+    None
+):
     _, descriptor, _, match = _fixture()
 
     with pytest.raises(ValidationError):
@@ -356,7 +365,9 @@ def test_scope_and_input_mappings_are_bijective_and_semantically_exact() -> None
     with pytest.raises(ValidationError):
         _with_descriptor(
             match,
-            replace(descriptor, input_contracts=descriptor.input_contracts + (extra_input,)),
+            replace(
+                descriptor, input_contracts=descriptor.input_contracts + (extra_input,)
+            ),
         )
 
     archive_contract = next(
@@ -369,7 +380,9 @@ def test_scope_and_input_mappings_are_bijective_and_semantically_exact() -> None
             replace(
                 descriptor,
                 input_contracts=tuple(
-                    changed_archive if item.input_ref == archive_contract.input_ref else item
+                    changed_archive
+                    if item.input_ref == archive_contract.input_ref
+                    else item
                     for item in descriptor.input_contracts
                 ),
             ),
@@ -389,12 +402,16 @@ def test_every_work_output_is_mapped_but_unused_descriptor_output_is_allowed() -
     )
     changed = _with_descriptor(
         match,
-        replace(descriptor, output_contracts=descriptor.output_contracts + (extra_output,)),
+        replace(
+            descriptor, output_contracts=descriptor.output_contracts + (extra_output,)
+        ),
     )
     assert extra_output in changed.descriptor.output_contracts
 
 
-def test_unavoidable_effect_cannot_be_hidden_but_possible_extra_effect_can_remain_unmapped() -> None:
+def test_unavoidable_effect_cannot_be_hidden_but_possible_extra_effect_can_remain_unmapped() -> (
+    None
+):
     _, descriptor, _, match = _fixture()
     unavoidable = CapabilityEffect(
         _ref("irr.capability_effect", "external"),
@@ -404,7 +421,9 @@ def test_unavoidable_effect_cannot_be_hidden_but_possible_extra_effect_can_remai
         "Unexpected unavoidable disclosure.",
     )
     with pytest.raises(ValidationError):
-        _with_descriptor(match, replace(descriptor, effects=descriptor.effects + (unavoidable,)))
+        _with_descriptor(
+            match, replace(descriptor, effects=descriptor.effects + (unavoidable,))
+        )
 
     possible = replace(
         unavoidable,
@@ -413,8 +432,12 @@ def test_unavoidable_effect_cannot_be_hidden_but_possible_extra_effect_can_remai
         requirement=CapabilityEffectRequirement.POSSIBLE,
         description="Optional diagnostic effect.",
     )
-    changed = _with_descriptor(match, replace(descriptor, effects=descriptor.effects + (possible,)))
-    assert possible.effect_ref not in {item.descriptor_effect_ref for item in changed.effect_matches}
+    changed = _with_descriptor(
+        match, replace(descriptor, effects=descriptor.effects + (possible,))
+    )
+    assert possible.effect_ref not in {
+        item.descriptor_effect_ref for item in changed.effect_matches
+    }
 
 
 def test_boundary_requirement_and_catalog_occurrence_are_material() -> None:
@@ -425,7 +448,12 @@ def test_boundary_requirement_and_catalog_occurrence_are_material() -> None:
         "Require another provider.",
     )
     with pytest.raises(ValidationError):
-        replace(match, requirement=replace(requirement, execution_boundary_requirements=(missing,)))
+        replace(
+            match,
+            requirement=replace(
+                requirement, execution_boundary_requirements=(missing,)
+            ),
+        )
 
     changed_snapshot = replace(
         match.catalog_snapshot,
@@ -450,9 +478,11 @@ def test_authority_and_availability_cannot_be_smuggled_into_match_wire() -> None
 
 def test_public_records_are_closed() -> None:
     with pytest.raises(TypeError):
+
         class _BadMatch(CapabilityMatch):
             pass
 
     with pytest.raises(TypeError):
+
         class _BadRequirement(CapabilityRequirement):
             pass

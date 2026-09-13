@@ -43,7 +43,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "7" * 64)
 SOURCE_IDENTITY = RecordIdentity("sha256", "8" * 64)
 TEMPORAL = RecordIdentity("sha256", "9" * 64)
@@ -218,7 +217,9 @@ def _success_outcome() -> CapabilityOutcome:
         (OutcomeEvidenceRole.COMPLETION, OutcomeEvidenceRole.EFFECT),
         "The authoritative publication receipt confirms the requested artifact became published.",
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
     return CapabilityOutcome(
         CapabilityOutcomeAttribution(
             _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -255,11 +256,16 @@ def test_capability_outcome_round_trip_and_independent_dimensions() -> None:
     assert decoded.identity == outcome.identity
     assert decoded.lifecycle.state is OutcomeLifecycleState.NORMAL_PROTOCOL_COMPLETED
     assert decoded.completion.state is OutcomeCompletionState.SATISFIED
-    assert decoded.effect_assessments[0].certainty is OutcomeEffectCertainty.CONFIRMED_OCCURRED
+    assert (
+        decoded.effect_assessments[0].certainty
+        is OutcomeEffectCertainty.CONFIRMED_OCCURRED
+    )
     assert outcome.has_material_unknown is False
 
 
-def test_interrupted_unknown_outcome_is_representable_without_calling_it_failure() -> None:
+def test_interrupted_unknown_outcome_is_representable_without_calling_it_failure() -> (
+    None
+):
     attempt = _effectful_attempt()
     disconnect = _evidence(
         "connection-loss",
@@ -270,7 +276,9 @@ def test_interrupted_unknown_outcome_is_representable_without_calling_it_failure
         ),
         "Connection was lost after request transmission; no material acknowledgement is available.",
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
     outcome = CapabilityOutcome(
         CapabilityOutcomeAttribution(
             _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -320,7 +328,9 @@ def test_failed_completion_can_preserve_known_partial_effect() -> None:
         ),
         "A partial external publication exists, but the required completion contract was not satisfied.",
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
     outcome = CapabilityOutcome(
         CapabilityOutcomeAttribution(
             _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -349,18 +359,27 @@ def test_failed_completion_can_preserve_known_partial_effect() -> None:
         "Failed completion with known partial effect history.",
     )
     assert outcome.completion.state is OutcomeCompletionState.NOT_SATISFIED
-    assert outcome.effect_assessments[0].certainty is OutcomeEffectCertainty.CONFIRMED_PARTIAL
+    assert (
+        outcome.effect_assessments[0].certainty
+        is OutcomeEffectCertainty.CONFIRMED_PARTIAL
+    )
 
 
-def test_transport_only_evidence_cannot_be_silently_strengthened_into_completion_evidence() -> None:
+def test_transport_only_evidence_cannot_be_silently_strengthened_into_completion_evidence() -> (
+    None
+):
     attempt = _effectful_attempt()
     transport = _evidence(
         "http-response",
         (OutcomeEvidenceRole.LIFECYCLE, OutcomeEvidenceRole.TRANSPORT),
         "A transport response was received.",
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
-    with pytest.raises(ValidationError, match="completion.evidence_refs requires evidence"):
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
+    with pytest.raises(
+        ValidationError, match="completion.evidence_refs requires evidence"
+    ):
         CapabilityOutcome(
             CapabilityOutcomeAttribution(
                 _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -451,8 +470,12 @@ def test_lifecycle_assessment_requires_lifecycle_role() -> None:
         (OutcomeEvidenceRole.COMPLETION, OutcomeEvidenceRole.EFFECT),
         "Completion and effect evidence without lifecycle role.",
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
-    with pytest.raises(ValidationError, match="lifecycle.evidence_refs requires evidence"):
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
+    with pytest.raises(
+        ValidationError, match="lifecycle.evidence_refs requires evidence"
+    ):
         CapabilityOutcome(
             CapabilityOutcomeAttribution(
                 _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -484,7 +507,9 @@ def test_lifecycle_assessment_requires_lifecycle_role() -> None:
 
 def test_outcome_occurrence_must_differ_from_attempt_occurrence() -> None:
     outcome = _success_outcome()
-    with pytest.raises(ValidationError, match="must differ from CapabilityAttempt occurrence"):
+    with pytest.raises(
+        ValidationError, match="must differ from CapabilityAttempt occurrence"
+    ):
         CapabilityOutcome(
             CapabilityOutcomeAttribution(
                 _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -522,7 +547,9 @@ def test_conflicting_outcome_evidence_has_no_implicit_precedence() -> None:
         "Another source cannot confirm the publication.",
         relation=EvidenceRelation.WEAKENS,
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
     outcome = CapabilityOutcome(
         CapabilityOutcomeAttribution(
             _ref("irr.outcome_evaluator", "bounded-v1"),
@@ -714,5 +741,6 @@ def test_effect_free_attempt_requires_no_fake_effect_assessment() -> None:
 
 def test_public_outcome_records_are_closed_against_subclassing() -> None:
     with pytest.raises(TypeError):
+
         class DerivedOutcome(CapabilityOutcome):
             pass

@@ -23,7 +23,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -100,7 +102,9 @@ def _normalize_continuation_inputs(
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError(f"{field} must not contain duplicate ContinuationInput identities")
+        raise ValidationError(
+            f"{field} must not contain duplicate ContinuationInput identities"
+        )
 
     source_identities = [item.source_identity for item in items]
     if len(set(source_identities)) != len(source_identities):
@@ -151,7 +155,10 @@ class SuccessorResolutionLineage(_CanonicalSuccessorResolutionRecord):
                 "SuccessorResolutionLineage.successor_kind must match the exact successor type"
             )
 
-        if self.successor.intent_request_identity != self.predecessor.intent_request_identity:
+        if (
+            self.successor.intent_request_identity
+            != self.predecessor.intent_request_identity
+        ):
             raise ValidationError(
                 "SuccessorResolutionLineage successor must preserve the predecessor IntentRequest identity"
             )
@@ -207,7 +214,7 @@ class SuccessorResolutionLineage(_CanonicalSuccessorResolutionRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "SuccessorResolutionLineage"
-    ) -> "SuccessorResolutionLineage":
+    ) -> SuccessorResolutionLineage:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -250,5 +257,5 @@ class SuccessorResolutionLineage(_CanonicalSuccessorResolutionRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "SuccessorResolutionLineage":
+    ) -> SuccessorResolutionLineage:
         return cls.from_primitive(parse_json_object(data))

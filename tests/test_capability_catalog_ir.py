@@ -257,16 +257,18 @@ def test_same_logical_capability_ref_with_changed_contract_changes_identity() ->
     assert _catalog(original).identity != _catalog(changed_completion).identity
 
 
-def test_catalog_rejects_duplicate_logical_capability_refs_even_if_contracts_differ() -> None:
+def test_catalog_rejects_duplicate_logical_capability_refs_even_if_contracts_differ() -> (
+    None
+):
     first = _descriptor()
-    second = _descriptor(
-        completion_contract="Return weaker acknowledgement semantics."
-    )
+    second = _descriptor(completion_contract="Return weaker acknowledgement semantics.")
     with pytest.raises(ValidationError, match="duplicate capability_ref"):
         _catalog(first, second)
 
 
-def test_input_output_and_effect_scope_links_must_reference_descriptor_requirements() -> None:
+def test_input_output_and_effect_scope_links_must_reference_descriptor_requirements() -> (
+    None
+):
     admitted = _scope("workspace")
     foreign = _scope("foreign")
 
@@ -274,9 +276,7 @@ def test_input_output_and_effect_scope_links_must_reference_descriptor_requireme
         CapabilityDescriptor(
             capability_ref=_ref("irr.capability", "filesystem.inspect"),
             operation="filesystem.inspect",
-            input_contracts=(
-                _input("path", foreign.requirement_ref),
-            ),
+            input_contracts=(_input("path", foreign.requirement_ref),),
             output_contracts=(),
             scope_requirements=(admitted,),
             effects=(),
@@ -290,9 +290,7 @@ def test_input_output_and_effect_scope_links_must_reference_descriptor_requireme
             capability_ref=_ref("irr.capability", "filesystem.inspect"),
             operation="filesystem.inspect",
             input_contracts=(),
-            output_contracts=(
-                _output("result", foreign.requirement_ref),
-            ),
+            output_contracts=(_output("result", foreign.requirement_ref),),
             scope_requirements=(admitted,),
             effects=(),
             execution_boundaries=(),
@@ -370,7 +368,9 @@ def test_operation_uses_same_closed_semantic_identifier_shape_as_work_ir() -> No
     assert _descriptor(operation="archive.extract").operation == "archive.extract"
 
 
-def test_catalog_attribution_occurrence_is_identity_material_but_not_authority() -> None:
+def test_catalog_attribution_occurrence_is_identity_material_but_not_authority() -> (
+    None
+):
     descriptor = _descriptor()
     first = _catalog(descriptor, event="catalog-001")
     second = _catalog(descriptor, event="catalog-002")
@@ -474,5 +474,6 @@ def test_execution_boundary_role_is_explicit_and_identity_material() -> None:
 
 def test_records_reject_subclassing_through_public_ir_surface() -> None:
     with pytest.raises(TypeError, match="closed IR type"):
+
         class ExtendedCapabilityDescriptor(CapabilityDescriptor):
             pass

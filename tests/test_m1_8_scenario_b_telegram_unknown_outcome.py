@@ -344,7 +344,9 @@ def _evaluation(
         descriptor.capability_ref,
         descriptor.identity,
         (
-            CapabilityScopeMatch(report_scope.scope_ref, report_requirement.requirement_ref),
+            CapabilityScopeMatch(
+                report_scope.scope_ref, report_requirement.requirement_ref
+            ),
             CapabilityScopeMatch(
                 recipient_scope.scope_ref,
                 recipient_requirement.requirement_ref,
@@ -365,7 +367,9 @@ def _evaluation(
         (),
         (
             CapabilityEffectMatch(read_effect.effect_ref, descriptor_read.effect_ref),
-            CapabilityEffectMatch(network_effect.effect_ref, descriptor_network.effect_ref),
+            CapabilityEffectMatch(
+                network_effect.effect_ref, descriptor_network.effect_ref
+            ),
             CapabilityEffectMatch(
                 disclosure_effect.effect_ref,
                 descriptor_disclosure.effect_ref,
@@ -656,12 +660,19 @@ def test_scenario_b_lost_ack_preserves_known_transport_and_unknown_delivery() ->
         for item in attempt.capability_evaluation.requirement.requested_effects
     }
     certainties = {
-        item.requested_effect_ref: item.certainty
-        for item in outcome.effect_assessments
+        item.requested_effect_ref: item.certainty for item in outcome.effect_assessments
     }
-    assert certainties[requested["filesystem.read"]] is OutcomeEffectCertainty.CONFIRMED_OCCURRED
-    assert certainties[requested["network.use"]] is OutcomeEffectCertainty.CONFIRMED_OCCURRED
-    assert certainties[requested["external.disclosure"]] is OutcomeEffectCertainty.UNKNOWN
+    assert (
+        certainties[requested["filesystem.read"]]
+        is OutcomeEffectCertainty.CONFIRMED_OCCURRED
+    )
+    assert (
+        certainties[requested["network.use"]]
+        is OutcomeEffectCertainty.CONFIRMED_OCCURRED
+    )
+    assert (
+        certainties[requested["external.disclosure"]] is OutcomeEffectCertainty.UNKNOWN
+    )
 
     assert continuation.source == outcome
     assert continuation.source_identity == outcome.identity
@@ -675,13 +686,19 @@ def test_scenario_b_transport_evidence_is_not_completion_evidence() -> None:
     assert isinstance(outcome, CapabilityOutcome)
     by_ref = {item.evidence_ref: item for item in outcome.evidence}
     completion_evidence = [by_ref[ref] for ref in outcome.completion.evidence_refs]
-    assert all(OutcomeEvidenceRole.COMPLETION not in item.roles for item in completion_evidence)
-    assert all(OutcomeEvidenceRole.UNCERTAINTY in item.roles for item in completion_evidence)
+    assert all(
+        OutcomeEvidenceRole.COMPLETION not in item.roles for item in completion_evidence
+    )
+    assert all(
+        OutcomeEvidenceRole.UNCERTAINTY in item.roles for item in completion_evidence
+    )
     transport_items = [
         item for item in outcome.evidence if OutcomeEvidenceRole.TRANSPORT in item.roles
     ]
     assert transport_items
-    assert all(OutcomeEvidenceRole.COMPLETION not in item.roles for item in transport_items)
+    assert all(
+        OutcomeEvidenceRole.COMPLETION not in item.roles for item in transport_items
+    )
 
 
 def test_scenario_b_unknown_send_surface_has_no_hidden_resend_or_retry_fields() -> None:

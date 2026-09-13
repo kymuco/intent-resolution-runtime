@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, ClassVar, TypeAlias
@@ -36,7 +37,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -74,7 +77,9 @@ class SourceAttribution:
         if type(self.source_ref) is not StableRef:
             raise ValidationError("SourceAttribution.source_ref must be a StableRef")
         if type(self.source_event_ref) is not StableRef:
-            raise ValidationError("SourceAttribution.source_event_ref must be a StableRef")
+            raise ValidationError(
+                "SourceAttribution.source_event_ref must be a StableRef"
+            )
 
     def to_primitive(self) -> dict[str, object]:
         return {
@@ -83,12 +88,16 @@ class SourceAttribution:
         }
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str = "attribution") -> "SourceAttribution":
+    def from_primitive(
+        cls, value: object, *, field: str = "attribution"
+    ) -> SourceAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"source_ref", "source_event_ref"}, field=field)
         try:
             return cls(
-                source_ref=StableRef.from_primitive(obj["source_ref"], field=f"{field}.source_ref"),
+                source_ref=StableRef.from_primitive(
+                    obj["source_ref"], field=f"{field}.source_ref"
+                ),
                 source_event_ref=StableRef.from_primitive(
                     obj["source_event_ref"], field=f"{field}.source_event_ref"
                 ),
@@ -135,11 +144,15 @@ class ClaimRecord(_CanonicalRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ClaimRecord":
+    def from_primitive(cls, value: object) -> ClaimRecord:
         obj = _expect_object(value, field="ClaimRecord")
-        _expect_exact_keys(obj, {"schema", "attribution", "statement"}, field="ClaimRecord")
+        _expect_exact_keys(
+            obj, {"schema", "attribution", "statement"}, field="ClaimRecord"
+        )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ClaimRecord schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported ClaimRecord schema: {obj['schema']!r}"
+            )
         try:
             return cls(
                 attribution=SourceAttribution.from_primitive(obj["attribution"]),
@@ -149,7 +162,7 @@ class ClaimRecord(_CanonicalRecord):
             raise SerializationError("invalid ClaimRecord") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ClaimRecord":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ClaimRecord:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -166,13 +179,19 @@ class EvidenceRecord(_CanonicalRecord):
 
     def __post_init__(self) -> None:
         if type(self.attribution) is not SourceAttribution:
-            raise ValidationError("EvidenceRecord.attribution must be a SourceAttribution")
+            raise ValidationError(
+                "EvidenceRecord.attribution must be a SourceAttribution"
+            )
         if type(self.relation) is not EvidenceRelation:
             raise ValidationError("EvidenceRecord.relation must be an EvidenceRelation")
         if type(self.target_kind) is not EvidenceTargetKind:
-            raise ValidationError("EvidenceRecord.target_kind must be an EvidenceTargetKind")
+            raise ValidationError(
+                "EvidenceRecord.target_kind must be an EvidenceTargetKind"
+            )
         if type(self.target_identity) is not RecordIdentity:
-            raise ValidationError("EvidenceRecord.target_identity must be a RecordIdentity")
+            raise ValidationError(
+                "EvidenceRecord.target_identity must be a RecordIdentity"
+            )
         _require_text(self.scope, field="EvidenceRecord.scope")
         _require_text(self.description, field="EvidenceRecord.description")
 
@@ -188,20 +207,32 @@ class EvidenceRecord(_CanonicalRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "EvidenceRecord":
+    def from_primitive(cls, value: object) -> EvidenceRecord:
         obj = _expect_object(value, field="EvidenceRecord")
         _expect_exact_keys(
             obj,
-            {"schema", "attribution", "relation", "target_kind", "target_identity", "scope", "description"},
+            {
+                "schema",
+                "attribution",
+                "relation",
+                "target_kind",
+                "target_identity",
+                "scope",
+                "description",
+            },
             field="EvidenceRecord",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported EvidenceRecord schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported EvidenceRecord schema: {obj['schema']!r}"
+            )
         try:
             relation = EvidenceRelation(obj["relation"])
             target_kind = EvidenceTargetKind(obj["target_kind"])
         except (ValueError, TypeError) as exc:
-            raise SerializationError("unsupported EvidenceRecord relation or target_kind") from exc
+            raise SerializationError(
+                "unsupported EvidenceRecord relation or target_kind"
+            ) from exc
         try:
             return cls(
                 attribution=SourceAttribution.from_primitive(obj["attribution"]),
@@ -217,7 +248,7 @@ class EvidenceRecord(_CanonicalRecord):
             raise SerializationError("invalid EvidenceRecord") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "EvidenceRecord":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> EvidenceRecord:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -232,9 +263,13 @@ class TemporalBasisRecord(_CanonicalRecord):
 
     def __post_init__(self) -> None:
         if type(self.attribution) is not SourceAttribution:
-            raise ValidationError("TemporalBasisRecord.attribution must be a SourceAttribution")
+            raise ValidationError(
+                "TemporalBasisRecord.attribution must be a SourceAttribution"
+            )
         if type(self.kind) is not TemporalBasisKind:
-            raise ValidationError("TemporalBasisRecord.kind must be a TemporalBasisKind")
+            raise ValidationError(
+                "TemporalBasisRecord.kind must be a TemporalBasisKind"
+            )
         _require_text(self.value, field="TemporalBasisRecord.value")
         _require_text(self.scope, field="TemporalBasisRecord.scope")
 
@@ -248,13 +283,17 @@ class TemporalBasisRecord(_CanonicalRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "TemporalBasisRecord":
+    def from_primitive(cls, value: object) -> TemporalBasisRecord:
         obj = _expect_object(value, field="TemporalBasisRecord")
         _expect_exact_keys(
-            obj, {"schema", "attribution", "kind", "value", "scope"}, field="TemporalBasisRecord"
+            obj,
+            {"schema", "attribution", "kind", "value", "scope"},
+            field="TemporalBasisRecord",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported TemporalBasisRecord schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported TemporalBasisRecord schema: {obj['schema']!r}"
+            )
         try:
             kind = TemporalBasisKind(obj["kind"])
         except (ValueError, TypeError) as exc:
@@ -270,7 +309,9 @@ class TemporalBasisRecord(_CanonicalRecord):
             raise SerializationError("invalid TemporalBasisRecord") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "TemporalBasisRecord":
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> TemporalBasisRecord:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -285,19 +326,27 @@ class CompletenessRecord(_CanonicalRecord):
 
     def __post_init__(self) -> None:
         if type(self.attribution) is not SourceAttribution:
-            raise ValidationError("CompletenessRecord.attribution must be a SourceAttribution")
+            raise ValidationError(
+                "CompletenessRecord.attribution must be a SourceAttribution"
+            )
         _require_text(self.bounded_domain, field="CompletenessRecord.bounded_domain")
         _require_text(self.purpose, field="CompletenessRecord.purpose")
         if type(self.temporal_basis_refs) is not tuple:
-            raise ValidationError("CompletenessRecord.temporal_basis_refs must be a tuple")
+            raise ValidationError(
+                "CompletenessRecord.temporal_basis_refs must be a tuple"
+            )
         if not all(type(item) is RecordIdentity for item in self.temporal_basis_refs):
             raise ValidationError(
                 "CompletenessRecord.temporal_basis_refs must contain RecordIdentity values"
             )
         if len(set(self.temporal_basis_refs)) != len(self.temporal_basis_refs):
-            raise ValidationError("CompletenessRecord.temporal_basis_refs must not contain duplicates")
+            raise ValidationError(
+                "CompletenessRecord.temporal_basis_refs must not contain duplicates"
+            )
         object.__setattr__(
-            self, "temporal_basis_refs", tuple(sorted(self.temporal_basis_refs, key=str))
+            self,
+            "temporal_basis_refs",
+            tuple(sorted(self.temporal_basis_refs, key=str)),
         )
 
     def to_primitive(self) -> dict[str, object]:
@@ -312,16 +361,26 @@ class CompletenessRecord(_CanonicalRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "CompletenessRecord":
+    def from_primitive(cls, value: object) -> CompletenessRecord:
         obj = _expect_object(value, field="CompletenessRecord")
         _expect_exact_keys(
             obj,
-            {"schema", "attribution", "bounded_domain", "purpose", "temporal_basis_refs"},
+            {
+                "schema",
+                "attribution",
+                "bounded_domain",
+                "purpose",
+                "temporal_basis_refs",
+            },
             field="CompletenessRecord",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported CompletenessRecord schema: {obj['schema']!r}")
-        refs = _expect_array(obj["temporal_basis_refs"], field="CompletenessRecord.temporal_basis_refs")
+            raise SerializationError(
+                f"unsupported CompletenessRecord schema: {obj['schema']!r}"
+            )
+        refs = _expect_array(
+            obj["temporal_basis_refs"], field="CompletenessRecord.temporal_basis_refs"
+        )
         try:
             return cls(
                 attribution=SourceAttribution.from_primitive(obj["attribution"]),
@@ -338,7 +397,9 @@ class CompletenessRecord(_CanonicalRecord):
             raise SerializationError("invalid CompletenessRecord") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "CompletenessRecord":
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> CompletenessRecord:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -352,9 +413,13 @@ class ContextReferenceRecord(_CanonicalRecord):
 
     def __post_init__(self) -> None:
         if type(self.attribution) is not SourceAttribution:
-            raise ValidationError("ContextReferenceRecord.attribution must be a SourceAttribution")
+            raise ValidationError(
+                "ContextReferenceRecord.attribution must be a SourceAttribution"
+            )
         if type(self.reference) is not StableRef:
-            raise ValidationError("ContextReferenceRecord.reference must be a StableRef")
+            raise ValidationError(
+                "ContextReferenceRecord.reference must be a StableRef"
+            )
         _require_text(self.description, field="ContextReferenceRecord.description")
 
     def to_primitive(self) -> dict[str, object]:
@@ -366,13 +431,17 @@ class ContextReferenceRecord(_CanonicalRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ContextReferenceRecord":
+    def from_primitive(cls, value: object) -> ContextReferenceRecord:
         obj = _expect_object(value, field="ContextReferenceRecord")
         _expect_exact_keys(
-            obj, {"schema", "attribution", "reference", "description"}, field="ContextReferenceRecord"
+            obj,
+            {"schema", "attribution", "reference", "description"},
+            field="ContextReferenceRecord",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ContextReferenceRecord schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported ContextReferenceRecord schema: {obj['schema']!r}"
+            )
         try:
             return cls(
                 attribution=SourceAttribution.from_primitive(obj["attribution"]),
@@ -385,7 +454,9 @@ class ContextReferenceRecord(_CanonicalRecord):
             raise SerializationError("invalid ContextReferenceRecord") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ContextReferenceRecord":
+    def from_json_bytes(
+        cls, data: bytes | bytearray | memoryview
+    ) -> ContextReferenceRecord:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -398,12 +469,12 @@ ContextRecord: TypeAlias = (
 )
 
 
-_RECORD_BY_SCHEMA = {
-    ClaimRecord.SCHEMA: ClaimRecord,
-    EvidenceRecord.SCHEMA: EvidenceRecord,
-    TemporalBasisRecord.SCHEMA: TemporalBasisRecord,
-    CompletenessRecord.SCHEMA: CompletenessRecord,
-    ContextReferenceRecord.SCHEMA: ContextReferenceRecord,
+_RECORD_BY_SCHEMA: dict[str, Callable[[object], ContextRecord]] = {
+    ClaimRecord.SCHEMA: ClaimRecord.from_primitive,
+    EvidenceRecord.SCHEMA: EvidenceRecord.from_primitive,
+    TemporalBasisRecord.SCHEMA: TemporalBasisRecord.from_primitive,
+    CompletenessRecord.SCHEMA: CompletenessRecord.from_primitive,
+    ContextReferenceRecord.SCHEMA: ContextReferenceRecord.from_primitive,
 }
 
 
@@ -411,11 +482,13 @@ def _parse_context_record(value: object, *, index: int) -> ContextRecord:
     obj = _expect_object(value, field=f"ContextEnvelope.records[{index}]")
     schema = obj.get("schema")
     if type(schema) is not str:
-        raise SerializationError(f"ContextEnvelope.records[{index}].schema must be a string")
-    record_type = _RECORD_BY_SCHEMA.get(schema)
-    if record_type is None:
+        raise SerializationError(
+            f"ContextEnvelope.records[{index}].schema must be a string"
+        )
+    parser = _RECORD_BY_SCHEMA.get(schema)
+    if parser is None:
         raise SerializationError(f"unsupported context record schema: {schema!r}")
-    return record_type.from_primitive(obj)
+    return parser(obj)
 
 
 @dataclass(frozen=True, slots=True)
@@ -430,9 +503,13 @@ class ContextEnvelope(_CanonicalRecord):
 
     def __post_init__(self) -> None:
         if type(self.intent_request_identity) is not RecordIdentity:
-            raise ValidationError("ContextEnvelope.intent_request_identity must be a RecordIdentity")
+            raise ValidationError(
+                "ContextEnvelope.intent_request_identity must be a RecordIdentity"
+            )
         if type(self.boundary_attribution) is not SourceAttribution:
-            raise ValidationError("ContextEnvelope.boundary_attribution must be a SourceAttribution")
+            raise ValidationError(
+                "ContextEnvelope.boundary_attribution must be a SourceAttribution"
+            )
         if type(self.records) is not tuple:
             raise ValidationError("ContextEnvelope.records must be a tuple")
         allowed = (
@@ -443,11 +520,15 @@ class ContextEnvelope(_CanonicalRecord):
             ContextReferenceRecord,
         )
         if not all(type(record) in allowed for record in self.records):
-            raise ValidationError("ContextEnvelope.records contains an unsupported record type")
+            raise ValidationError(
+                "ContextEnvelope.records contains an unsupported record type"
+            )
 
         identities = [record.identity for record in self.records]
         if len(set(identities)) != len(identities):
-            raise ValidationError("ContextEnvelope.records must not contain duplicate record identities")
+            raise ValidationError(
+                "ContextEnvelope.records must not contain duplicate record identities"
+            )
 
         ordered = tuple(sorted(self.records, key=lambda record: str(record.identity)))
         object.__setattr__(self, "records", ordered)
@@ -468,9 +549,9 @@ class ContextEnvelope(_CanonicalRecord):
                     raise ValidationError(
                         "EvidenceRecord target must be present in the bounded ContextEnvelope"
                     )
-                if record.target_kind is EvidenceTargetKind.CLAIM and type(target) not in (
-                    ClaimRecord, CompletenessRecord
-                ):
+                if record.target_kind is EvidenceTargetKind.CLAIM and type(
+                    target
+                ) not in (ClaimRecord, CompletenessRecord):
                     raise ValidationError(
                         "claim evidence must target a ClaimRecord or CompletenessRecord"
                     )
@@ -492,7 +573,7 @@ class ContextEnvelope(_CanonicalRecord):
         }
 
     @classmethod
-    def from_primitive(cls, value: object) -> "ContextEnvelope":
+    def from_primitive(cls, value: object) -> ContextEnvelope:
         obj = _expect_object(value, field="ContextEnvelope")
         _expect_exact_keys(
             obj,
@@ -500,23 +581,28 @@ class ContextEnvelope(_CanonicalRecord):
             field="ContextEnvelope",
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(f"unsupported ContextEnvelope schema: {obj['schema']!r}")
+            raise SerializationError(
+                f"unsupported ContextEnvelope schema: {obj['schema']!r}"
+            )
         records = _expect_array(obj["records"], field="ContextEnvelope.records")
         try:
             return cls(
                 intent_request_identity=RecordIdentity.from_primitive(
-                    obj["intent_request_identity"], field="ContextEnvelope.intent_request_identity"
+                    obj["intent_request_identity"],
+                    field="ContextEnvelope.intent_request_identity",
                 ),
                 boundary_attribution=SourceAttribution.from_primitive(
-                    obj["boundary_attribution"], field="ContextEnvelope.boundary_attribution"
+                    obj["boundary_attribution"],
+                    field="ContextEnvelope.boundary_attribution",
                 ),
                 records=tuple(
-                    _parse_context_record(item, index=index) for index, item in enumerate(records)
+                    _parse_context_record(item, index=index)
+                    for index, item in enumerate(records)
                 ),
             )
         except ValidationError as exc:
             raise SerializationError("invalid ContextEnvelope") from exc
 
     @classmethod
-    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> "ContextEnvelope":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ContextEnvelope:
         return cls.from_primitive(parse_json_object(data))

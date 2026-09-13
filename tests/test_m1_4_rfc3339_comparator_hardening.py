@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 
 from intent_resolution_runtime import (
-    BindingAttribution,
     BindingAttribute,
     BindingAttributeKind,
+    BindingAttribution,
     BindingInput,
     BindingInputRole,
     BindingIssue,
@@ -35,14 +35,22 @@ def _input(name: str, timestamp: str) -> BindingInput:
     return BindingInput(
         resolved_intent_identity=RESOLVED,
         input_ref=_ref("irr.binding_input", name),
-        attribution=SourceAttribution(source_ref=SOURCE_REF, source_event_ref=_ref("host.event", name)),
+        attribution=SourceAttribution(
+            source_ref=SOURCE_REF, source_event_ref=_ref("host.event", name)
+        ),
         role=BindingInputRole.PLAN_LOCAL_OUTPUT,
         source_identity=SOURCE,
         semantic_type="test.value",
         value=name,
         selection_scope=SELECTION_SCOPE,
         value_scope=f"value:{name}",
-        attributes=(BindingAttribute(name="timestamp", kind=BindingAttributeKind.RFC3339_TIMESTAMP, value=timestamp),),
+        attributes=(
+            BindingAttribute(
+                name="timestamp",
+                kind=BindingAttributeKind.RFC3339_TIMESTAMP,
+                value=timestamp,
+            ),
+        ),
     )
 
 
@@ -74,10 +82,15 @@ def _rule() -> BindingRule:
 
 
 def _attribution() -> BindingAttribution:
-    return BindingAttribution(evaluator_ref=_ref("irr.evaluator", "binding-v1"), binding_event_ref=_ref("irr.event", "r8"))
+    return BindingAttribution(
+        evaluator_ref=_ref("irr.evaluator", "binding-v1"),
+        binding_event_ref=_ref("irr.event", "r8"),
+    )
 
 
-def test_arbitrary_fractional_precision_does_not_depend_on_decimal_to_int_conversion() -> None:
+def test_arbitrary_fractional_precision_does_not_depend_on_decimal_to_int_conversion() -> (
+    None
+):
     prefix = "0" * 5000
     older = _input("older", f"2026-08-30T12:00:00.{prefix}1Z")
     newer = _input("newer", f"2026-08-30T12:00:00.{prefix}2Z")
@@ -93,10 +106,18 @@ def test_year_zero_and_lowercase_rfc3339_forms_compare_as_exact_instants() -> No
     assert result.kind is BindingIssueKind.TIE
 
 
-@pytest.mark.parametrize("mode", [BindingSelectionMode.MAX_ATTRIBUTE, BindingSelectionMode.MIN_ATTRIBUTE])
-def test_text_extrema_are_not_admitted_without_an_explicit_text_ordering_contract(mode: BindingSelectionMode) -> None:
+@pytest.mark.parametrize(
+    "mode", [BindingSelectionMode.MAX_ATTRIBUTE, BindingSelectionMode.MIN_ATTRIBUTE]
+)
+def test_text_extrema_are_not_admitted_without_an_explicit_text_ordering_contract(
+    mode: BindingSelectionMode,
+) -> None:
     with pytest.raises(ValidationError, match="rfc3339_timestamp selector kind"):
-        BindingSelectionPolicy(mode=mode, selector_attributes=("name",), selector_kinds=(BindingAttributeKind.TEXT,))
+        BindingSelectionPolicy(
+            mode=mode,
+            selector_attributes=("name",),
+            selector_kinds=(BindingAttributeKind.TEXT,),
+        )
 
 
 def test_fractional_trailing_zero_forms_compare_as_the_same_instant() -> None:
@@ -105,7 +126,6 @@ def test_fractional_trailing_zero_forms_compare_as_the_same_instant() -> None:
     result = evaluate_binding(_rule(), (first, second), attribution=_attribution())
     assert type(result) is BindingIssue
     assert result.kind is BindingIssueKind.TIE
-
 
 
 def test_non_ascii_decimal_digits_are_not_rfc3339_digits() -> None:

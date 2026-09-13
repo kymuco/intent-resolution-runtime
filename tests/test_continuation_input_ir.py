@@ -21,12 +21,12 @@ from intent_resolution_runtime import (
     CapabilityMatchEvaluation,
     CapabilityMatchEvaluationAttribution,
     CapabilityMatchIssue,
+    CapabilityOutcome,
+    CapabilityOutcomeAttribution,
     CapabilityRequestedScope,
     CapabilityRequirement,
     CapabilityScopeMatch,
     CapabilityScopeRequirement,
-    CapabilityOutcome,
-    CapabilityOutcomeAttribution,
     ContinuationInput,
     ContinuationInputAttribution,
     ContinuationSourceKind,
@@ -56,11 +56,11 @@ from intent_resolution_runtime import (
     StableRef,
     SymbolicReference,
     ValidationError,
+    WorkContinuationMode,
     WorkerResult,
     WorkerResultAttribution,
     WorkerResultMaterial,
     WorkerResultMaterialRole,
-    WorkContinuationMode,
     WorkPlan,
     WorkProposal,
     WorkProposalAttribution,
@@ -68,7 +68,6 @@ from intent_resolution_runtime import (
     evaluate_binding,
     evaluate_capability_match_evaluation,
 )
-
 
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 SOURCE_IDENTITY = RecordIdentity("sha256", "2" * 64)
@@ -453,7 +452,9 @@ def _governance_decision(kind: GovernanceDecisionKind) -> GovernanceDecision:
     )
 
 
-def _governance_material(kind: GovernanceDecisionKind) -> GovernanceContinuationMaterial:
+def _governance_material(
+    kind: GovernanceDecisionKind,
+) -> GovernanceContinuationMaterial:
     decision = _governance_decision(kind)
     return GovernanceContinuationMaterial(
         decision,
@@ -461,7 +462,9 @@ def _governance_material(kind: GovernanceDecisionKind) -> GovernanceContinuation
     )
 
 
-def _continuation(source_kind: ContinuationSourceKind, source: object) -> ContinuationInput:
+def _continuation(
+    source_kind: ContinuationSourceKind, source: object
+) -> ContinuationInput:
     return ContinuationInput(
         ContinuationInputAttribution(
             _ref("irr.host", "continuation-test"),
@@ -577,7 +580,9 @@ def test_continuation_has_no_retry_successor_or_authority_fields() -> None:
             )
 
 
-def test_same_source_new_reentry_event_is_new_occurrence_not_new_source_semantics() -> None:
+def test_same_source_new_reentry_event_is_new_occurrence_not_new_source_semantics() -> (
+    None
+):
     source = _binding_issue()
     first = _continuation(ContinuationSourceKind.BINDING_ISSUE, source)
     second = ContinuationInput(
@@ -595,9 +600,11 @@ def test_same_source_new_reentry_event_is_new_occurrence_not_new_source_semantic
 
 def test_public_continuation_records_are_closed_against_subclassing() -> None:
     with pytest.raises(TypeError):
+
         class DerivedContinuation(ContinuationInput):
             pass
 
     with pytest.raises(TypeError):
+
         class DerivedGovernanceMaterial(GovernanceContinuationMaterial):
             pass

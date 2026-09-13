@@ -157,7 +157,9 @@ def _binding(predecessor: ResolvedIntent) -> BoundValue:
     return result
 
 
-def _evaluation(predecessor: ResolvedIntent, bound: BoundValue) -> CapabilityMatchEvaluation:
+def _evaluation(
+    predecessor: ResolvedIntent, bound: BoundValue
+) -> CapabilityMatchEvaluation:
     plan_ref = _ref("irr.work_plan", "scenario-a-extract")
     step_ref = _ref("irr.work_step", "extract-archive")
     step = WorkStep(
@@ -285,7 +287,9 @@ def _evaluation(predecessor: ResolvedIntent, bound: BoundValue) -> CapabilityMat
         descriptor.capability_ref,
         descriptor.identity,
         (
-            CapabilityScopeMatch(source_scope.scope_ref, source_requirement.requirement_ref),
+            CapabilityScopeMatch(
+                source_scope.scope_ref, source_requirement.requirement_ref
+            ),
             CapabilityScopeMatch(
                 destination_scope.scope_ref,
                 destination_requirement.requirement_ref,
@@ -541,7 +545,9 @@ def _all_keys(value: object) -> set[str]:
     return keys
 
 
-def test_scenario_a_partial_extract_preserves_scoped_effects_and_returns_to_irr() -> None:
+def test_scenario_a_partial_extract_preserves_scoped_effects_and_returns_to_irr() -> (
+    None
+):
     fixture = _fixture()
     attempt = fixture["attempt"]
     authorization = fixture["authorization"]
@@ -558,7 +564,9 @@ def test_scenario_a_partial_extract_preserves_scoped_effects_and_returns_to_irr(
     assert isinstance(lineage, SuccessorResolutionLineage)
 
     requirement = attempt.capability_evaluation.requirement
-    requested_scopes = {item.value: item.scope_ref for item in requirement.requested_scopes}
+    requested_scopes = {
+        item.value: item.scope_ref for item in requirement.requested_scopes
+    }
     requested_effects = {
         item.semantic_type: item for item in requirement.requested_effects
     }
@@ -571,7 +579,9 @@ def test_scenario_a_partial_extract_preserves_scoped_effects_and_returns_to_irr(
 
     assert attempt.presented_authorizations == (authorization,)
     assert authorization.decision.components[0].kind is GovernanceDecisionKind.AUTHORIZE
-    assert {item.scope for item in authorization.decision.proposal.authority_material} == {
+    assert {
+        item.scope for item in authorization.decision.proposal.authority_material
+    } == {
         SELECTED_BACKUP,
         DESTINATION,
     }
@@ -599,7 +609,9 @@ def test_scenario_a_partial_extract_preserves_scoped_effects_and_returns_to_irr(
     assert successor.identity != fixture["predecessor"].identity
 
 
-def test_scenario_a_failed_completion_does_not_erase_partial_write_or_imply_parent_success() -> None:
+def test_scenario_a_failed_completion_does_not_erase_partial_write_or_imply_parent_success() -> (
+    None
+):
     outcome = _fixture()["outcome"]
     assert isinstance(outcome, CapabilityOutcome)
     assert outcome.completion.state is OutcomeCompletionState.NOT_SATISFIED
@@ -610,7 +622,9 @@ def test_scenario_a_failed_completion_does_not_erase_partial_write_or_imply_pare
     assert outcome.has_material_unknown is False
 
 
-def test_scenario_a_partial_extract_recovery_surface_has_no_hidden_retry_or_fallback_fields() -> None:
+def test_scenario_a_partial_extract_recovery_surface_has_no_hidden_retry_or_fallback_fields() -> (
+    None
+):
     fixture = _fixture()
     for record_name in ("outcome", "continuation", "lineage"):
         record = fixture[record_name]

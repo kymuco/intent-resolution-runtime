@@ -21,7 +21,6 @@ from intent_resolution_runtime import (
     evaluate_binding,
 )
 
-
 REQUEST = RecordIdentity("sha256", "1" * 64)
 CONTEXT_A = RecordIdentity("sha256", "2" * 64)
 CONTEXT_B = RecordIdentity("sha256", "3" * 64)

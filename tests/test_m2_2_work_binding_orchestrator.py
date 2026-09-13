@@ -26,7 +26,10 @@ from intent_resolution_runtime import (
     WorkSymbolicInput,
     evaluate_binding,
 )
-from intent_resolution_runtime.work_binding import WorkBindingFrontier, orchestrate_work_binding
+from intent_resolution_runtime.work_binding import (
+    WorkBindingFrontier,
+    orchestrate_work_binding,
+)
 
 
 def _rid(ch: str) -> RecordIdentity:
@@ -228,7 +231,9 @@ def _evaluation(
     )
 
 
-def test_no_work_plan_requires_explicit_work_disposition_without_claiming_no_work() -> None:
+def test_no_work_plan_requires_explicit_work_disposition_without_claiming_no_work() -> (
+    None
+):
     resolved = _resolved()
 
     frontier = orchestrate_work_binding(resolved)
@@ -379,7 +384,9 @@ def test_binding_issue_is_preserved_as_canonical_result_not_hidden_fallback() ->
     assert frontier.external_binding_complete is False
 
 
-def test_complete_semantic_frontier_exposes_bound_pending_and_missing_slots_together() -> None:
+def test_complete_semantic_frontier_exposes_bound_pending_and_missing_slots_together() -> (
+    None
+):
     resolved = _resolved()
     alpha = _symbol(resolved, "alpha")
     beta = _symbol(resolved, "beta")
@@ -410,7 +417,9 @@ def test_complete_semantic_frontier_exposes_bound_pending_and_missing_slots_toge
     assert frontier.external_binding_complete is False
 
 
-def test_frontier_preserves_binding_issue_and_independent_missing_rule_simultaneously() -> None:
+def test_frontier_preserves_binding_issue_and_independent_missing_rule_simultaneously() -> (
+    None
+):
     resolved = _resolved()
     alpha = _symbol(resolved, "alpha")
     beta = _symbol(resolved, "beta")
@@ -495,7 +504,9 @@ def test_evaluation_without_exact_supplied_rule_is_orphaned() -> None:
     )
     evaluation = _evaluation(rule, (binding_input,), label="archive")
 
-    with pytest.raises(ValidationError, match="orphaned from the supplied active BindingRule set"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the supplied active BindingRule set"
+    ):
         orchestrate_work_binding(
             resolved,
             work_plans=(plan,),

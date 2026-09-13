@@ -119,7 +119,9 @@ def test_candidate_attribution_is_provider_occurrence_not_authority() -> None:
     assert "verified" not in text
 
 
-def test_candidate_identity_is_bound_to_request_context_and_provider_invocation() -> None:
+def test_candidate_identity_is_bound_to_request_context_and_provider_invocation() -> (
+    None
+):
     base = candidate()
     changed_context = CandidateResolution(
         intent_request_identity=base.intent_request_identity,
@@ -207,7 +209,9 @@ def test_resolved_intent_rejects_blocking_issue() -> None:
         )
 
 
-def test_resolved_intent_allows_explicit_nonblocking_conflict_without_workplan() -> None:
+def test_resolved_intent_allows_explicit_nonblocking_conflict_without_workplan() -> (
+    None
+):
     resolved = ResolvedIntent(
         intent_request_identity=rid("1"),
         context_envelope_identity=rid("2"),
@@ -329,7 +333,10 @@ def test_round_trip_preserves_candidate_and_outputs() -> None:
         blocking_issues=(ambiguity(),),
         candidate_inputs=(cand,),
     )
-    assert ClarificationNeed.from_json_bytes(clarification.canonical_bytes()) == clarification
+    assert (
+        ClarificationNeed.from_json_bytes(clarification.canonical_bytes())
+        == clarification
+    )
 
     info = InformationNeed(
         intent_request_identity=rid("1"),
@@ -380,7 +387,10 @@ def test_m11_golden_digest_is_preserved() -> None:
         principal_ref=StableRef("hde.principal", "user:self"),
         expression=IntentExpression("Стоит проверить последние логи."),
     )
-    assert request.identity.digest == "bedad2f962490352db8d156a3e39cbd40c2cbc6071a0bfc64899607fdd2967e8"
+    assert (
+        request.identity.digest
+        == "bedad2f962490352db8d156a3e39cbd40c2cbc6071a0bfc64899607fdd2967e8"
+    )
 
 
 def test_resolution_record_types_are_closed() -> None:
@@ -412,12 +422,20 @@ def test_m13_candidate_and_resolved_golden_digests_are_frozen() -> None:
         unresolved_issues=(conflict_nonblocking(),),
         candidate_inputs=(cand,),
     )
-    assert cand.identity.digest == "480e4745d996e82b9faa8bffff4a02be6bf79e04c8423008fb825842e0976e5d"
-    assert resolved.identity.digest == "c47d45338347536d6ce576598dd17bd59c91ab82581c6fb11c631be1edbb161e"
+    assert (
+        cand.identity.digest
+        == "480e4745d996e82b9faa8bffff4a02be6bf79e04c8423008fb825842e0976e5d"
+    )
+    assert (
+        resolved.identity.digest
+        == "c47d45338347536d6ce576598dd17bd59c91ab82581c6fb11c631be1edbb161e"
+    )
 
 
 def test_admitted_candidate_lineage_is_exact_candidate_not_bare_digest() -> None:
-    with pytest.raises(ValidationError, match="candidate_inputs contains an unsupported record type"):
+    with pytest.raises(
+        ValidationError, match="candidate_inputs contains an unsupported record type"
+    ):
         ResolvedIntent(
             intent_request_identity=rid("1"),
             context_envelope_identity=rid("2"),

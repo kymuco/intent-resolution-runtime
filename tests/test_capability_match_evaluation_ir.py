@@ -31,7 +31,6 @@ from intent_resolution_runtime import (
     evaluate_capability_match_evaluation,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "2" * 64)
 
 
@@ -180,7 +179,9 @@ def test_single_match_round_trip_and_classification_returns_exact_match() -> Non
     assert evaluate_capability_match_evaluation(evaluation) == match
 
 
-def test_empty_catalog_classifies_as_bounded_no_match_not_global_impossibility() -> None:
+def test_empty_catalog_classifies_as_bounded_no_match_not_global_impossibility() -> (
+    None
+):
     requirement = _requirement()
     snapshot = _snapshot()
     evaluation = _evaluation(
@@ -416,9 +417,11 @@ def test_mismatch_reason_and_assessment_round_trip_and_order_are_canonical() -> 
 
 def test_public_records_are_closed() -> None:
     with pytest.raises(TypeError):
+
         class _BadEvaluation(CapabilityMatchEvaluation):
             pass
 
     with pytest.raises(TypeError):
+
         class _BadIssue(CapabilityMatchIssue):
             pass

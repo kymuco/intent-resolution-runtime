@@ -21,7 +21,6 @@ from intent_resolution_runtime import (
     ValidationError,
 )
 
-
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 
 
@@ -117,7 +116,9 @@ def test_scenario_d_material_ambiguity_yields_clarification_not_resolved_work() 
     assert "authorized" not in keys
 
 
-def test_scenario_d_provider_proposal_cannot_be_admitted_while_material_ambiguity_blocks() -> None:
+def test_scenario_d_provider_proposal_cannot_be_admitted_while_material_ambiguity_blocks() -> (
+    None
+):
     request, candidate, _ = _fixture()
     ambiguity = candidate.issues[0]
 
@@ -136,7 +137,9 @@ def test_scenario_d_provider_proposal_cannot_be_admitted_while_material_ambiguit
         )
 
 
-def test_scenario_d_candidate_confidence_or_authority_cannot_replace_referent_evidence() -> None:
+def test_scenario_d_candidate_confidence_or_authority_cannot_replace_referent_evidence() -> (
+    None
+):
     _, candidate, clarification = _fixture()
 
     # The provider may propose one alternative, but the canonical blocking issue preserves both.

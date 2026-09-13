@@ -29,7 +29,6 @@ from intent_resolution_runtime import (
     evaluate_capability_match_evaluation,
 )
 
-
 REQUEST_IDENTITY = RecordIdentity("sha256", "1" * 64)
 CONTEXT_IDENTITY = RecordIdentity("sha256", "2" * 64)
 FILE_PATH = r"W:\reports\report.pdf"
@@ -175,7 +174,9 @@ def _all_keys(value: object) -> set[str]:
     return keys
 
 
-def test_scenario_f_missing_signal_capability_is_bounded_no_match_not_fallback() -> None:
+def test_scenario_f_missing_signal_capability_is_bounded_no_match_not_fallback() -> (
+    None
+):
     step, evaluation, issue = _fixture()
 
     assert step.operation == "signal.send_file"
@@ -187,7 +188,9 @@ def test_scenario_f_missing_signal_capability_is_bounded_no_match_not_fallback()
     assert assessment.reasons[0].kind is CapabilityMismatchKind.OPERATION_MISMATCH
 
 
-def test_scenario_f_missing_capability_cannot_enter_governance_or_attempt_path() -> None:
+def test_scenario_f_missing_capability_cannot_enter_governance_or_attempt_path() -> (
+    None
+):
     step, evaluation, issue = _fixture()
 
     with pytest.raises(ValidationError, match="exactly one admitted CapabilityMatch"):
@@ -206,17 +209,24 @@ def test_scenario_f_missing_capability_cannot_enter_governance_or_attempt_path()
         assert forbidden not in keys
 
 
-def test_scenario_f_other_channel_presence_does_not_mean_global_impossibility_or_precedence() -> None:
+def test_scenario_f_other_channel_presence_does_not_mean_global_impossibility_or_precedence() -> (
+    None
+):
     _, evaluation, issue = _fixture()
 
     assert issue.kind is CapabilityMatchIssueKind.NO_COMPATIBLE_CAPABILITY
     assert "Telegram" in evaluation.catalog_snapshot.scope_statement
     assert evaluation.catalog_snapshot.descriptors[0].operation == "telegram.send_file"
     assert evaluation.requirement.work_step.operation == "signal.send_file"
-    assert evaluation.catalog_snapshot.descriptors[0].operation != evaluation.requirement.work_step.operation
+    assert (
+        evaluation.catalog_snapshot.descriptors[0].operation
+        != evaluation.requirement.work_step.operation
+    )
 
 
-def test_scenario_f_issue_round_trip_preserves_exact_missing_capability_provenance() -> None:
+def test_scenario_f_issue_round_trip_preserves_exact_missing_capability_provenance() -> (
+    None
+):
     _, _, issue = _fixture()
 
     decoded = CapabilityMatchIssue.from_json_bytes(issue.canonical_bytes())

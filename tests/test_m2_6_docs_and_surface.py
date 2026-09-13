@@ -4,7 +4,6 @@ from pathlib import Path
 
 import intent_resolution_runtime as irr
 
-
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 DOC = ROOT / "docs" / "m2_6_end_to_end_host_fixture.md"
@@ -21,16 +20,41 @@ def test_readme_declares_m2_6_and_preserves_frozen_m2_5_history() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
-    assert "**M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.**" in text
-    assert "**M2.1 — Initial Resolution Orchestrator is complete and frozen in `main`.**" in text
-    assert "**M2.2 — Work / Binding Orchestrator is complete and frozen in `main`.**" in text
-    assert "**M2.3 — Capability / Governance Orchestrator is complete and frozen in `main`.**" in text
-    assert "**M2.4 — Attempt / Outcome / Continuation Orchestrator is complete and frozen in `main`.**" in text
-    assert "**M2.5 — Worker Lifecycle Orchestrator is complete and frozen in `main`.**" in text
-    assert "**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.**" in text
+    assert (
+        "**M2.0 — Runtime Orchestration Charter is complete and frozen in `main`.**"
+        in text
+    )
+    assert (
+        "**M2.1 — Initial Resolution Orchestrator is complete and frozen in `main`.**"
+        in text
+    )
+    assert (
+        "**M2.2 — Work / Binding Orchestrator is complete and frozen in `main`.**"
+        in text
+    )
+    assert (
+        "**M2.3 — Capability / Governance Orchestrator is complete and frozen in `main`.**"
+        in text
+    )
+    assert (
+        "**M2.4 — Attempt / Outcome / Continuation Orchestrator is complete and frozen in `main`.**"
+        in text
+    )
+    assert (
+        "**M2.5 — Worker Lifecycle Orchestrator is complete and frozen in `main`.**"
+        in text
+    )
+    assert (
+        "**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.**" in text
+    )
     assert "**M3.0 — Host Integration Charter** is the next milestone." in text
-    assert "[M2.5 Worker Lifecycle Orchestrator](docs/m2_5_worker_lifecycle_orchestrator.md)" in text
-    assert "[M2.6 End-to-End Host Fixture](docs/m2_6_end_to_end_host_fixture.md)" in text
+    assert (
+        "[M2.5 Worker Lifecycle Orchestrator](docs/m2_5_worker_lifecycle_orchestrator.md)"
+        in text
+    )
+    assert (
+        "[M2.6 End-to-End Host Fixture](docs/m2_6_end_to_end_host_fixture.md)" in text
+    )
 
 
 def test_m2_6_doc_freezes_composition_without_new_authority() -> None:

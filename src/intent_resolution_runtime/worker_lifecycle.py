@@ -17,13 +17,17 @@ from .worker_result import (
 def _identity_key(value: object) -> str:
     identity = getattr(value, "identity", None)
     if type(identity) is not RecordIdentity:
-        raise ValidationError("M2.5 worker lifecycle material must expose an exact RecordIdentity")
+        raise ValidationError(
+            "M2.5 worker lifecycle material must expose an exact RecordIdentity"
+        )
     return str(identity)
 
 
 def _normalize_parent_work_plans(value: object) -> tuple[WorkPlan, ...]:
     if type(value) is not tuple:
-        raise ValidationError("WorkerLifecycleFrontier.parent_work_plans must be a tuple")
+        raise ValidationError(
+            "WorkerLifecycleFrontier.parent_work_plans must be a tuple"
+        )
     if not all(type(item) is WorkPlan for item in value):
         raise ValidationError(
             "WorkerLifecycleFrontier.parent_work_plans must contain WorkPlan values"
@@ -31,7 +35,9 @@ def _normalize_parent_work_plans(value: object) -> tuple[WorkPlan, ...]:
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError("WorkerLifecycleFrontier.parent_work_plans contains duplicate identities")
+        raise ValidationError(
+            "WorkerLifecycleFrontier.parent_work_plans contains duplicate identities"
+        )
     return tuple(sorted(items, key=_identity_key))
 
 
@@ -45,7 +51,9 @@ def _normalize_delegations(value: object) -> tuple[DelegatedWork, ...]:
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError("WorkerLifecycleFrontier.delegated_work contains duplicate identities")
+        raise ValidationError(
+            "WorkerLifecycleFrontier.delegated_work contains duplicate identities"
+        )
 
     by_ref: dict[StableRef, RecordIdentity] = {}
     for item in items:
@@ -68,7 +76,9 @@ def _normalize_handoffs(value: object) -> tuple[DelegatedWorkHandoff, ...]:
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError("WorkerLifecycleFrontier.handoffs contains duplicate identities")
+        raise ValidationError(
+            "WorkerLifecycleFrontier.handoffs contains duplicate identities"
+        )
 
     occurrences: dict[StableRef, RecordIdentity] = {}
     for item in items:
@@ -92,7 +102,9 @@ def _normalize_results(value: object) -> tuple[WorkerResult, ...]:
     items = tuple(value)
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
-        raise ValidationError("WorkerLifecycleFrontier.worker_results contains duplicate identities")
+        raise ValidationError(
+            "WorkerLifecycleFrontier.worker_results contains duplicate identities"
+        )
 
     occurrences: dict[StableRef, RecordIdentity] = {}
     for item in items:
@@ -118,7 +130,9 @@ class WorkerLifecycleFrontier:
 
     def __post_init__(self) -> None:
         if type(self.predecessor) is not ResolvedIntent:
-            raise ValidationError("WorkerLifecycleFrontier.predecessor must be a ResolvedIntent")
+            raise ValidationError(
+                "WorkerLifecycleFrontier.predecessor must be a ResolvedIntent"
+            )
 
         predecessor_identity = self.predecessor.identity
         predecessor_event = self.predecessor.admission_attribution.admission_event_ref
@@ -149,8 +163,8 @@ class WorkerLifecycleFrontier:
         handoffs = _normalize_handoffs(self.handoffs)
         handoff_events: set[StableRef] = set()
         for handoff in handoffs:
-            delegated = delegation_map.get(handoff.delegated_work.identity)
-            if delegated is None or delegated != handoff.delegated_work:
+            active_delegated = delegation_map.get(handoff.delegated_work.identity)
+            if active_delegated is None or active_delegated != handoff.delegated_work:
                 raise ValidationError(
                     "DelegatedWorkHandoff is orphaned from the exact supplied DelegatedWork history"
                 )
@@ -165,8 +179,8 @@ class WorkerLifecycleFrontier:
 
         results = _normalize_results(self.worker_results)
         for result in results:
-            handoff = handoff_map.get(result.handoff.identity)
-            if handoff is None or handoff != result.handoff:
+            active_handoff = handoff_map.get(result.handoff.identity)
+            if active_handoff is None or active_handoff != result.handoff:
                 raise ValidationError(
                     "WorkerResult is orphaned from the exact supplied DelegatedWorkHandoff history"
                 )
@@ -184,7 +198,9 @@ class WorkerLifecycleFrontier:
     @property
     def handoff_disposition_required_delegations(self) -> tuple[DelegatedWork, ...]:
         handed_off = {item.delegated_work.identity for item in self.handoffs}
-        return tuple(item for item in self.delegated_work if item.identity not in handed_off)
+        return tuple(
+            item for item in self.delegated_work if item.identity not in handed_off
+        )
 
     @property
     def result_pending_handoffs(self) -> tuple[DelegatedWorkHandoff, ...]:
@@ -212,7 +228,11 @@ class WorkerLifecycleFrontier:
         for result in self.worker_results:
             identity = result.handoff.identity
             counts[identity] = counts.get(identity, 0) + 1
-        return tuple(sorted((identity for identity, count in counts.items() if count > 1), key=str))
+        return tuple(
+            sorted(
+                (identity for identity, count in counts.items() if count > 1), key=str
+            )
+        )
 
     @property
     def results_with_needs(self) -> tuple[WorkerResult, ...]:

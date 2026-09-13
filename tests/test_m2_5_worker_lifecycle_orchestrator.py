@@ -18,13 +18,13 @@ from intent_resolution_runtime import (
     SourceAttribution,
     StableRef,
     ValidationError,
+    WorkContinuationMode,
     WorkerNeed,
     WorkerNeedKind,
     WorkerResult,
     WorkerResultAttribution,
     WorkerResultMaterial,
     WorkerResultMaterialRole,
-    WorkContinuationMode,
     WorkPlan,
     WorkStep,
 )
@@ -313,11 +313,15 @@ def test_handoff_requires_exact_supplied_delegation() -> None:
     delegated = _delegation(predecessor)
     handoff = _handoff(delegated)
 
-    with pytest.raises(ValidationError, match="orphaned from the exact supplied DelegatedWork"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the exact supplied DelegatedWork"
+    ):
         orchestrate_worker_lifecycle(predecessor, handoffs=(handoff,))
 
 
-def test_multiple_handoffs_for_one_delegation_preserve_history_without_worker_precedence() -> None:
+def test_multiple_handoffs_for_one_delegation_preserve_history_without_worker_precedence() -> (
+    None
+):
     predecessor = _predecessor()
     delegated = _delegation(predecessor)
     first = _handoff(delegated, worker="worker-a", event="handoff-a")
@@ -362,7 +366,9 @@ def test_worker_result_requires_exact_supplied_handoff() -> None:
     handoff = _handoff(delegated)
     result = _deliverable_result(handoff)
 
-    with pytest.raises(ValidationError, match="orphaned from the exact supplied DelegatedWorkHandoff"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the exact supplied DelegatedWorkHandoff"
+    ):
         orchestrate_worker_lifecycle(
             predecessor,
             delegated_work=(delegated,),
@@ -386,11 +392,15 @@ def test_handoff_without_result_is_pending_not_worker_failure() -> None:
     assert not hasattr(frontier, "worker_failed")
 
 
-def test_multiple_worker_results_for_one_handoff_remain_distinct_return_history() -> None:
+def test_multiple_worker_results_for_one_handoff_remain_distinct_return_history() -> (
+    None
+):
     predecessor = _predecessor()
     delegated = _delegation(predecessor)
     handoff = _handoff(delegated)
-    first = _deliverable_result(handoff, event="result-first", content="First returned material.")
+    first = _deliverable_result(
+        handoff, event="result-first", content="First returned material."
+    )
     second = _need_result(handoff, event="result-second")
 
     frontier = orchestrate_worker_lifecycle(
@@ -453,7 +463,9 @@ def test_competing_records_cannot_share_one_worker_result_occurrence() -> None:
         "Competing record for the same occurrence.",
     )
 
-    with pytest.raises(ValidationError, match="one Worker result occurrence cannot identify competing"):
+    with pytest.raises(
+        ValidationError, match="one Worker result occurrence cannot identify competing"
+    ):
         orchestrate_worker_lifecycle(
             predecessor,
             delegated_work=(delegated,),
@@ -478,7 +490,9 @@ def test_worker_result_occurrence_cannot_alias_predecessor_admission() -> None:
         result.description,
     )
 
-    with pytest.raises(ValidationError, match="result occurrence must differ from the predecessor"):
+    with pytest.raises(
+        ValidationError, match="result occurrence must differ from the predecessor"
+    ):
         orchestrate_worker_lifecycle(
             predecessor,
             delegated_work=(delegated,),
@@ -504,7 +518,9 @@ def test_worker_result_occurrence_cannot_alias_another_handoff_occurrence() -> N
         result.description,
     )
 
-    with pytest.raises(ValidationError, match="distinct from every Worker handoff occurrence"):
+    with pytest.raises(
+        ValidationError, match="distinct from every Worker handoff occurrence"
+    ):
         orchestrate_worker_lifecycle(
             predecessor,
             delegated_work=(delegated,),
@@ -554,7 +570,9 @@ def test_completion_claim_is_visible_but_not_delegated_or_parent_completion() ->
     assert not hasattr(frontier, "intent_satisfied")
 
 
-def test_deliverable_return_is_not_parent_completion_or_automatic_continuation() -> None:
+def test_deliverable_return_is_not_parent_completion_or_automatic_continuation() -> (
+    None
+):
     predecessor = _predecessor()
     delegated = _delegation(predecessor)
     handoff = _handoff(delegated)
@@ -578,7 +596,9 @@ def test_input_order_does_not_create_worker_handoff_or_result_precedence() -> No
     first_delegation = _delegation(predecessor, label="alpha")
     second_delegation = _delegation(predecessor, label="beta")
     first_handoff = _handoff(first_delegation, worker="worker-a", event="handoff-alpha")
-    second_handoff = _handoff(second_delegation, worker="worker-b", event="handoff-beta")
+    second_handoff = _handoff(
+        second_delegation, worker="worker-b", event="handoff-beta"
+    )
     first_result = _deliverable_result(first_handoff, event="result-alpha")
     second_result = _need_result(second_handoff, event="result-beta")
 

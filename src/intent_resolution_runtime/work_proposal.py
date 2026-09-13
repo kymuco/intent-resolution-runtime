@@ -42,7 +42,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -91,7 +93,9 @@ class WorkProposalAttribution(_CanonicalWorkProposalRecord):
 
     def __post_init__(self) -> None:
         if type(self.proposer_ref) is not StableRef:
-            raise ValidationError("WorkProposalAttribution.proposer_ref must be a StableRef")
+            raise ValidationError(
+                "WorkProposalAttribution.proposer_ref must be a StableRef"
+            )
         if type(self.proposal_event_ref) is not StableRef:
             raise ValidationError(
                 "WorkProposalAttribution.proposal_event_ref must be a StableRef"
@@ -107,7 +111,7 @@ class WorkProposalAttribution(_CanonicalWorkProposalRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkProposalAttribution"
-    ) -> "WorkProposalAttribution":
+    ) -> WorkProposalAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "proposer_ref", "proposal_event_ref"}, field=field
@@ -129,7 +133,7 @@ class WorkProposalAttribution(_CanonicalWorkProposalRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "WorkProposalAttribution":
+    ) -> WorkProposalAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -161,7 +165,9 @@ class ProposedWorkStep(_CanonicalWorkProposalRecord):
     def capability_match(self) -> CapabilityMatch:
         result = evaluate_capability_match_evaluation(self.capability_evaluation)
         if type(result) is not CapabilityMatch:
-            raise AssertionError("validated ProposedWorkStep lost its exact CapabilityMatch")
+            raise AssertionError(
+                "validated ProposedWorkStep lost its exact CapabilityMatch"
+            )
         return result
 
     def to_primitive(self) -> dict[str, object]:
@@ -174,7 +180,7 @@ class ProposedWorkStep(_CanonicalWorkProposalRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "ProposedWorkStep"
-    ) -> "ProposedWorkStep":
+    ) -> ProposedWorkStep:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "step_ref", "capability_evaluation"}, field=field
@@ -195,9 +201,7 @@ class ProposedWorkStep(_CanonicalWorkProposalRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "ProposedWorkStep":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> ProposedWorkStep:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -228,7 +232,9 @@ class WorkProposalMaterial(_CanonicalWorkProposalRecord):
 
     def __post_init__(self) -> None:
         if type(self.material_ref) is not StableRef:
-            raise ValidationError("WorkProposalMaterial.material_ref must be a StableRef")
+            raise ValidationError(
+                "WorkProposalMaterial.material_ref must be a StableRef"
+            )
         if type(self.kind) is not WorkProposalMaterialKind:
             raise ValidationError(
                 "WorkProposalMaterial.kind must be a WorkProposalMaterialKind"
@@ -264,7 +270,7 @@ class WorkProposalMaterial(_CanonicalWorkProposalRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkProposalMaterial"
-    ) -> "WorkProposalMaterial":
+    ) -> WorkProposalMaterial:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -296,9 +302,7 @@ class WorkProposalMaterial(_CanonicalWorkProposalRecord):
                 ),
                 kind=kind,
                 step_refs=tuple(
-                    StableRef.from_primitive(
-                        item, field=f"{field}.step_refs[{index}]"
-                    )
+                    StableRef.from_primitive(item, field=f"{field}.step_refs[{index}]")
                     for index, item in enumerate(refs)
                 ),
                 source_ref=StableRef.from_primitive(
@@ -316,7 +320,7 @@ class WorkProposalMaterial(_CanonicalWorkProposalRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "WorkProposalMaterial":
+    ) -> WorkProposalMaterial:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -422,7 +426,7 @@ class WorkProposal(_CanonicalWorkProposalRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "WorkProposal"
-    ) -> "WorkProposal":
+    ) -> WorkProposal:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -466,7 +470,5 @@ class WorkProposal(_CanonicalWorkProposalRecord):
             raise SerializationError(f"invalid {field}") from exc
 
     @classmethod
-    def from_json_bytes(
-        cls, data: bytes | bytearray | memoryview
-    ) -> "WorkProposal":
+    def from_json_bytes(cls, data: bytes | bytearray | memoryview) -> WorkProposal:
         return cls.from_primitive(parse_json_object(data))

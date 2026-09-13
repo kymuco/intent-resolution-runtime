@@ -221,7 +221,7 @@ def _seal_ir_type(base_type: type) -> None:
     def _reject_subclassing(cls: type, **kwargs: object) -> None:
         raise TypeError(f"{base_name} is a closed IR type and cannot be subclassed")
 
-    base_type.__init_subclass__ = classmethod(_reject_subclassing)
+    base_type.__init_subclass__ = classmethod(_reject_subclassing)  # type: ignore[method-assign, assignment]
 
 
 for _ir_type in (

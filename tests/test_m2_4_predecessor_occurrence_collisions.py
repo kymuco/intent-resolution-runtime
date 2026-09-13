@@ -29,7 +29,6 @@ from intent_resolution_runtime.attempt_outcome_continuation import (
     orchestrate_attempt_outcome_continuation,
 )
 
-
 SOURCE_IDENTITY = RecordIdentity("sha256", "a" * 64)
 
 

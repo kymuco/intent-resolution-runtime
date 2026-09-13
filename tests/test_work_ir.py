@@ -129,7 +129,10 @@ def test_work_plan_round_trip_and_step_order_are_canonical() -> None:
 def test_work_plan_completion_contract_is_distinct_identity_covered_semantics() -> None:
     step = _step("one")
     first = _plan(step, completion_contract="The bounded inspection result exists.")
-    second = _plan(step, completion_contract="The bounded inspection result has been reviewed by IRR.")
+    second = _plan(
+        step,
+        completion_contract="The bounded inspection result has been reviewed by IRR.",
+    )
 
     assert first != second
     assert first.identity != second.identity
@@ -151,7 +154,9 @@ def test_dependency_graph_must_be_finite_and_acyclic() -> None:
         _plan(a, b, description="Invalid cyclic plan.")
 
 
-def test_large_finite_dependency_chain_does_not_depend_on_python_recursion_limit() -> None:
+def test_large_finite_dependency_chain_does_not_depend_on_python_recursion_limit() -> (
+    None
+):
     steps: list[WorkStep] = []
     previous: StableRef | None = None
     for index in range(1500):
@@ -280,7 +285,10 @@ def test_work_step_rejects_foreign_symbolic_lineage() -> None:
 
 
 def test_operation_is_a_dotted_semantic_identifier_not_executable_text() -> None:
-    assert _step("valid-operation", operation="filesystem.search").operation == "filesystem.search"
+    assert (
+        _step("valid-operation", operation="filesystem.search").operation
+        == "filesystem.search"
+    )
     with pytest.raises(ValidationError, match="semantic operation identifier"):
         _step("command-shaped-operation", operation="rm -rf /")
     with pytest.raises(ValidationError, match="semantic operation identifier"):
@@ -302,10 +310,16 @@ def test_literal_executable_looking_text_remains_data() -> None:
     assert b"rm -rf /" in plan.canonical_bytes()
 
 
-def test_literal_string_value_may_be_empty_or_whitespace_when_semantically_meaningful() -> None:
+def test_literal_string_value_may_be_empty_or_whitespace_when_semantically_meaningful() -> (
+    None
+):
     empty = WorkLiteralInput(name="empty", semantic_type="text.literal", value="")
-    whitespace = WorkLiteralInput(name="whitespace", semantic_type="text.literal", value="   ")
-    step = _step("literal-edge-values", inputs=(whitespace, empty), operation="text.inspect")
+    whitespace = WorkLiteralInput(
+        name="whitespace", semantic_type="text.literal", value="   "
+    )
+    step = _step(
+        "literal-edge-values", inputs=(whitespace, empty), operation="text.inspect"
+    )
     plan = _plan(step)
     values = {item.name: item.value for item in plan.steps[0].inputs}
     assert values == {"empty": "", "whitespace": "   "}
@@ -328,9 +342,7 @@ def test_work_ir_has_no_authority_surface() -> None:
     def walk(value: object) -> list[str]:
         if isinstance(value, dict):
             return list(value) + [
-                key
-                for child in value.values()
-                for key in walk(child)
+                key for child in value.values() for key in walk(child)
             ]
         if isinstance(value, list):
             return [key for child in value for key in walk(child)]
@@ -342,9 +354,11 @@ def test_work_ir_has_no_authority_surface() -> None:
 
 def test_public_work_records_are_closed_ir_types() -> None:
     with pytest.raises(TypeError, match="closed IR type"):
+
         class InvalidPlan(WorkPlan):
             pass
 
     with pytest.raises(TypeError, match="closed IR type"):
+
         class InvalidStep(WorkStep):
             pass

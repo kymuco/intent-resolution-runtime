@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CHARTER = ROOT / "docs" / "m3_0_host_integration_charter.md"
 
@@ -29,7 +28,10 @@ def test_m3_0_uses_existing_typed_irr_input_boundary_without_blob_escape() -> No
 
     assert "IntentRequest\n+ ContextEnvelope" in text
     assert "Host possesses data != admitted IRR Context" in text
-    assert "ContextEnvelope remains typed semantic Context, not a text/blob transport" in text
+    assert (
+        "ContextEnvelope remains typed semantic Context, not a text/blob transport"
+        in text
+    )
     assert "ContextReferenceRecord.description != hidden content transport" in text
     assert "raw Host text != ClaimRecord by default" in text
     assert "Context Reference != content" in text

@@ -35,7 +35,6 @@ from intent_resolution_runtime import (
     WorkStep,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "3" * 64)
 SOURCE_ID = RecordIdentity("sha256", "4" * 64)
 AUTHORITY_CONTEXT_ID = RecordIdentity("sha256", "5" * 64)
@@ -214,7 +213,9 @@ def test_authorize_component_materializes_separate_authorization() -> None:
     assert authorization.authorized_step_refs == component.step_refs
     assert authorization.conditions == (condition,)
     assert authorization.decision.proposal == proposal
-    assert Authorization.from_json_bytes(authorization.canonical_bytes()) == authorization
+    assert (
+        Authorization.from_json_bytes(authorization.canonical_bytes()) == authorization
+    )
     assert GovernanceDecision.from_json_bytes(decision.canonical_bytes()) == decision
 
 
@@ -247,7 +248,10 @@ def test_non_authorize_components_cannot_materialize_authorization(
 ) -> None:
     proposal = _proposal()
     directives = ()
-    if kind in (GovernanceDecisionKind.CONSTRAIN, GovernanceDecisionKind.REQUIRE_REVIEW):
+    if kind in (
+        GovernanceDecisionKind.CONSTRAIN,
+        GovernanceDecisionKind.REQUIRE_REVIEW,
+    ):
         directives = (_directive("directive", "semantic_constraint"),)
     component = _component(
         proposal,
@@ -399,5 +403,6 @@ def test_authority_context_identity_and_exact_proposal_are_identity_covered() ->
 
 def test_governance_ir_types_are_closed() -> None:
     with pytest.raises(TypeError):
+
         class _BadAuthorization(Authorization):
             pass

@@ -32,7 +32,6 @@ from intent_resolution_runtime import (
     evaluate_binding,
 )
 
-
 REQUEST = RecordIdentity("sha256", "1" * 64)
 CONTEXT_A = RecordIdentity("sha256", "2" * 64)
 CONTEXT_B = RecordIdentity("sha256", "3" * 64)
@@ -44,7 +43,9 @@ def _ref(namespace: str, value: str) -> StableRef:
 
 
 def _predecessor(
-    *, event: str = "resolve-predecessor-001", semantics: str = "Inspect bounded workspace."
+    *,
+    event: str = "resolve-predecessor-001",
+    semantics: str = "Inspect bounded workspace.",
 ) -> ResolvedIntent:
     return ResolvedIntent(
         intent_request_identity=REQUEST,
@@ -116,7 +117,8 @@ def _continuation(
 
 def _resolved_successor(
     predecessor: ResolvedIntent,
-    *, event: str = "resolve-successor-001",
+    *,
+    event: str = "resolve-successor-001",
     request_identity: RecordIdentity | None = None,
 ) -> ResolvedIntent:
     return ResolvedIntent(
@@ -376,5 +378,6 @@ def test_same_exact_relation_is_idempotent_and_type_is_closed() -> None:
     assert first.identity == second.identity
 
     with pytest.raises(TypeError, match="closed IR type"):
+
         class InvalidSuccessorResolutionLineage(SuccessorResolutionLineage):
             pass

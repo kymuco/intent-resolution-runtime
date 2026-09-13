@@ -23,7 +23,6 @@ from intent_resolution_runtime import (
     WorkerResultMaterialRole,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 WORK_PLAN = RecordIdentity("sha256", "2" * 64)
 
@@ -41,7 +40,9 @@ def _scope(name: str = "project") -> DelegatedScope:
     )
 
 
-def _deliverable(scope_ref: StableRef, name: str = "analysis-report") -> ExpectedDeliverable:
+def _deliverable(
+    scope_ref: StableRef, name: str = "analysis-report"
+) -> ExpectedDeliverable:
     return ExpectedDeliverable(
         deliverable_ref=_ref("irr.expected_deliverable", name),
         semantic_type="artifact.report",
@@ -100,9 +101,7 @@ def _material(
     delegated = handoff.delegated_work
     scope_ref = delegated.scopes[0].scope_ref if scope_ref is None else scope_ref
     expected_refs = (
-        (delegated.expected_deliverables[0].deliverable_ref,)
-        if expected
-        else ()
+        (delegated.expected_deliverables[0].deliverable_ref,) if expected else ()
     )
     return WorkerResultMaterial(
         material_ref=_ref("irr.worker_result_material", name),

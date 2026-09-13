@@ -56,7 +56,6 @@ from intent_resolution_runtime.attempt_outcome_continuation import (
     orchestrate_attempt_outcome_continuation,
 )
 
-
 SOURCE_IDENTITY = RecordIdentity("sha256", "8" * 64)
 TEMPORAL_IDENTITY = RecordIdentity("sha256", "9" * 64)
 
@@ -94,7 +93,9 @@ def _predecessor(label: str = "main") -> ResolvedIntent:
     )
 
 
-def _evaluation(predecessor: ResolvedIntent, label: str = "main") -> CapabilityMatchEvaluation:
+def _evaluation(
+    predecessor: ResolvedIntent, label: str = "main"
+) -> CapabilityMatchEvaluation:
     plan_ref = _ref("irr.work_plan", f"publish-{label}")
     step_ref = _ref("irr.work_step", "publish")
     completion = "Confirm the bounded artifact publication for the requested target."
@@ -256,7 +257,9 @@ def _outcome(
     *,
     unknown: bool = False,
 ) -> CapabilityOutcome:
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
     if unknown:
         evidence = _evidence(
             f"disconnect-{label}",
@@ -418,7 +421,9 @@ def test_outcome_requires_exact_supplied_attempt_history() -> None:
     attempt = _attempt(predecessor, "one")
     outcome = _outcome(attempt, "one")
 
-    with pytest.raises(ValidationError, match="orphaned from the exact supplied CapabilityAttempt"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the exact supplied CapabilityAttempt"
+    ):
         orchestrate_attempt_outcome_continuation(predecessor, outcomes=(outcome,))
 
 
@@ -453,7 +458,9 @@ def test_outcome_does_not_automatically_become_continuation_source() -> None:
     assert frontier.reentry_pending_sources == ()
 
 
-def test_selected_outcome_source_without_host_reentry_is_pending_not_automatic_continuation() -> None:
+def test_selected_outcome_source_without_host_reentry_is_pending_not_automatic_continuation() -> (
+    None
+):
     predecessor = _predecessor()
     attempt = _attempt(predecessor, "one")
     outcome = _outcome(attempt, "one", unknown=True)
@@ -479,7 +486,9 @@ def test_continuation_input_must_descend_from_exact_selected_source() -> None:
     outcome = _outcome(attempt, "one", unknown=True)
     continuation = _continuation(outcome, "one")
 
-    with pytest.raises(ValidationError, match="orphaned from the exact selected continuation source"):
+    with pytest.raises(
+        ValidationError, match="orphaned from the exact selected continuation source"
+    ):
         orchestrate_attempt_outcome_continuation(
             predecessor,
             attempts=(attempt,),
@@ -488,7 +497,9 @@ def test_continuation_input_must_descend_from_exact_selected_source() -> None:
         )
 
 
-def test_repeated_host_reentry_of_same_source_is_history_not_semantic_amplification() -> None:
+def test_repeated_host_reentry_of_same_source_is_history_not_semantic_amplification() -> (
+    None
+):
     predecessor = _predecessor()
     attempt = _attempt(predecessor, "one")
     outcome = _outcome(attempt, "one", unknown=True)
@@ -546,7 +557,9 @@ def test_successor_lineage_cannot_use_unsupplied_reentry_history() -> None:
     continuation = _continuation(outcome, "one")
     lineage = _lineage(predecessor, continuation, "one")
 
-    with pytest.raises(ValidationError, match="outside the exact supplied re-entry history"):
+    with pytest.raises(
+        ValidationError, match="outside the exact supplied re-entry history"
+    ):
         orchestrate_attempt_outcome_continuation(
             predecessor,
             attempts=(attempt,),
@@ -564,7 +577,9 @@ def test_competing_successor_lineages_fail_closed_without_branch_precedence() ->
     first = _lineage(predecessor, continuation, "first")
     second = _lineage(predecessor, continuation, "second")
 
-    with pytest.raises(ValidationError, match="competing active SuccessorResolutionLineage"):
+    with pytest.raises(
+        ValidationError, match="competing active SuccessorResolutionLineage"
+    ):
         orchestrate_attempt_outcome_continuation(
             predecessor,
             attempts=(attempt,),

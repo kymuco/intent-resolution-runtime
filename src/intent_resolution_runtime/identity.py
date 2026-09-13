@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from .canonical import sha256_hex
 from .errors import SerializationError, ValidationError
 
-
 _SHA256_HEX = re.compile(r"[0-9a-f]{64}\Z", flags=re.ASCII)
 
 
@@ -21,7 +20,9 @@ class RecordIdentity:
         if type(self.algorithm) is not str or self.algorithm != "sha256":
             raise ValidationError("only sha256 record identity is supported in M1")
         if type(self.digest) is not str or _SHA256_HEX.fullmatch(self.digest) is None:
-            raise ValidationError("sha256 digest must be exactly 64 lowercase ASCII hex characters")
+            raise ValidationError(
+                "sha256 digest must be exactly 64 lowercase ASCII hex characters"
+            )
 
     def __str__(self) -> str:
         return f"{self.algorithm}:{self.digest}"
@@ -30,7 +31,7 @@ class RecordIdentity:
         return {"algorithm": self.algorithm, "digest": self.digest}
 
     @classmethod
-    def from_primitive(cls, value: object, *, field: str) -> "RecordIdentity":
+    def from_primitive(cls, value: object, *, field: str) -> RecordIdentity:
         if not isinstance(value, dict):
             raise SerializationError(f"{field} must be a JSON object")
         if set(value) != {"algorithm", "digest"}:

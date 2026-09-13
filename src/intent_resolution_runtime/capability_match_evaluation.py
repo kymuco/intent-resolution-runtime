@@ -38,7 +38,9 @@ def _expect_array(value: object, *, field: str) -> list[Any]:
     return value
 
 
-def _expect_exact_keys(value: dict[str, Any], expected: set[str], *, field: str) -> None:
+def _expect_exact_keys(
+    value: dict[str, Any], expected: set[str], *, field: str
+) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -112,7 +114,7 @@ class CapabilityMatchEvaluationAttribution(_CanonicalCapabilityEvaluationRecord)
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityMatchEvaluationAttribution"
-    ) -> "CapabilityMatchEvaluationAttribution":
+    ) -> CapabilityMatchEvaluationAttribution:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj, {"schema", "evaluator_ref", "evaluation_event_ref"}, field=field
@@ -135,7 +137,7 @@ class CapabilityMatchEvaluationAttribution(_CanonicalCapabilityEvaluationRecord)
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityMatchEvaluationAttribution":
+    ) -> CapabilityMatchEvaluationAttribution:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -166,7 +168,7 @@ class CapabilityMismatchReason(_CanonicalCapabilityEvaluationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityMismatchReason"
-    ) -> "CapabilityMismatchReason":
+    ) -> CapabilityMismatchReason:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"schema", "kind", "scope", "description"}, field=field)
         if obj["schema"] != cls.SCHEMA:
@@ -189,7 +191,7 @@ class CapabilityMismatchReason(_CanonicalCapabilityEvaluationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityMismatchReason":
+    ) -> CapabilityMismatchReason:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -206,7 +208,9 @@ def _normalize_mismatch_reasons(
     keys = [(item.kind.value, item.scope, item.description) for item in items]
     if len(set(keys)) != len(keys):
         raise ValidationError(f"{field} must not contain duplicate reasons")
-    return tuple(sorted(items, key=lambda item: (item.kind.value, item.scope, item.description)))
+    return tuple(
+        sorted(items, key=lambda item: (item.kind.value, item.scope, item.description))
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,7 +256,7 @@ class CapabilityIncompatibleDescriptorAssessment(_CanonicalCapabilityEvaluationR
         value: object,
         *,
         field: str = "CapabilityIncompatibleDescriptorAssessment",
-    ) -> "CapabilityIncompatibleDescriptorAssessment":
+    ) -> CapabilityIncompatibleDescriptorAssessment:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -289,13 +293,11 @@ class CapabilityIncompatibleDescriptorAssessment(_CanonicalCapabilityEvaluationR
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityIncompatibleDescriptorAssessment":
+    ) -> CapabilityIncompatibleDescriptorAssessment:
         return cls.from_primitive(parse_json_object(data))
 
 
-def _normalize_matches(
-    value: object, *, field: str
-) -> tuple[CapabilityMatch, ...]:
+def _normalize_matches(value: object, *, field: str) -> tuple[CapabilityMatch, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is CapabilityMatch for item in value):
@@ -433,7 +435,7 @@ class CapabilityMatchEvaluation(_CanonicalCapabilityEvaluationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityMatchEvaluation"
-    ) -> "CapabilityMatchEvaluation":
+    ) -> CapabilityMatchEvaluation:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
@@ -489,7 +491,7 @@ class CapabilityMatchEvaluation(_CanonicalCapabilityEvaluationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityMatchEvaluation":
+    ) -> CapabilityMatchEvaluation:
         return cls.from_primitive(parse_json_object(data))
 
 
@@ -530,7 +532,7 @@ class CapabilityMatchIssue(_CanonicalCapabilityEvaluationRecord):
     @classmethod
     def from_primitive(
         cls, value: object, *, field: str = "CapabilityMatchIssue"
-    ) -> "CapabilityMatchIssue":
+    ) -> CapabilityMatchIssue:
         obj = _expect_object(value, field=field)
         _expect_exact_keys(obj, {"schema", "evaluation", "kind"}, field=field)
         if obj["schema"] != cls.SCHEMA:
@@ -554,7 +556,7 @@ class CapabilityMatchIssue(_CanonicalCapabilityEvaluationRecord):
     @classmethod
     def from_json_bytes(
         cls, data: bytes | bytearray | memoryview
-    ) -> "CapabilityMatchIssue":
+    ) -> CapabilityMatchIssue:
         return cls.from_primitive(parse_json_object(data))
 
 

@@ -24,7 +24,6 @@ from intent_resolution_runtime import (
     evaluate_binding,
 )
 
-
 REQUEST = RecordIdentity("sha256", "1" * 64)
 CONTEXT = RecordIdentity("sha256", "2" * 64)
 SOURCE_ID = RecordIdentity("sha256", "3" * 64)
@@ -123,7 +122,9 @@ def _successor(predecessor: ResolvedIntent, *, event: str) -> ResolvedIntent:
     )
 
 
-def test_continuation_exposes_mechanical_source_occurrence_without_wire_change() -> None:
+def test_continuation_exposes_mechanical_source_occurrence_without_wire_change() -> (
+    None
+):
     predecessor = _predecessor()
     continuation = _continuation(
         predecessor,
@@ -183,7 +184,9 @@ def test_source_and_reentry_occurrence_roles_cannot_overlap_across_inputs() -> N
         source_event="binding-b-001",
         reentry_event="binding-a-001",
     )
-    with pytest.raises(ValidationError, match="source occurrences must remain distinct"):
+    with pytest.raises(
+        ValidationError, match="source occurrences must remain distinct"
+    ):
         SuccessorResolutionLineage(
             predecessor,
             (first, second),

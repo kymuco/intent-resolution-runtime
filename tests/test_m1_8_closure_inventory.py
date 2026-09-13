@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 SCENARIO_FILES: dict[str, tuple[str, ...]] = {
     "A": (
         "test_m1_8_scenario_a_restore_backup.py",
@@ -47,7 +46,9 @@ def test_scenario_splits_are_explicit_and_bounded() -> None:
 
 def test_m1_8_fixture_inventory_contains_no_generic_scenario_runtime_layer() -> None:
     filenames = {
-        filename for scenario_files in SCENARIO_FILES.values() for filename in scenario_files
+        filename
+        for scenario_files in SCENARIO_FILES.values()
+        for filename in scenario_files
     }
     assert all(filename.startswith("test_m1_8_scenario_") for filename in filenames)
     assert "scenario_runtime.py" not in filenames
