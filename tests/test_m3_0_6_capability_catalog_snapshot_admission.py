@@ -3,15 +3,17 @@ from __future__ import annotations
 import pytest
 
 from intent_resolution_runtime import (
-    AdmittedCapabilityCatalogSnapshot,
-    CandidateCapabilityCatalogSnapshot,
     CapabilityCatalogAttribution,
     CapabilityCatalogSnapshot,
+    StableRef,
+    ValidationError,
+)
+from intent_resolution_runtime.capability_catalog_admission import (
+    AdmittedCapabilityCatalogSnapshot,
+    CandidateCapabilityCatalogSnapshot,
     CapabilityCatalogSnapshotAdmissionAttribution,
     CapabilityCatalogSnapshotAdmissionFrontierKind,
     CapabilityCatalogSnapshotProposalAttribution,
-    StableRef,
-    ValidationError,
     orchestrate_capability_catalog_snapshot_admission,
 )
 
