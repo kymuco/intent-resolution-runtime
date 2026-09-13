@@ -79,6 +79,25 @@ def test_no_candidate_material_requires_explicit_proposal_input() -> None:
     assert frontier.admitted_catalog is None
 
 
+def test_empty_candidate_domain_cannot_be_synthesized_by_admitter() -> None:
+    with pytest.raises(ValidationError, match="requires explicit candidate snapshot"):
+        orchestrate_capability_catalog_snapshot_admission(
+            admitter=_admitter,
+            admission_attribution=_admission("empty"),
+        )
+
+
+def test_admitted_catalog_must_equal_one_exact_proposed_snapshot() -> None:
+    candidate = _candidate(_snapshot("proposed"), label="proposed")
+
+    with pytest.raises(ValidationError, match="one exact proposed snapshot"):
+        AdmittedCapabilityCatalogSnapshot(
+            admission_attribution=_admission("synthesized"),
+            snapshot=_snapshot("synthesized"),
+            candidate_inputs=(candidate,),
+        )
+
+
 def test_one_exact_catalog_requires_admission_not_automatic_activation() -> None:
     candidate = _candidate(_snapshot("one"), label="one")
 
