@@ -139,9 +139,7 @@ def _admitted_catalog(
     candidate = CandidateCapabilityCatalogSnapshot(
         attribution=CapabilityCatalogSnapshotProposalAttribution(
             proposer_ref=_ref("irr.catalog_proposer", "test-host"),
-            proposal_event_ref=_ref(
-                "irr.catalog_proposal", f"m3.0.7:{label}"
-            ),
+            proposal_event_ref=_ref("irr.catalog_proposal", f"m3.0.7:{label}"),
         ),
         snapshot=snapshot,
         rationale="Use this exact bounded capability domain.",
@@ -149,9 +147,7 @@ def _admitted_catalog(
     return AdmittedCapabilityCatalogSnapshot(
         admission_attribution=CapabilityCatalogSnapshotAdmissionAttribution(
             resolver_ref=_ref("irr.catalog_resolver", "test"),
-            admission_event_ref=_ref(
-                "irr.catalog_admission", f"m3.0.7:{label}"
-            ),
+            admission_event_ref=_ref("irr.catalog_admission", f"m3.0.7:{label}"),
         ),
         snapshot=snapshot,
         candidate_inputs=(candidate,),
@@ -176,7 +172,10 @@ def test_exact_admitted_inputs_produce_one_mechanically_bound_evaluation() -> No
 
     assert output.evaluation.requirement == output.admitted_requirement.requirement
     assert output.evaluation.catalog_snapshot == output.admitted_catalog.snapshot
-    assert output.evaluation.attribution.evaluator_ref == mechanical_capability_evaluator_ref()
+    assert (
+        output.evaluation.attribution.evaluator_ref
+        == mechanical_capability_evaluator_ref()
+    )
 
     result = evaluate_capability_match_evaluation(output.evaluation)
     assert result.__class__ is CapabilityMatch
@@ -243,7 +242,9 @@ def test_foreign_admitted_requirement_cannot_be_attached_to_evaluation() -> None
 def test_foreign_admitted_catalog_cannot_be_attached_to_evaluation() -> None:
     output = _derive()
 
-    with pytest.raises(ValidationError, match="exact admitted CapabilityCatalogSnapshot"):
+    with pytest.raises(
+        ValidationError, match="exact admitted CapabilityCatalogSnapshot"
+    ):
         MechanicallyDerivedCapabilityMatchEvaluation(
             admitted_requirement=output.admitted_requirement,
             admitted_catalog=_admitted_catalog("foreign"),
