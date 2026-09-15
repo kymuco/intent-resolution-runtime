@@ -4,30 +4,28 @@ from inspect import signature
 
 import pytest
 
-from intent_resolution_runtime.context import (
+from intent_resolution_runtime import (
+    CandidateAttribution,
+    CandidateResolution,
     ClaimRecord,
     CompletenessRecord,
+    CognitiveProviderIntegrationError,
+    CognitiveProviderPort,
+    CognitiveProviderRequest,
     ContextEnvelope,
     EvidenceRecord,
     EvidenceRelation,
     EvidenceTargetKind,
-    SourceAttribution,
-    TemporalBasisKind,
-    TemporalBasisRecord,
-)
-from intent_resolution_runtime.errors import ValidationError
-from intent_resolution_runtime.intent import (
     IntentExpression,
     IntentRequest,
     OriginAttribution,
     OriginKind,
+    RecordIdentity,
+    SourceAttribution,
     StableRef,
-)
-from intent_resolution_runtime.resolution import CandidateAttribution, CandidateResolution
-from intent_resolution_runtime.cognitive_provider import (
-    CognitiveProviderIntegrationError,
-    CognitiveProviderPort,
-    CognitiveProviderRequest,
+    TemporalBasisKind,
+    TemporalBasisRecord,
+    ValidationError,
     build_cognitive_provider_request,
     invoke_cognitive_provider,
 )
@@ -98,8 +96,8 @@ def _candidate(
     *,
     provider_ref: StableRef | None = None,
     invocation_ref: StableRef | None = None,
-    intent_request_identity=None,
-    context_envelope_identity=None,
+    intent_request_identity: RecordIdentity | None = None,
+    context_envelope_identity: RecordIdentity | None = None,
 ) -> CandidateResolution:
     return CandidateResolution(
         intent_request_identity=(
