@@ -272,6 +272,57 @@ def test_projection_requires_completeness_temporal_basis_to_be_disclosed() -> No
         )
 
 
+def test_invoke_rejects_forged_intent_expression_before_provider_call() -> None:
+    intent_request = _request("forged-expression")
+    context = _context(intent_request, "forged-expression")
+    forged = CognitiveProviderRequest(
+        provider_ref=_provider_ref("forged-expression"),
+        invocation_ref=_invocation_ref("forged-expression"),
+        intent_request_identity=intent_request.identity,
+        context_envelope_identity=context.identity,
+        intent_expression=IntentExpression(text="A different request"),
+    )
+    provider = _StaticProvider(_candidate(forged))
+
+    with pytest.raises(ValidationError, match="exact source IntentExpression"):
+        invoke_cognitive_provider(
+            provider,
+            forged,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
+
+    assert provider.requests == []
+
+
+def test_invoke_rejects_forged_context_projection_before_provider_call() -> None:
+    intent_request = _request("forged-context")
+    context = _context(intent_request, "forged-context")
+    foreign_context = _context(intent_request, "foreign-context")
+    foreign_claim = next(
+        record for record in foreign_context.records if type(record) is ClaimRecord
+    )
+    forged = CognitiveProviderRequest(
+        provider_ref=_provider_ref("forged-context"),
+        invocation_ref=_invocation_ref("forged-context"),
+        intent_request_identity=intent_request.identity,
+        context_envelope_identity=context.identity,
+        intent_expression=intent_request.expression,
+        context_records=(foreign_claim,),
+    )
+    provider = _StaticProvider(_candidate(forged))
+
+    with pytest.raises(ValidationError, match="exact source ContextEnvelope"):
+        invoke_cognitive_provider(
+            provider,
+            forged,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
+
+    assert provider.requests == []
+
+
 def test_provider_port_is_one_request_to_one_candidate_proposal_surface() -> None:
     parameters = signature(CognitiveProviderPort.propose).parameters
 
@@ -295,7 +346,12 @@ def test_matching_provider_candidate_crosses_boundary_unchanged() -> None:
     expected = _candidate(provider_request)
     provider = _StaticProvider(expected)
 
-    actual = invoke_cognitive_provider(provider, provider_request)
+    actual = invoke_cognitive_provider(
+        provider,
+        provider_request,
+        intent_request=intent_request,
+        context_envelope=context,
+    )
 
     assert isinstance(provider, CognitiveProviderPort)
     assert actual is expected
@@ -319,7 +375,12 @@ def test_provider_candidate_with_foreign_intent_lineage_fails_closed() -> None:
     )
 
     with pytest.raises(CognitiveProviderIntegrationError, match="foreign IntentRequest"):
-        invoke_cognitive_provider(provider, provider_request)
+        invoke_cognitive_provider(
+            provider,
+            provider_request,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
 
 
 def test_provider_candidate_with_foreign_context_lineage_fails_closed() -> None:
@@ -341,7 +402,12 @@ def test_provider_candidate_with_foreign_context_lineage_fails_closed() -> None:
     )
 
     with pytest.raises(CognitiveProviderIntegrationError, match="foreign ContextEnvelope"):
-        invoke_cognitive_provider(provider, provider_request)
+        invoke_cognitive_provider(
+            provider,
+            provider_request,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
 
 
 def test_provider_candidate_with_wrong_provider_attribution_fails_closed() -> None:
@@ -358,7 +424,12 @@ def test_provider_candidate_with_wrong_provider_attribution_fails_closed() -> No
     )
 
     with pytest.raises(CognitiveProviderIntegrationError, match="wrong provider_ref"):
-        invoke_cognitive_provider(provider, provider_request)
+        invoke_cognitive_provider(
+            provider,
+            provider_request,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
 
 
 def test_provider_candidate_with_wrong_invocation_attribution_fails_closed() -> None:
@@ -375,7 +446,12 @@ def test_provider_candidate_with_wrong_invocation_attribution_fails_closed() -> 
     )
 
     with pytest.raises(CognitiveProviderIntegrationError, match="wrong invocation_ref"):
-        invoke_cognitive_provider(provider, provider_request)
+        invoke_cognitive_provider(
+            provider,
+            provider_request,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
 
 
 def test_provider_must_return_exact_candidate_resolution() -> None:
@@ -389,7 +465,12 @@ def test_provider_must_return_exact_candidate_resolution() -> None:
     )
 
     with pytest.raises(CognitiveProviderIntegrationError, match="exact CandidateResolution"):
-        invoke_cognitive_provider(_WrongTypeProvider(), provider_request)  # type: ignore[arg-type]
+        invoke_cognitive_provider(
+            _WrongTypeProvider(),  # type: ignore[arg-type]
+            provider_request,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
 
 
 def test_transport_failure_is_not_converted_into_semantic_ir() -> None:
@@ -403,7 +484,12 @@ def test_transport_failure_is_not_converted_into_semantic_ir() -> None:
     )
 
     with pytest.raises(RuntimeError, match="transport unavailable"):
-        invoke_cognitive_provider(_ExplodingProvider(), provider_request)
+        invoke_cognitive_provider(
+            _ExplodingProvider(),
+            provider_request,
+            intent_request=intent_request,
+            context_envelope=context,
+        )
 
 
 def test_provider_output_remains_proposal_not_admission_or_authority() -> None:
@@ -418,6 +504,8 @@ def test_provider_output_remains_proposal_not_admission_or_authority() -> None:
     candidate = invoke_cognitive_provider(
         _StaticProvider(_candidate(provider_request)),
         provider_request,
+        intent_request=intent_request,
+        context_envelope=context,
     )
 
     assert type(candidate) is CandidateResolution
@@ -454,10 +542,14 @@ def test_separate_provider_invocations_remain_separate_candidate_provenance() ->
     first = invoke_cognitive_provider(
         _StaticProvider(_candidate(first_request)),
         first_request,
+        intent_request=intent_request,
+        context_envelope=context,
     )
     second = invoke_cognitive_provider(
         _StaticProvider(_candidate(second_request)),
         second_request,
+        intent_request=intent_request,
+        context_envelope=context,
     )
 
     assert first.attribution != second.attribution
