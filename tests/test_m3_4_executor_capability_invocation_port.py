@@ -198,7 +198,9 @@ def _attempt(
     )
 
 
-def _outcome(attempt: CapabilityAttempt, *, event: str = "outcome-m3-4") -> CapabilityOutcome:
+def _outcome(
+    attempt: CapabilityAttempt, *, event: str = "outcome-m3-4"
+) -> CapabilityOutcome:
     lifecycle = OutcomeEvidence(
         _ref("irr.outcome_evidence", f"lifecycle-{event}"),
         SourceAttribution(
@@ -225,7 +227,9 @@ def _outcome(attempt: CapabilityAttempt, *, event: str = "outcome-m3-4") -> Capa
         "artifact.publish attempt",
         "Attributable result evidence confirms the requested publication.",
     )
-    effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+    effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+        0
+    ].effect_ref
     return CapabilityOutcome(
         CapabilityOutcomeAttribution(
             _ref("irr.outcome_evaluator", "m3-4-test"),
@@ -331,7 +335,9 @@ def test_exact_attempt_replay_is_blocked_before_second_executor_call() -> None:
     assert executor.calls == 1
 
 
-def test_transport_failure_leaves_attempt_durable_and_same_attempt_cannot_retry() -> None:
+def test_transport_failure_leaves_attempt_durable_and_same_attempt_cannot_retry() -> (
+    None
+):
     attempt = _attempt()
     executor = _FailingExecutor()
     repository = InMemoryAdmittedHistoryRepository()
@@ -403,7 +409,9 @@ def test_explicit_executor_boundary_mismatch_fails_before_attempt_commit() -> No
     executor = _Executor(_outcome(attempt))
     repository = InMemoryAdmittedHistoryRepository()
 
-    with pytest.raises(ExecutorIntegrationError, match="exact admitted Executor boundary"):
+    with pytest.raises(
+        ExecutorIntegrationError, match="exact admitted Executor boundary"
+    ):
         invoke_executor(
             executor,
             repository,
@@ -497,7 +505,9 @@ def test_wrong_executor_return_type_does_not_erase_committed_attempt() -> None:
     assert repository.get(attempt.identity) is not None
 
 
-def test_invocation_request_and_port_expose_no_retry_or_authority_decision_surface() -> None:
+def test_invocation_request_and_port_expose_no_retry_or_authority_decision_surface() -> (
+    None
+):
     assert set(CapabilityInvocationRequest.__dataclass_fields__) == {"attempt"}
     parameters = inspect.signature(invoke_executor).parameters
     for forbidden in (
