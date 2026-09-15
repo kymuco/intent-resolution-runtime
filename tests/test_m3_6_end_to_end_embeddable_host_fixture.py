@@ -717,8 +717,9 @@ def test_capability_lane_composes_and_replays_without_external_reexecution() -> 
         context,
         candidate,
         resolved,
-        admitted_plan.work_plan,
-        admitted_requirement.requirement,
+        admitted_plan,
+        admitted_requirement,
+        admitted_catalog,
         evaluation,
         proposal,
         decision,
@@ -731,10 +732,17 @@ def test_capability_lane_composes_and_replays_without_external_reexecution() -> 
     replayed_resolved = ResolvedIntent.from_json_bytes(
         _stored_bytes(repository, resolved.identity)
     )
-    replayed_plan = WorkPlan.from_json_bytes(_stored_bytes(repository, plan.identity))
-    replayed_requirement = CapabilityRequirement.from_json_bytes(
-        _stored_bytes(repository, admitted_requirement.requirement.identity)
+    replayed_admitted_plan = AdmittedWorkPlan.from_json_bytes(
+        _stored_bytes(repository, admitted_plan.identity)
     )
+    replayed_admitted_requirement = AdmittedCapabilityRequirement.from_json_bytes(
+        _stored_bytes(repository, admitted_requirement.identity)
+    )
+    replayed_admitted_catalog = AdmittedCapabilityCatalogSnapshot.from_json_bytes(
+        _stored_bytes(repository, admitted_catalog.identity)
+    )
+    replayed_plan = replayed_admitted_plan.work_plan
+    replayed_requirement = replayed_admitted_requirement.requirement
     replayed_evaluation = CapabilityMatchEvaluation.from_json_bytes(
         _stored_bytes(repository, evaluation.identity)
     )
@@ -753,6 +761,44 @@ def test_capability_lane_composes_and_replays_without_external_reexecution() -> 
     replayed_outcome = CapabilityOutcome.from_json_bytes(
         _stored_bytes(repository, outcome.identity)
     )
+
+    replayed_work_disposition = orchestrate_work_disposition(
+        replayed_resolved,
+        candidate_inputs=replayed_admitted_plan.candidate_inputs,
+        admitted_outputs=(replayed_admitted_plan,),
+    )
+    assert (
+        replayed_work_disposition.kind
+        is WorkDispositionFrontierKind.DISPOSITION_OUTPUT_AVAILABLE
+    )
+    assert replayed_work_disposition.disposition_output == replayed_admitted_plan
+
+    replayed_requirement_admission = orchestrate_capability_requirement_admission(
+        replayed_plan,
+        replayed_requirement.step_ref,
+        candidate_inputs=replayed_admitted_requirement.candidate_inputs,
+        admitted_outputs=(replayed_admitted_requirement,),
+    )
+    assert (
+        replayed_requirement_admission.kind
+        is CapabilityRequirementAdmissionFrontierKind.REQUIREMENT_OUTPUT_AVAILABLE
+    )
+    assert (
+        replayed_requirement_admission.admitted_requirement
+        == replayed_admitted_requirement
+    )
+
+    replayed_catalog_admission = orchestrate_capability_catalog_snapshot_admission(
+        candidate_inputs=replayed_admitted_catalog.candidate_inputs,
+        admitted_outputs=(replayed_admitted_catalog,),
+    )
+    assert (
+        replayed_catalog_admission.kind
+        is CapabilityCatalogSnapshotAdmissionFrontierKind.CATALOG_OUTPUT_AVAILABLE
+    )
+    assert replayed_catalog_admission.admitted_catalog == replayed_admitted_catalog
+    assert replayed_evaluation.requirement == replayed_requirement
+    assert replayed_evaluation.catalog_snapshot == replayed_admitted_catalog.snapshot
 
     replayed_governance = orchestrate_capability_governance(
         replayed_plan,
