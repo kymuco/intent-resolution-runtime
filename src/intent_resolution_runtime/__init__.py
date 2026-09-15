@@ -144,6 +144,14 @@ from .delegation import (
     ExpectedDeliverable,
 )
 from .errors import IntentIRError, SerializationError, ValidationError
+from .executor_integration import (
+    CapabilityInvocationRequest,
+    ExecutorIntegrationError,
+    ExecutorPort,
+    ExecutorReplayBlockedError,
+    build_capability_invocation_request,
+    invoke_executor,
+)
 from .governance import (
     Authorization,
     GovernanceDecision,
@@ -440,6 +448,7 @@ __all__ = [
     "CapabilityIncompatibleDescriptorAssessment",
     "CapabilityInputContract",
     "CapabilityInputMatch",
+    "CapabilityInvocationRequest",
     "CapabilityMatch",
     "CapabilityMatchAttribution",
     "CapabilityMatchEvaluation",
@@ -486,6 +495,9 @@ __all__ = [
     "EvidenceRecord",
     "EvidenceRelation",
     "EvidenceTargetKind",
+    "ExecutorIntegrationError",
+    "ExecutorPort",
+    "ExecutorReplayBlockedError",
     "ExpectedDeliverable",
     "GovernanceContinuationMaterial",
     "GovernanceDecision",
@@ -564,6 +576,7 @@ __all__ = [
     "WorkerResultAttribution",
     "WorkerResultMaterial",
     "WorkerResultMaterialRole",
+    "build_capability_invocation_request",
     "build_capability_match_evaluation",
     "build_cognitive_provider_request",
     "build_governance_review_request",
@@ -571,6 +584,7 @@ __all__ = [
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "invoke_cognitive_provider",
+    "invoke_executor",
     "invoke_governance",
     "mechanical_capability_evaluator_ref",
     "mechanical_capability_matcher_ref",
