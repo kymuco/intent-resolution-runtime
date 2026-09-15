@@ -250,6 +250,14 @@ from .work_proposal import (
     WorkProposalMaterial,
     WorkProposalMaterialKind,
 )
+from .worker_integration import (
+    WorkerHandoffRequest,
+    WorkerIntegrationError,
+    WorkerPort,
+    WorkerReplayBlockedError,
+    build_worker_handoff_request,
+    invoke_worker,
+)
 from .worker_lifecycle import WorkerLifecycleFrontier, orchestrate_worker_lifecycle
 from .worker_result import (
     WorkerNeed,
@@ -569,9 +577,13 @@ __all__ = [
     "WorkProposalMaterialKind",
     "WorkStep",
     "WorkSymbolicInput",
+    "WorkerHandoffRequest",
+    "WorkerIntegrationError",
     "WorkerLifecycleFrontier",
     "WorkerNeed",
     "WorkerNeedKind",
+    "WorkerPort",
+    "WorkerReplayBlockedError",
     "WorkerResult",
     "WorkerResultAttribution",
     "WorkerResultMaterial",
@@ -580,12 +592,14 @@ __all__ = [
     "build_capability_match_evaluation",
     "build_cognitive_provider_request",
     "build_governance_review_request",
+    "build_worker_handoff_request",
     "derive_mechanical_capability_match_evaluation",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "invoke_cognitive_provider",
     "invoke_executor",
     "invoke_governance",
+    "invoke_worker",
     "mechanical_capability_evaluator_ref",
     "mechanical_capability_matcher_ref",
     "orchestrate_attempt_outcome_continuation",

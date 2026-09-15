@@ -14,7 +14,6 @@ def test_m2_closure_adds_no_still_premature_m3_public_runtime_surface() -> None:
         "HostRuntime",
         "HostSession",
         "HistoryRepository",
-        "WorkerPort",
         "orchestrate_host",
         "orchestrate_end_to_end",
     ):
