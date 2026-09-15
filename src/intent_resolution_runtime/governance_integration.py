@@ -32,7 +32,9 @@ class GovernanceReviewRequest:
 
     def __post_init__(self) -> None:
         if type(self.governance_ref) is not StableRef:
-            raise ValidationError("GovernanceReviewRequest.governance_ref must be a StableRef")
+            raise ValidationError(
+                "GovernanceReviewRequest.governance_ref must be a StableRef"
+            )
         if type(self.decision_event_ref) is not StableRef:
             raise ValidationError(
                 "GovernanceReviewRequest.decision_event_ref must be a StableRef"
@@ -46,7 +48,9 @@ class GovernanceReviewRequest:
                 "GovernanceReviewRequest.authority_context_identity must be a RecordIdentity"
             )
         if type(self.proposal) is not WorkProposal:
-            raise ValidationError("GovernanceReviewRequest.proposal must be a WorkProposal")
+            raise ValidationError(
+                "GovernanceReviewRequest.proposal must be a WorkProposal"
+            )
         if self.decision_event_ref == self.proposal.attribution.proposal_event_ref:
             raise ValidationError(
                 "Governance review decision occurrence must differ from proposal occurrence"
