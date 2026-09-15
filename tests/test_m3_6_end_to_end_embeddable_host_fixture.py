@@ -106,7 +106,6 @@ from intent_resolution_runtime import (
     orchestrate_worker_lifecycle,
 )
 
-
 AUTHORITY_CONTEXT_IDENTITY = RecordIdentity("sha256", "a" * 64)
 OUTCOME_SOURCE_IDENTITY = RecordIdentity("sha256", "b" * 64)
 OUTCOME_TEMPORAL_IDENTITY = RecordIdentity("sha256", "c" * 64)
