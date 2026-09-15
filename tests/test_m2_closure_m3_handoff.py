@@ -9,12 +9,11 @@ README = ROOT / "README.md"
 DOC = ROOT / "docs" / "m2_closure_m3_handoff.md"
 
 
-def test_m2_closure_adds_no_premature_m3_public_runtime_surface() -> None:
+def test_m2_closure_adds_no_still_premature_m3_public_runtime_surface() -> None:
     for name in (
         "HostRuntime",
         "HostSession",
         "HistoryRepository",
-        "CognitiveProviderPort",
         "GovernancePort",
         "ExecutorPort",
         "WorkerPort",
