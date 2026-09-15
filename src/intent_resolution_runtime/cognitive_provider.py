@@ -138,6 +138,42 @@ class CognitiveProviderPort(Protocol):
     def propose(self, request: CognitiveProviderRequest) -> CandidateResolution: ...
 
 
+def _validate_request_source(
+    request: CognitiveProviderRequest,
+    *,
+    intent_request: IntentRequest,
+    context_envelope: ContextEnvelope,
+) -> None:
+    if type(intent_request) is not IntentRequest:
+        raise ValidationError("intent_request must be an IntentRequest")
+    if type(context_envelope) is not ContextEnvelope:
+        raise ValidationError("context_envelope must be a ContextEnvelope")
+    if context_envelope.intent_request_identity != intent_request.identity:
+        raise ValidationError(
+            "context_envelope must belong to the exact IntentRequest being projected"
+        )
+    if request.intent_request_identity != intent_request.identity:
+        raise ValidationError(
+            "provider request must preserve the exact source IntentRequest identity"
+        )
+    if request.context_envelope_identity != context_envelope.identity:
+        raise ValidationError(
+            "provider request must preserve the exact source ContextEnvelope identity"
+        )
+    if request.intent_expression != intent_request.expression:
+        raise ValidationError(
+            "provider request must preserve the exact source IntentExpression"
+        )
+
+    available = {record.identity: record for record in context_envelope.records}
+    for record in request.context_records:
+        source = available.get(record.identity)
+        if source is None or source != record:
+            raise ValidationError(
+                "provider request context_records must come from the exact source ContextEnvelope"
+            )
+
+
 def build_cognitive_provider_request(
     *,
     provider_ref: StableRef,
@@ -196,8 +232,11 @@ def build_cognitive_provider_request(
 def invoke_cognitive_provider(
     provider: CognitiveProviderPort,
     request: CognitiveProviderRequest,
+    *,
+    intent_request: IntentRequest,
+    context_envelope: ContextEnvelope,
 ) -> CandidateResolution:
-    """Invoke a provider and validate exact proposal lineage/attribution.
+    """Invoke a provider and validate exact input/output lineage and attribution.
 
     Transport/provider exceptions are deliberately not converted into semantic IR records.
     A successful return is still only CandidateResolution proposal material for M2.1.
@@ -207,6 +246,11 @@ def invoke_cognitive_provider(
         raise ValidationError("provider must satisfy CognitiveProviderPort")
     if type(request) is not CognitiveProviderRequest:
         raise ValidationError("request must be a CognitiveProviderRequest")
+    _validate_request_source(
+        request,
+        intent_request=intent_request,
+        context_envelope=context_envelope,
+    )
 
     candidate = provider.propose(request)
     if type(candidate) is not CandidateResolution:
