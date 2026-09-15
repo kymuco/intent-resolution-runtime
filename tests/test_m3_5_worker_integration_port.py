@@ -393,5 +393,7 @@ def test_request_and_port_expose_no_ambient_authority_or_retry_surface() -> None
 
 def test_request_is_immutable_mechanism_state() -> None:
     request = build_worker_handoff_request(_handoff())
-    with pytest.raises(Exception):
+    with pytest.raises(
+        ValidationError, match="WorkerHandoffRequest.handoff must be a DelegatedWorkHandoff"
+    ):
         replace(request, handoff=object())  # type: ignore[arg-type]
