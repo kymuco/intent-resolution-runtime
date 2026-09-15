@@ -196,7 +196,9 @@ def test_projection_rejects_record_not_present_in_exact_context_envelope() -> No
         record for record in foreign_context.records if type(record) is ClaimRecord
     )
 
-    with pytest.raises(ValidationError, match="only records from the exact ContextEnvelope"):
+    with pytest.raises(
+        ValidationError, match="only records from the exact ContextEnvelope"
+    ):
         build_cognitive_provider_request(
             provider_ref=_provider_ref(),
             invocation_ref=_invocation_ref(),
@@ -223,9 +225,13 @@ def test_projection_rejects_context_from_foreign_intent_request() -> None:
 def test_projection_requires_disclosed_evidence_target_to_be_disclosed() -> None:
     intent_request = _request("evidence")
     context = _context(intent_request, "evidence")
-    evidence = next(record for record in context.records if type(record) is EvidenceRecord)
+    evidence = next(
+        record for record in context.records if type(record) is EvidenceRecord
+    )
 
-    with pytest.raises(ValidationError, match="target of every disclosed EvidenceRecord"):
+    with pytest.raises(
+        ValidationError, match="target of every disclosed EvidenceRecord"
+    ):
         build_cognitive_provider_request(
             provider_ref=_provider_ref("evidence"),
             invocation_ref=_invocation_ref("evidence"),
@@ -239,7 +245,9 @@ def test_projection_accepts_dependency_closed_evidence_subset() -> None:
     intent_request = _request("closed-evidence")
     context = _context(intent_request, "closed-evidence")
     claim = next(record for record in context.records if type(record) is ClaimRecord)
-    evidence = next(record for record in context.records if type(record) is EvidenceRecord)
+    evidence = next(
+        record for record in context.records if type(record) is EvidenceRecord
+    )
 
     provider_request = build_cognitive_provider_request(
         provider_ref=_provider_ref("closed-evidence"),
@@ -374,7 +382,9 @@ def test_provider_candidate_with_foreign_intent_lineage_fails_closed() -> None:
         _candidate(provider_request, intent_request_identity=foreign.identity)
     )
 
-    with pytest.raises(CognitiveProviderIntegrationError, match="foreign IntentRequest"):
+    with pytest.raises(
+        CognitiveProviderIntegrationError, match="foreign IntentRequest"
+    ):
         invoke_cognitive_provider(
             provider,
             provider_request,
@@ -401,7 +411,9 @@ def test_provider_candidate_with_foreign_context_lineage_fails_closed() -> None:
         )
     )
 
-    with pytest.raises(CognitiveProviderIntegrationError, match="foreign ContextEnvelope"):
+    with pytest.raises(
+        CognitiveProviderIntegrationError, match="foreign ContextEnvelope"
+    ):
         invoke_cognitive_provider(
             provider,
             provider_request,
@@ -464,7 +476,9 @@ def test_provider_must_return_exact_candidate_resolution() -> None:
         context_envelope=context,
     )
 
-    with pytest.raises(CognitiveProviderIntegrationError, match="exact CandidateResolution"):
+    with pytest.raises(
+        CognitiveProviderIntegrationError, match="exact CandidateResolution"
+    ):
         invoke_cognitive_provider(
             _WrongTypeProvider(),  # type: ignore[arg-type]
             provider_request,
