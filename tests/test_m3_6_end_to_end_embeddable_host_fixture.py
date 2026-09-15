@@ -310,8 +310,7 @@ def _admit_requirement(work_plan: WorkPlan) -> AdmittedCapabilityRequirement:
         candidate_inputs=(candidate,),
     )
     assert (
-        unresolved.kind
-        is CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED
+        unresolved.kind is CapabilityRequirementAdmissionFrontierKind.ADMISSION_REQUIRED
     )
 
     attribution = CapabilityRequirementAdmissionAttribution(
@@ -435,7 +434,9 @@ def _admit_catalog(
     return frontier.admitted_catalog
 
 
-def _proposal(work_plan: WorkPlan, evaluation: CapabilityMatchEvaluation) -> WorkProposal:
+def _proposal(
+    work_plan: WorkPlan, evaluation: CapabilityMatchEvaluation
+) -> WorkProposal:
     return WorkProposal(
         attribution=WorkProposalAttribution(
             proposer_ref=_ref("irr.proposer", "m3-6-irr"),
@@ -509,7 +510,9 @@ class RecordingExecutor:
             scope="artifact.publish attempt",
             statement="Attributable evidence confirms the exact publication.",
         )
-        effect_ref = attempt.capability_evaluation.requirement.requested_effects[0].effect_ref
+        effect_ref = attempt.capability_evaluation.requirement.requested_effects[
+            0
+        ].effect_ref
         return CapabilityOutcome(
             attribution=CapabilityOutcomeAttribution(
                 evaluator_ref=_ref("irr.outcome_evaluator", "m3-6-executor-result"),
@@ -622,7 +625,9 @@ def test_capability_lane_composes_and_replays_without_external_reexecution() -> 
         context,
         candidate_inputs=(candidate,),
     )
-    assert unresolved_resolution.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    assert (
+        unresolved_resolution.kind is InitialResolutionFrontierKind.ADMISSION_REQUIRED
+    )
     resolution_frontier = orchestrate_initial_resolution(
         request,
         context,
