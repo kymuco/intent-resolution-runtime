@@ -42,7 +42,9 @@ def _normalize_context_records(
     value: object,
 ) -> tuple[ProviderContextRecord, ...]:
     if type(value) is not tuple:
-        raise ValidationError("CognitiveProviderRequest.context_records must be a tuple")
+        raise ValidationError(
+            "CognitiveProviderRequest.context_records must be a tuple"
+        )
     if not all(type(item) in _ALLOWED_CONTEXT_TYPES for item in value):
         raise ValidationError(
             "CognitiveProviderRequest.context_records contains an unsupported record type"
@@ -101,7 +103,9 @@ class CognitiveProviderRequest:
 
     def __post_init__(self) -> None:
         if type(self.provider_ref) is not StableRef:
-            raise ValidationError("CognitiveProviderRequest.provider_ref must be a StableRef")
+            raise ValidationError(
+                "CognitiveProviderRequest.provider_ref must be a StableRef"
+            )
         if type(self.invocation_ref) is not StableRef:
             raise ValidationError(
                 "CognitiveProviderRequest.invocation_ref must be a StableRef"
@@ -207,11 +211,15 @@ def build_cognitive_provider_request(
             "disclosed_context_identities must be a tuple of RecordIdentity values"
         )
     if len(set(disclosed_context_identities)) != len(disclosed_context_identities):
-        raise ValidationError("disclosed_context_identities must not contain duplicates")
+        raise ValidationError(
+            "disclosed_context_identities must not contain duplicates"
+        )
 
     available = {record.identity: record for record in context_envelope.records}
     missing = [
-        identity for identity in disclosed_context_identities if identity not in available
+        identity
+        for identity in disclosed_context_identities
+        if identity not in available
     ]
     if missing:
         raise ValidationError(
