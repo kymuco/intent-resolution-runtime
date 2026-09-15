@@ -47,7 +47,7 @@ def test_readme_declares_m2_6_and_preserves_frozen_m2_5_history() -> None:
     assert (
         "**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.**" in text
     )
-    assert "**M3.0 — Host Integration Charter** is the next milestone." in text
+    assert "**M3 — Host Integration is complete and frozen through M3.6.**" in text
     assert (
         "[M2.5 Worker Lifecycle Orchestrator](docs/m2_5_worker_lifecycle_orchestrator.md)"
         in text

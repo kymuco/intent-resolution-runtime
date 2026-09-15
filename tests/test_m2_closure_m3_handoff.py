@@ -20,7 +20,7 @@ def test_m2_closure_adds_no_still_premature_m3_public_runtime_surface() -> None:
         assert not hasattr(irr, name)
 
 
-def test_readme_closes_m2_and_selects_m3_0_charter() -> None:
+def test_readme_preserves_m2_closure_after_m3_completion() -> None:
     text = README.read_text(encoding="utf-8")
 
     assert "**M1 — Intent Resolution IR is complete and frozen through M1.8.**" in text
@@ -28,12 +28,12 @@ def test_readme_closes_m2_and_selects_m3_0_charter() -> None:
     assert (
         "**M2.6 — End-to-End Host Fixture is complete and frozen in `main`.**" in text
     )
-    assert "**M3.0 — Host Integration Charter** is the next milestone." in text
+    assert "**M3 — Host Integration is complete and frozen through M3.6.**" in text
     assert "[M2 closure & M3 handoff](docs/m2_closure_m3_handoff.md)" in text
     assert (
-        "Normative M0 contracts, the M1 IR, and M2 Runtime Orchestration are frozen in `main`; "
-        "M3 begins with a charter-first Host integration boundary"
-    ) in text
+        "the next milestone should be selected from concrete embedding-product evidence"
+        in text
+    )
 
 
 def test_m2_closure_doc_freezes_source_of_truth_and_m3_boundary() -> None:
