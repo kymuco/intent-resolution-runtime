@@ -383,8 +383,7 @@ def test_same_concrete_use_blocks_distinct_attempts_even_when_reusable() -> None
     )
     assert repository.get(second.attempt.identity) is None
     assert (
-        repository.use_claim_owner(first.use_claim.identity)
-        == first.attempt.identity
+        repository.use_claim_owner(first.use_claim.identity) == first.attempt.identity
     )
 
 
