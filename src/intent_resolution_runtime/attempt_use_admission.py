@@ -123,10 +123,24 @@ class AuthorizationConditionUseAssessment(_CanonicalUseAdmissionRecord):
                 "AuthorizationConditionUseAssessment.evidence_refs must not "
                 "contain duplicates"
             )
+        normalized_evidence_refs = tuple(
+            sorted(self.evidence_refs, key=_ref_key)
+        )
+        if (
+            self.mode
+            in (
+                AuthorizationConditionUseMode.REUSABLE,
+                AuthorizationConditionUseMode.EXCLUSIVE_ONCE,
+            )
+            and not normalized_evidence_refs
+        ):
+            raise ValidationError(
+                "resolved Authorization condition use mode requires evidence_refs"
+            )
         object.__setattr__(
             self,
             "evidence_refs",
-            tuple(sorted(self.evidence_refs, key=_ref_key)),
+            normalized_evidence_refs,
         )
         _require_text(
             self.rationale,
@@ -700,6 +714,14 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
 
         applicability_attr = self.applicability_evaluation.attribution
         policy_attr = self.use_policy_evaluation.attribution
+        if (
+            applicability_attr.evaluation_event_ref
+            == policy_attr.evaluation_event_ref
+        ):
+            raise ValidationError(
+                "Authorization applicability and use-policy evaluations must have "
+                "distinct occurrences"
+            )
         if applicability_attr.use_context_ref != self.attribution.use_context_ref:
             raise ValidationError(
                 "CapabilityAttemptUseAdmission must preserve the exact applicability "
@@ -830,6 +852,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
 class CapabilityAttemptUseAdmissionResult(StrEnum):
     ADMITTED = "admitted"
     ATTEMPT_ALREADY_ADMITTED = "attempt_already_admitted"
+    ATTEMPT_ADMISSION_CONFLICT = "attempt_admission_conflict"
     AUTHORIZATION_POLICY_CONFLICT = "authorization_policy_conflict"
     EXCLUSIVE_CLAIM_CONFLICT = "exclusive_claim_conflict"
 
@@ -886,8 +909,11 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             )
         attempt_identity = admission.attempt.identity
         with self._lock:
-            if attempt_identity in self._admissions:
-                return CapabilityAttemptUseAdmissionResult.ATTEMPT_ALREADY_ADMITTED
+            existing_admission = self._admissions.get(attempt_identity)
+            if existing_admission is not None:
+                if existing_admission == admission:
+                    return CapabilityAttemptUseAdmissionResult.ATTEMPT_ALREADY_ADMITTED
+                return CapabilityAttemptUseAdmissionResult.ATTEMPT_ADMISSION_CONFLICT
 
             authorization_identity = (
                 admission.applicability_evaluation.authorization.identity
