@@ -460,6 +460,60 @@ def test_applicability_and_use_policy_occurrences_must_be_distinct() -> None:
         )
 
 
+def test_evaluator_occurrences_cannot_alias_embedded_attempt_lineage() -> None:
+    directive = _directive("evaluator-occurrence-alias")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="evaluator-occurrence-alias",
+        directives=(directive,),
+    )
+    policy = _use_policy(
+        applicability,
+        label="evaluator-occurrence-alias",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    attempt = _attempt(
+        applicability,
+        evaluation,
+        event="attempt-evaluator-occurrence-alias",
+    )
+
+    aliased_applicability = replace(
+        applicability,
+        attribution=replace(
+            applicability.attribution,
+            evaluation_event_ref=attempt.capability_evaluation.attribution.evaluation_event_ref,
+        ),
+    )
+    with pytest.raises(
+        ValidationError,
+        match="applicability occurrence must differ",
+    ):
+        _admission(
+            attempt,
+            aliased_applicability,
+            policy,
+            event="admission-applicability-occurrence-alias",
+        )
+
+    aliased_policy = replace(
+        policy,
+        attribution=replace(
+            policy.attribution,
+            evaluation_event_ref=attempt.capability_match.attribution.match_event_ref,
+        ),
+    )
+    with pytest.raises(
+        ValidationError,
+        match="use-policy occurrence must differ",
+    ):
+        _admission(
+            attempt,
+            applicability,
+            aliased_policy,
+            event="admission-policy-occurrence-alias",
+        )
+
+
 def test_use_admission_occurrence_cannot_alias_embedded_prerequisite_event() -> None:
     directive = _directive("admission-occurrence-alias")
     _authorization_record, evaluation, applicability = _applicability(
