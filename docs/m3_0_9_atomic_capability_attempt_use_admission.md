@@ -113,12 +113,8 @@ Possible results:
 - AUTHORIZATION_POLICY_CONFLICT
 - EXCLUSIVE_CLAIM_CONFLICT
 
-For a fresh Attempt the repository must either:
-
-1. commit the Attempt admission and every derived exclusive claim together; or
-2. commit nothing.
-
-A conflict on any one claim must not leak the remaining claims.
+For a fresh Attempt the repository must commit the Attempt admission and every derived
+exclusive claim in one atomic critical section, or commit nothing.
 
 The repository also freezes one normalized condition-mode mapping per Authorization on
 the first successful use admission. A later Attempt that presents a different mapping
@@ -180,11 +176,10 @@ CapabilityAttempt != effect
 7. distinct Attempts with reusable conditions can both admit;
 8. distinct Attempts sharing one exclusive claim cannot both admit;
 9. Authorization use-policy semantics cannot drift after first admitted use;
-10. multi-claim conflict is all-or-nothing;
-11. concurrent competing Attempts produce exactly one ADMITTED result;
-12. same directive ref under different Authorization identities does not alias;
-13. exact canonical roundtrip preserves derived claims;
-14. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
+10. concurrent competing Attempts produce exactly one ADMITTED result;
+11. same directive ref under different Authorization identities does not alias;
+12. exact canonical roundtrip preserves derived claims;
+13. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
 
 ## FAIL
 
