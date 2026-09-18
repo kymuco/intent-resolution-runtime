@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from hashlib import sha256
 
 import pytest
@@ -177,6 +178,40 @@ def test_directive_text_is_not_silently_classified_as_exclusive() -> None:
     assert policy.condition_assessments[0].mode is AuthorizationConditionUseMode.UNKNOWN
 
 
+@pytest.mark.parametrize(
+    "mode",
+    (
+        AuthorizationConditionUseMode.REUSABLE,
+        AuthorizationConditionUseMode.EXCLUSIVE_ONCE,
+    ),
+)
+def test_resolved_use_mode_requires_explicit_evidence(mode) -> None:
+    directive = _directive(f"evidence-{mode.value}")
+
+    with pytest.raises(
+        ValidationError,
+        match="resolved Authorization condition use mode requires evidence_refs",
+    ):
+        AuthorizationConditionUseAssessment(
+            directive_ref=directive.directive_ref,
+            mode=mode,
+            evidence_refs=(),
+            rationale="Positive use-mode classification without evidence.",
+        )
+
+
+def test_unknown_use_mode_may_preserve_absence_of_evidence() -> None:
+    directive = _directive("unknown-no-evidence")
+    assessment = AuthorizationConditionUseAssessment(
+        directive_ref=directive.directive_ref,
+        mode=AuthorizationConditionUseMode.UNKNOWN,
+        evidence_refs=(),
+        rationale="No evidence resolves the use mode.",
+    )
+
+    assert assessment.evidence_refs == ()
+
+
 def test_use_policy_must_exactly_cover_authorization_conditions() -> None:
     first = _directive("first")
     second = _directive("second", semantic_type="scope_at_use")
@@ -199,7 +234,9 @@ def test_use_policy_must_exactly_cover_authorization_conditions() -> None:
                 AuthorizationConditionUseAssessment(
                     directive_ref=first.directive_ref,
                     mode=AuthorizationConditionUseMode.REUSABLE,
-                    evidence_refs=(),
+                    evidence_refs=(
+                        _ref("irr.authorization_use_policy_evidence", "coverage-first"),
+                    ),
                     rationale="Only one condition was classified.",
                 ),
             ),
@@ -347,6 +384,80 @@ def test_same_attempt_replay_is_not_a_second_admission() -> None:
         repository.admit(admission)
         is CapabilityAttemptUseAdmissionResult.ATTEMPT_ALREADY_ADMITTED
     )
+
+
+def test_same_attempt_with_changed_admission_lineage_is_not_exact_replay() -> None:
+    directive = _directive("replay-conflict")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="replay-conflict",
+        directives=(directive,),
+    )
+    policy = _use_policy(
+        applicability,
+        label="replay-conflict",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE},
+    )
+    attempt = _attempt(
+        applicability,
+        evaluation,
+        event="attempt-replay-conflict",
+    )
+    first = _admission(
+        attempt,
+        applicability,
+        policy,
+        event="admission-replay-conflict-first",
+    )
+    second = _admission(
+        attempt,
+        applicability,
+        policy,
+        event="admission-replay-conflict-second",
+    )
+    repository = InMemoryCapabilityAttemptUseAdmissionRepository()
+
+    assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
+    assert (
+        repository.admit(second)
+        is CapabilityAttemptUseAdmissionResult.ATTEMPT_ADMISSION_CONFLICT
+    )
+    assert repository.get(attempt.identity) == first
+
+
+def test_applicability_and_use_policy_occurrences_must_be_distinct() -> None:
+    directive = _directive("occurrence-alias")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="occurrence-alias",
+        directives=(directive,),
+    )
+    policy = _use_policy(
+        applicability,
+        label="occurrence-alias",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    aliased_policy = replace(
+        policy,
+        attribution=replace(
+            policy.attribution,
+            evaluation_event_ref=applicability.attribution.evaluation_event_ref,
+        ),
+    )
+    attempt = _attempt(
+        applicability,
+        evaluation,
+        event="attempt-occurrence-alias",
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="evaluations must have distinct occurrences",
+    ):
+        _admission(
+            attempt,
+            applicability,
+            aliased_policy,
+            event="admission-occurrence-alias",
+        )
 
 
 def test_authorization_use_policy_cannot_drift_after_first_admitted_use() -> None:
