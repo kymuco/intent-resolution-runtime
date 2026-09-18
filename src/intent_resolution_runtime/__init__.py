@@ -1,6 +1,14 @@
 """Intent Resolution Runtime public surface."""
 
 from .attempt import AttemptBoundInput, CapabilityAttempt, CapabilityAttemptAttribution
+from .authorization_applicability import (
+    AuthorizationApplicabilityAttribution,
+    AuthorizationApplicabilityEvaluation,
+    AuthorizationApplicabilityResult,
+    AuthorizationConditionAssessment,
+    AuthorizationConditionDisposition,
+    evaluate_authorization_applicability,
+)
 from .attempt_outcome_continuation import (
     AttemptOutcomeContinuationFrontier,
     orchestrate_attempt_outcome_continuation,
@@ -377,6 +385,9 @@ for _ir_type in (
     GovernanceDecisionComponent,
     GovernanceDecision,
     Authorization,
+    AuthorizationApplicabilityAttribution,
+    AuthorizationConditionAssessment,
+    AuthorizationApplicabilityEvaluation,
     CapabilityAttemptAttribution,
     AttemptBoundInput,
     CapabilityAttempt,
@@ -413,6 +424,11 @@ __all__ = [
     "AttemptBoundInput",
     "AttemptOutcomeContinuationFrontier",
     "Authorization",
+    "AuthorizationApplicabilityAttribution",
+    "AuthorizationApplicabilityEvaluation",
+    "AuthorizationApplicabilityResult",
+    "AuthorizationConditionAssessment",
+    "AuthorizationConditionDisposition",
     "BindingAttribute",
     "BindingAttributeKind",
     "BindingAttribution",
@@ -594,6 +610,7 @@ __all__ = [
     "build_governance_review_request",
     "build_worker_handoff_request",
     "derive_mechanical_capability_match_evaluation",
+    "evaluate_authorization_applicability",
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "invoke_cognitive_provider",
