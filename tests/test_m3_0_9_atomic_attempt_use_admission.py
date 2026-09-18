@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from hashlib import sha256
 
 import pytest
 
@@ -38,7 +39,7 @@ def _ref(namespace: str, value: str) -> StableRef:
 def _context(label: str) -> tuple[StableRef, RecordIdentity]:
     return (
         _ref("irr.authorization_use_context", label),
-        RecordIdentity("sha256", (label[0] if label else "a") * 64),
+        RecordIdentity("sha256", sha256(label.encode("utf-8")).hexdigest()),
     )
 
 
