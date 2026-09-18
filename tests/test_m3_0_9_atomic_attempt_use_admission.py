@@ -86,6 +86,23 @@ def _applicability(
     return authorization, evaluation, applicability
 
 
+def _recontextualize_applicability(
+    applicability: AuthorizationApplicabilityEvaluation,
+    *,
+    label: str,
+) -> AuthorizationApplicabilityEvaluation:
+    context_ref, context_identity = _context(label)
+    return replace(
+        applicability,
+        attribution=AuthorizationApplicabilityAttribution(
+            evaluator_ref=applicability.attribution.evaluator_ref,
+            evaluation_event_ref=_ref("irr.event", f"applicability-{label}"),
+            use_context_ref=context_ref,
+            use_context_identity=context_identity,
+        ),
+    )
+
+
 def _use_policy(
     applicability: AuthorizationApplicabilityEvaluation,
     *,
@@ -291,62 +308,122 @@ def test_unresolved_use_policy_cannot_construct_admission() -> None:
         )
 
 
-def test_reusable_authorization_allows_distinct_attempts() -> None:
+def test_reusable_authorization_allows_distinct_concrete_uses() -> None:
     directive = _directive("scope", semantic_type="scope_at_use")
-    _authorization_record, evaluation, applicability = _applicability(
+    _authorization_record, evaluation, first_applicability = _applicability(
         label="reusable",
         directives=(directive,),
     )
-    policy = _use_policy(
-        applicability,
-        label="reusable",
+    second_applicability = _recontextualize_applicability(
+        first_applicability,
+        label="reusable-second-use",
+    )
+    first_policy = _use_policy(
+        first_applicability,
+        label="reusable-first",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    second_policy = _use_policy(
+        second_applicability,
+        label="reusable-second",
         modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
     )
     first = _admission(
-        _attempt(applicability, evaluation, event="attempt-reusable-first"),
-        applicability,
-        policy,
+        _attempt(first_applicability, evaluation, event="attempt-reusable-first"),
+        first_applicability,
+        first_policy,
         event="admission-reusable-first",
     )
     second = _admission(
-        _attempt(applicability, evaluation, event="attempt-reusable-second"),
-        applicability,
-        policy,
+        _attempt(second_applicability, evaluation, event="attempt-reusable-second"),
+        second_applicability,
+        second_policy,
         event="admission-reusable-second",
     )
     repository = InMemoryCapabilityAttemptUseAdmissionRepository()
 
+    assert first.use_claim != second.use_claim
+    assert first_policy.policy_identity == second_policy.policy_identity
     assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
     assert repository.admit(second) is CapabilityAttemptUseAdmissionResult.ADMITTED
     assert first.exclusive_claims == ()
     assert second.exclusive_claims == ()
 
 
-def test_exclusive_condition_blocks_distinct_competing_attempt() -> None:
-    directive = _directive("one-use")
+def test_same_concrete_use_blocks_distinct_attempts_even_when_reusable() -> None:
+    directive = _directive("same-use-reusable", semantic_type="scope_at_use")
     _authorization_record, evaluation, applicability = _applicability(
-        label="exclusive",
+        label="same-use-reusable",
         directives=(directive,),
     )
     policy = _use_policy(
         applicability,
+        label="same-use-reusable",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    first = _admission(
+        _attempt(applicability, evaluation, event="attempt-same-use-first"),
+        applicability,
+        policy,
+        event="admission-same-use-first",
+    )
+    second = _admission(
+        _attempt(applicability, evaluation, event="attempt-same-use-second"),
+        applicability,
+        policy,
+        event="admission-same-use-second",
+    )
+    repository = InMemoryCapabilityAttemptUseAdmissionRepository()
+
+    assert first.use_claim == second.use_claim
+    assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
+    assert (
+        repository.admit(second)
+        is CapabilityAttemptUseAdmissionResult.USE_CONTEXT_CONFLICT
+    )
+    assert repository.get(second.attempt.identity) is None
+    assert (
+        repository.use_claim_owner(first.use_claim.identity)
+        == first.attempt.identity
+    )
+
+
+def test_exclusive_condition_blocks_distinct_concrete_uses() -> None:
+    directive = _directive("one-use")
+    _authorization_record, evaluation, first_applicability = _applicability(
         label="exclusive",
+        directives=(directive,),
+    )
+    second_applicability = _recontextualize_applicability(
+        first_applicability,
+        label="exclusive-second-use",
+    )
+    first_policy = _use_policy(
+        first_applicability,
+        label="exclusive-first",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE},
+    )
+    second_policy = _use_policy(
+        second_applicability,
+        label="exclusive-second",
         modes={directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE},
     )
     first = _admission(
-        _attempt(applicability, evaluation, event="attempt-exclusive-first"),
-        applicability,
-        policy,
+        _attempt(first_applicability, evaluation, event="attempt-exclusive-first"),
+        first_applicability,
+        first_policy,
         event="admission-exclusive-first",
     )
     second = _admission(
-        _attempt(applicability, evaluation, event="attempt-exclusive-second"),
-        applicability,
-        policy,
+        _attempt(second_applicability, evaluation, event="attempt-exclusive-second"),
+        second_applicability,
+        second_policy,
         event="admission-exclusive-second",
     )
     repository = InMemoryCapabilityAttemptUseAdmissionRepository()
 
+    assert first.use_claim != second.use_claim
+    assert first.exclusive_claims == second.exclusive_claims
     assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
     assert (
         repository.admit(second)
@@ -647,27 +724,36 @@ def test_same_directive_ref_in_different_authorization_does_not_alias_claim() ->
     assert first.exclusive_claims[0].identity != second.exclusive_claims[0].identity
 
 
-def test_concurrent_competing_attempts_admit_exactly_one_exclusive_use() -> None:
+def test_concurrent_distinct_uses_admit_exactly_one_exclusive_claim() -> None:
     directive = _directive("race")
-    _authorization_record, evaluation, applicability = _applicability(
+    _authorization_record, evaluation, first_applicability = _applicability(
         label="race",
         directives=(directive,),
     )
-    policy = _use_policy(
-        applicability,
-        label="race",
+    second_applicability = _recontextualize_applicability(
+        first_applicability,
+        label="race-second-use",
+    )
+    first_policy = _use_policy(
+        first_applicability,
+        label="race-first",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE},
+    )
+    second_policy = _use_policy(
+        second_applicability,
+        label="race-second",
         modes={directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE},
     )
     first = _admission(
-        _attempt(applicability, evaluation, event="attempt-race-first"),
-        applicability,
-        policy,
+        _attempt(first_applicability, evaluation, event="attempt-race-first"),
+        first_applicability,
+        first_policy,
         event="admission-race-first",
     )
     second = _admission(
-        _attempt(applicability, evaluation, event="attempt-race-second"),
-        applicability,
-        policy,
+        _attempt(second_applicability, evaluation, event="attempt-race-second"),
+        second_applicability,
+        second_policy,
         event="admission-race-second",
     )
     repository = InMemoryCapabilityAttemptUseAdmissionRepository()
@@ -679,6 +765,38 @@ def test_concurrent_competing_attempts_admit_exactly_one_exclusive_use() -> None
     assert (
         results.count(CapabilityAttemptUseAdmissionResult.EXCLUSIVE_CLAIM_CONFLICT) == 1
     )
+
+
+def test_concurrent_same_use_admits_exactly_one_attempt() -> None:
+    directive = _directive("same-use-race", semantic_type="scope_at_use")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="same-use-race",
+        directives=(directive,),
+    )
+    policy = _use_policy(
+        applicability,
+        label="same-use-race",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    first = _admission(
+        _attempt(applicability, evaluation, event="attempt-same-use-race-first"),
+        applicability,
+        policy,
+        event="admission-same-use-race-first",
+    )
+    second = _admission(
+        _attempt(applicability, evaluation, event="attempt-same-use-race-second"),
+        applicability,
+        policy,
+        event="admission-same-use-race-second",
+    )
+    repository = InMemoryCapabilityAttemptUseAdmissionRepository()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = tuple(pool.map(repository.admit, (first, second)))
+
+    assert results.count(CapabilityAttemptUseAdmissionResult.ADMITTED) == 1
+    assert results.count(CapabilityAttemptUseAdmissionResult.USE_CONTEXT_CONFLICT) == 1
 
 
 def test_roundtrip_preserves_derived_claims_and_exact_admission_identity() -> None:
