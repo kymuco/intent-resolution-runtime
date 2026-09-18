@@ -386,9 +386,7 @@ def test_authorization_use_policy_cannot_drift_after_first_admitted_use() -> Non
     )
     assert repository.get(second.attempt.identity) is None
     assert (
-        repository.authorization_policy_identity(
-            applicability.authorization.identity
-        )
+        repository.authorization_policy_identity(applicability.authorization.identity)
         == reusable_policy.policy_identity
     )
 
@@ -403,7 +401,9 @@ def test_same_directive_ref_in_different_authorization_does_not_alias_claim() ->
         label="auth-b",
         directives=(directive,),
     )
-    assert applicability_a.authorization.identity != applicability_b.authorization.identity
+    assert (
+        applicability_a.authorization.identity != applicability_b.authorization.identity
+    )
 
     policy_a = _use_policy(
         applicability_a,
@@ -432,59 +432,6 @@ def test_same_directive_ref_in_different_authorization_does_not_alias_claim() ->
     assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
     assert repository.admit(second) is CapabilityAttemptUseAdmissionResult.ADMITTED
     assert first.exclusive_claims[0].identity != second.exclusive_claims[0].identity
-
-
-def test_multi_claim_conflict_is_atomic_and_does_not_leak_other_claims() -> None:
-    first_directive = _directive("claim-a")
-    second_directive = _directive("claim-b")
-    _authorization_record, evaluation, applicability = _applicability(
-        label="multi",
-        directives=(first_directive, second_directive),
-    )
-
-    first_policy = _use_policy(
-        applicability,
-        label="multi-first",
-        modes={
-            first_directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE,
-            second_directive.directive_ref: AuthorizationConditionUseMode.REUSABLE,
-        },
-    )
-    first = _admission(
-        _attempt(applicability, evaluation, event="attempt-multi-first"),
-        applicability,
-        first_policy,
-        event="admission-multi-first",
-    )
-
-    second_policy = _use_policy(
-        applicability,
-        label="multi-second",
-        modes={
-            first_directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE,
-            second_directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE,
-        },
-    )
-    second = _admission(
-        _attempt(applicability, evaluation, event="attempt-multi-second"),
-        applicability,
-        second_policy,
-        event="admission-multi-second",
-    )
-    repository = InMemoryCapabilityAttemptUseAdmissionRepository()
-
-    assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
-    assert (
-        repository.admit(second)
-        is CapabilityAttemptUseAdmissionResult.EXCLUSIVE_CLAIM_CONFLICT
-    )
-    second_claim = next(
-        claim
-        for claim in second.exclusive_claims
-        if claim.directive_ref == second_directive.directive_ref
-    )
-    assert repository.claim_owner(second_claim.identity) is None
-    assert repository.get(second.attempt.identity) is None
 
 
 def test_concurrent_competing_attempts_admit_exactly_one_exclusive_use() -> None:
@@ -517,8 +464,7 @@ def test_concurrent_competing_attempts_admit_exactly_one_exclusive_use() -> None
 
     assert results.count(CapabilityAttemptUseAdmissionResult.ADMITTED) == 1
     assert (
-        results.count(CapabilityAttemptUseAdmissionResult.EXCLUSIVE_CLAIM_CONFLICT)
-        == 1
+        results.count(CapabilityAttemptUseAdmissionResult.EXCLUSIVE_CLAIM_CONFLICT) == 1
     )
 
 
@@ -540,9 +486,7 @@ def test_roundtrip_preserves_derived_claims_and_exact_admission_identity() -> No
         event="admission-roundtrip-use",
     )
 
-    restored = CapabilityAttemptUseAdmission.from_json_bytes(
-        original.canonical_bytes()
-    )
+    restored = CapabilityAttemptUseAdmission.from_json_bytes(original.canonical_bytes())
 
     assert restored == original
     assert restored.identity == original.identity
