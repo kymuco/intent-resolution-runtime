@@ -173,9 +173,7 @@ class AuthorizationApplicabilityAttribution(_CanonicalApplicabilityRecord):
         return cls.from_primitive(parse_json_object(data))
 
 
-def _normalize_evidence_refs(
-    value: object, *, field: str
-) -> tuple[StableRef, ...]:
+def _normalize_evidence_refs(value: object, *, field: str) -> tuple[StableRef, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is StableRef for item in value):
@@ -254,9 +252,7 @@ class AuthorizationConditionAssessment(_CanonicalApplicabilityRecord):
         try:
             disposition = AuthorizationConditionDisposition(obj["disposition"])
         except ValueError as exc:
-            raise SerializationError(
-                f"unsupported {field}.disposition"
-            ) from exc
+            raise SerializationError(f"unsupported {field}.disposition") from exc
         evidence_refs = _expect_array(
             obj["evidence_refs"], field=f"{field}.evidence_refs"
         )
@@ -296,7 +292,9 @@ def _normalize_assessments(
     items = cast(tuple[AuthorizationConditionAssessment, ...], value)
     refs = [item.directive_ref for item in items]
     if len(set(refs)) != len(refs):
-        raise ValidationError(f"{field} must not contain duplicate directive_ref values")
+        raise ValidationError(
+            f"{field} must not contain duplicate directive_ref values"
+        )
     return tuple(sorted(items, key=lambda item: _ref_key(item.directive_ref)))
 
 
@@ -435,9 +433,7 @@ def evaluate_authorization_applicability(
         raise ValidationError(
             "evaluate_authorization_applicability requires an AuthorizationApplicabilityEvaluation"
         )
-    dispositions = {
-        item.disposition for item in evaluation.condition_assessments
-    }
+    dispositions = {item.disposition for item in evaluation.condition_assessments}
     if AuthorizationConditionDisposition.UNSATISFIED in dispositions:
         return AuthorizationApplicabilityResult.NOT_APPLICABLE
     if AuthorizationConditionDisposition.UNKNOWN in dispositions:
