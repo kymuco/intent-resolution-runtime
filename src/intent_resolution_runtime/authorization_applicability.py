@@ -159,7 +159,8 @@ class AuthorizationApplicabilityAttribution(_CanonicalApplicabilityRecord):
                     obj["use_context_ref"], field=f"{field}.use_context_ref"
                 ),
                 use_context_identity=RecordIdentity.from_primitive(
-                    obj["use_context_identity"]
+                    obj["use_context_identity"],
+                    field=f"{field}.use_context_identity",
                 ),
             )
         except ValidationError as exc:
