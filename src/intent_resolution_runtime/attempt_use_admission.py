@@ -56,9 +56,7 @@ def _expect_exact_keys(
             details.append(f"missing={missing}")
         if extra:
             details.append(f"extra={extra}")
-        raise SerializationError(
-            f"{field} has invalid fields ({', '.join(details)})"
-        )
+        raise SerializationError(f"{field} has invalid fields ({', '.join(details)})")
 
 
 def _ref_key(value: StableRef) -> tuple[str, str]:
@@ -301,7 +299,9 @@ def _normalize_use_assessments(
     assessments = cast(tuple[AuthorizationConditionUseAssessment, ...], value)
     refs = [item.directive_ref for item in assessments]
     if len(set(refs)) != len(refs):
-        raise ValidationError(f"{field} must not contain duplicate directive_ref values")
+        raise ValidationError(
+            f"{field} must not contain duplicate directive_ref values"
+        )
     return tuple(sorted(assessments, key=lambda item: _ref_key(item.directive_ref)))
 
 
@@ -648,7 +648,10 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
             raise ValidationError(
                 "CapabilityAttemptUseAdmission.attempt must be a CapabilityAttempt"
             )
-        if type(self.applicability_evaluation) is not AuthorizationApplicabilityEvaluation:
+        if (
+            type(self.applicability_evaluation)
+            is not AuthorizationApplicabilityEvaluation
+        ):
             raise ValidationError(
                 "CapabilityAttemptUseAdmission.applicability_evaluation must be an "
                 "AuthorizationApplicabilityEvaluation"
@@ -749,9 +752,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
             "attempt": self.attempt.to_primitive(),
             "attribution": self.attribution.to_primitive(),
             "description": self.description,
-            "exclusive_claims": [
-                item.to_primitive() for item in self.exclusive_claims
-            ],
+            "exclusive_claims": [item.to_primitive() for item in self.exclusive_claims],
             "schema": self.SCHEMA,
             "use_policy_evaluation": self.use_policy_evaluation.to_primitive(),
         }
@@ -870,9 +871,7 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
 
     def __init__(self) -> None:
         self._admissions: dict[RecordIdentity, CapabilityAttemptUseAdmission] = {}
-        self._authorization_policy_identities: dict[
-            RecordIdentity, RecordIdentity
-        ] = {}
+        self._authorization_policy_identities: dict[RecordIdentity, RecordIdentity] = {}
         self._claim_owners: dict[RecordIdentity, RecordIdentity] = {}
         self._lock = Lock()
 
@@ -901,9 +900,7 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
                 existing_policy_identity is not None
                 and existing_policy_identity != policy_identity
             ):
-                return (
-                    CapabilityAttemptUseAdmissionResult.AUTHORIZATION_POLICY_CONFLICT
-                )
+                return CapabilityAttemptUseAdmissionResult.AUTHORIZATION_POLICY_CONFLICT
 
             if any(
                 claim.identity in self._claim_owners
