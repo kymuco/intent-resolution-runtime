@@ -21,8 +21,10 @@ from intent_resolution_runtime import (
     CapabilityAttemptUseAdmission,
     CapabilityAttemptUseAdmissionAttribution,
     CapabilityAttemptUseAdmissionResult,
+    CapabilityUseContextClaim,
     InMemoryCapabilityAttemptUseAdmissionRepository,
     RecordIdentity,
+    SerializationError,
     StableRef,
     ValidationError,
     evaluate_authorization_use_policy,
@@ -798,6 +800,40 @@ def test_concurrent_same_use_admits_exactly_one_attempt() -> None:
     assert results.count(CapabilityAttemptUseAdmissionResult.USE_CONTEXT_CONFLICT) == 1
 
 
+def test_serialized_use_claim_cannot_be_redirected() -> None:
+    directive = _directive("tampered-use-claim")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="tampered-use-claim",
+        directives=(directive,),
+    )
+    policy = _use_policy(
+        applicability,
+        label="tampered-use-claim",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    admission = _admission(
+        _attempt(
+            applicability,
+            evaluation,
+            event="attempt-tampered-use-claim",
+        ),
+        applicability,
+        policy,
+        event="admission-tampered-use-claim",
+    )
+    primitive = admission.to_primitive()
+    primitive["use_claim"] = CapabilityUseContextClaim(
+        use_context_ref=_ref("irr.authorization_use_context", "redirected"),
+        use_context_identity=RecordIdentity("sha256", "f" * 64),
+    ).to_primitive()
+
+    with pytest.raises(
+        SerializationError,
+        match="use_claim must equal the exact derived use-context claim",
+    ):
+        CapabilityAttemptUseAdmission.from_primitive(primitive)
+
+
 def test_roundtrip_preserves_derived_claims_and_exact_admission_identity() -> None:
     directive = _directive("roundtrip")
     _authorization_record, evaluation, applicability = _applicability(
@@ -820,4 +856,5 @@ def test_roundtrip_preserves_derived_claims_and_exact_admission_identity() -> No
 
     assert restored == original
     assert restored.identity == original.identity
+    assert restored.use_claim == original.use_claim
     assert restored.exclusive_claims == original.exclusive_claims
