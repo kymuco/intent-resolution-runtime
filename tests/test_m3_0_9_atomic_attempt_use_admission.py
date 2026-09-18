@@ -460,6 +460,54 @@ def test_applicability_and_use_policy_occurrences_must_be_distinct() -> None:
         )
 
 
+def test_use_admission_occurrence_cannot_alias_embedded_prerequisite_event() -> None:
+    directive = _directive("admission-occurrence-alias")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="admission-occurrence-alias",
+        directives=(directive,),
+    )
+    policy = _use_policy(
+        applicability,
+        label="admission-occurrence-alias",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    attempt = _attempt(
+        applicability,
+        evaluation,
+        event="attempt-admission-occurrence-alias",
+    )
+    authorization = applicability.authorization
+    protected = (
+        attempt.attribution.attempt_event_ref,
+        attempt.capability_evaluation.attribution.evaluation_event_ref,
+        attempt.capability_match.attribution.match_event_ref,
+        attempt.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref,
+        authorization.decision.proposal.attribution.proposal_event_ref,
+        authorization.decision.attribution.decision_event_ref,
+        applicability.attribution.evaluation_event_ref,
+        policy.attribution.evaluation_event_ref,
+    )
+
+    for event_ref in protected:
+        attribution = CapabilityAttemptUseAdmissionAttribution(
+            admitter_ref=_ref("irr.attempt_use_admitter", "m3-0-9-test"),
+            admission_event_ref=event_ref,
+            use_context_ref=applicability.attribution.use_context_ref,
+            use_context_identity=applicability.attribution.use_context_identity,
+        )
+        with pytest.raises(
+            ValidationError,
+            match="use-admission occurrence must differ",
+        ):
+            CapabilityAttemptUseAdmission(
+                attribution=attribution,
+                attempt=attempt,
+                applicability_evaluation=applicability,
+                use_policy_evaluation=policy,
+                description="Aliased prerequisite occurrence must fail closed.",
+            )
+
+
 def test_authorization_use_policy_cannot_drift_after_first_admitted_use() -> None:
     directive = _directive("policy-drift")
     _authorization_record, evaluation, applicability = _applicability(
