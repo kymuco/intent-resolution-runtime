@@ -483,18 +483,13 @@ def evaluate_authorization_use_policy(
 
 @dataclass(frozen=True, slots=True)
 class CapabilityUseContextClaim(_CanonicalUseAdmissionRecord):
-    """Canonical one-Attempt claim for one exact concrete use context."""
+    """Canonical one-Attempt claim for one exact content-bound use context."""
 
     SCHEMA: ClassVar[str] = "irr.capability_use_context_claim.v1"
 
-    use_context_ref: StableRef
     use_context_identity: RecordIdentity
 
     def __post_init__(self) -> None:
-        if type(self.use_context_ref) is not StableRef:
-            raise ValidationError(
-                "CapabilityUseContextClaim.use_context_ref must be a StableRef"
-            )
         if type(self.use_context_identity) is not RecordIdentity:
             raise ValidationError(
                 "CapabilityUseContextClaim.use_context_identity must be a RecordIdentity"
@@ -504,7 +499,6 @@ class CapabilityUseContextClaim(_CanonicalUseAdmissionRecord):
         return {
             "schema": self.SCHEMA,
             "use_context_identity": self.use_context_identity.to_primitive(),
-            "use_context_ref": self.use_context_ref.to_primitive(),
         }
 
     @classmethod
@@ -517,17 +511,13 @@ class CapabilityUseContextClaim(_CanonicalUseAdmissionRecord):
         obj = _expect_object(value, field=field)
         _expect_exact_keys(
             obj,
-            {"schema", "use_context_ref", "use_context_identity"},
+            {"schema", "use_context_identity"},
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
-                use_context_ref=StableRef.from_primitive(
-                    obj["use_context_ref"],
-                    field=f"{field}.use_context_ref",
-                ),
                 use_context_identity=RecordIdentity.from_primitive(
                     obj["use_context_identity"],
                     field=f"{field}.use_context_identity",
@@ -835,7 +825,6 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
             self,
             "use_claim",
             CapabilityUseContextClaim(
-                use_context_ref=self.attribution.use_context_ref,
                 use_context_identity=self.attribution.use_context_identity,
             ),
         )
