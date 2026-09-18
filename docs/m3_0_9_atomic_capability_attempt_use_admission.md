@@ -7,9 +7,10 @@ CapabilityAttempt and Executor invocation.
 
 M3.4 already persists an exact CapabilityAttempt before invoking Executor and blocks
 automatic replay of that same Attempt. That does **not** prevent two distinct Attempts
+from targeting the same exact concrete use, nor does it prevent distinct concrete uses
 from consuming the same one-use Authorization condition.
 
-M3.0.9 closes only that gap.
+M3.0.9 closes exactly those two pre-effect admission gaps.
 
 ~~~text
 exact APPLICABLE Authorization evidence
@@ -21,19 +22,25 @@ explicit condition use-mode evaluation
 resolved use policy
         ↓
 atomic CapabilityAttempt use admission
-        ├── reusable conditions: no exclusive claim
-        └── exclusive_once conditions: exact canonical claim
+        ├── exact use-context claim: always
+        ├── reusable conditions: no Authorization-level exclusive claim
+        └── exclusive_once conditions: exact Authorization-level claim
         ↓
 STOP before Executor
 ~~~
 
 ## Falsification target
 
-Two distinct CapabilityAttempts may carry the same Authorization and differ only in their
-attempt occurrence. M3.4 history persistence accepts both because their identities differ.
+Two distinct CapabilityAttempts may differ only in their attempt occurrence while still
+targeting the same exact concrete use. M3.4 history persistence accepts both because their
+Attempt identities differ.
 
-M3.0.9 must make this impossible when an exact Authorization condition has been explicitly
-classified EXCLUSIVE_ONCE.
+M3.0.9 must ensure that one exact use-context can admit at most one Attempt regardless of
+whether the Authorization is reusable.
+
+Separately, two different use-contexts may still carry the same Authorization. When an
+exact Authorization condition is explicitly classified EXCLUSIVE_ONCE, at most one of
+those distinct uses may be admitted.
 
 ## No directive-text interpretation
 
@@ -66,6 +73,38 @@ CapabilityAttemptUseAdmission.
 REUSABLE and EXCLUSIVE_ONCE are positive authority-relevant classifications and must
 reference at least one evidence_ref. UNKNOWN may preserve an empty evidence set.
 
+## Exact concrete-use claim
+
+Every CapabilityAttemptUseAdmission mechanically derives one CapabilityUseContextClaim
+from:
+
+~~~text
+use_context_ref
++
+use_context_identity
+~~~
+
+This claim exists for every admitted use, including unconditional and REUSABLE
+Authorizations.
+
+The caller cannot supply or override it.
+
+Therefore:
+
+~~~text
+same exact use-context
++ different CapabilityAttempt occurrences
+→ at most one admitted Attempt
+
+REUSABLE Authorization
+!= permission to duplicate one concrete use
+!= retry authority
+~~~
+
+A new concrete use must have a distinct exact use-context. IRR does not decide whether two
+real-world situations are the same concrete use; the Host integration must construct and
+content-bind the use-context correctly.
+
 ## Exact exclusive claim
 
 For every EXCLUSIVE_ONCE assessment, IRR derives the claim key mechanically from:
@@ -92,6 +131,7 @@ CapabilityAttemptUseAdmission binds:
 - one exact RESOLVED AuthorizationUsePolicyEvaluation;
 - the exact shared use-context ref and identity;
 - one distinct admission occurrence;
+- one exact derived concrete-use claim;
 - the exact derived EXCLUSIVE_ONCE claims.
 
 The Attempt must present exactly the Authorization evaluated by both evaluations.
@@ -115,10 +155,12 @@ Possible results:
 - ATTEMPT_ALREADY_ADMITTED
 - ATTEMPT_ADMISSION_CONFLICT
 - AUTHORIZATION_POLICY_CONFLICT
+- USE_CONTEXT_CONFLICT
 - EXCLUSIVE_CLAIM_CONFLICT
 
-For a fresh Attempt the repository must commit the Attempt admission and every derived
-exclusive claim in one atomic critical section, or commit nothing.
+For a fresh Attempt the repository must commit the Attempt admission, the exact
+use-context claim, and every derived Authorization-level exclusive claim in one atomic
+critical section, or commit nothing.
 
 The repository also freezes one normalized condition-mode mapping per Authorization on
 the first successful use admission. A later Attempt that presents a different mapping
@@ -145,6 +187,10 @@ M3.0.9 adds:
 
 ~~~text
 different CapabilityAttempts
++ same exact use-context
+→ at most one admitted Attempt
+
+different exact use-contexts
 + same EXCLUSIVE_ONCE Authorization condition
 → at most one admitted use
 ~~~
@@ -162,8 +208,11 @@ SATISFIED != exclusive_once
 directive text != use-mode fact
 use-policy evaluation != use admission
 use-admission construction != durable activation
-Attempt identity != exclusive-use identity
+Attempt identity != concrete-use identity
+concrete-use claim != Authorization-level exclusive claim
 same Attempt replay != distinct competing Attempt
+REUSABLE != retry authority
+use-context conflict != retry authority
 exclusive claim conflict != retry authority
 atomic use admission != Executor invocation
 CapabilityAttempt != effect
@@ -173,30 +222,41 @@ CapabilityAttempt != effect
 
 1. use-policy assessment exactly covers Authorization conditions;
 2. UNKNOWN policy classification fails closed;
-3. IRR never parses GovernanceDirective text into a use mode;
-4. exclusive claims are derived only from Authorization identity + directive ref;
-5. caller cannot omit a derived exclusive claim;
-6. only an exact same CapabilityAttemptUseAdmission is replay; the same Attempt with
-   changed admission lineage fails closed;
-7. applicability and use-policy evaluations use distinct occurrences;
-8. distinct Attempts with reusable conditions can both admit;
-9. distinct Attempts sharing one exclusive claim cannot both admit;
-10. Authorization use-policy semantics cannot drift after first admitted use;
-11. concurrent competing Attempts produce exactly one ADMITTED result;
-12. same directive ref under different Authorization identities does not alias;
-13. exact canonical roundtrip preserves derived claims;
-14. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
+3. REUSABLE and EXCLUSIVE_ONCE require explicit evidence provenance;
+4. IRR never parses GovernanceDirective text into a use mode;
+5. one exact use-context claim is mechanically derived for every admission;
+6. caller cannot omit or redirect the exact use-context claim;
+7. two distinct Attempts for the same exact use-context cannot both admit, even when
+   Authorization conditions are REUSABLE;
+8. distinct exact use-contexts may both admit under stable REUSABLE policy;
+9. Authorization-level exclusive claims are derived only from Authorization identity +
+   directive ref;
+10. caller cannot omit or redirect a derived Authorization-level exclusive claim;
+11. distinct exact use-contexts sharing one EXCLUSIVE_ONCE claim cannot both admit;
+12. only an exact same CapabilityAttemptUseAdmission is replay; the same Attempt with
+    changed admission lineage fails closed;
+13. applicability, use-policy, use-admission, and embedded Attempt prerequisite
+    occurrences remain distinct;
+14. Authorization use-policy semantics cannot drift after first admitted use;
+15. concurrent same-use Attempts produce exactly one ADMITTED result;
+16. concurrent distinct-use Attempts sharing one exclusive claim produce exactly one
+    ADMITTED result;
+17. same directive ref under different Authorization identities does not alias;
+18. exact canonical roundtrip preserves the derived use-context and exclusive claims;
+19. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
 
 ## FAIL
 
 - semantic_type/scope/statement is parsed to infer EXCLUSIVE_ONCE;
-- Host supplies an arbitrary exclusivity key;
+- Host supplies an arbitrary concrete-use or Authorization-level exclusivity key;
 - partial condition use-policy coverage is accepted;
 - REUSABLE or EXCLUSIVE_ONCE is accepted without evidence provenance;
 - UNKNOWN is treated as reusable;
-- a caller can construct an admission while omitting an exclusive claim;
-- a conflict leaves another claim reserved;
-- two competing Attempts can both admit the same exclusive claim;
+- a caller can construct an admission while omitting the exact use-context claim;
+- a caller can construct an admission while omitting an Authorization-level exclusive claim;
+- two different Attempts can both admit the same exact use-context;
+- two different use-contexts can both admit the same EXCLUSIVE_ONCE claim;
+- a failed admission leaks any claim or admission state;
 - the same Attempt with changed admission lineage is treated as exact replay;
 - repository admission invokes Executor;
 - M3.0.9 claims exactly-once external effects.
@@ -204,8 +264,9 @@ CapabilityAttempt != effect
 ## EXIT
 
 M3.0.9 is complete when exact Authorization-backed CapabilityAttempt use admission can
-atomically exclude competing uses across distinct Attempts without interpreting directive
-text or crossing the Executor boundary.
+atomically exclude duplicate Attempts for one exact concrete use and independently exclude
+competing concrete uses for EXCLUSIVE_ONCE Authorization conditions, without interpreting
+directive text or crossing the Executor boundary.
 
 The next HDE milestone may integrate this canonical prerequisite into a durable Host-side
 store and replay boundary before Executor.
