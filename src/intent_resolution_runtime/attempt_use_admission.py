@@ -123,9 +123,7 @@ class AuthorizationConditionUseAssessment(_CanonicalUseAdmissionRecord):
                 "AuthorizationConditionUseAssessment.evidence_refs must not "
                 "contain duplicates"
             )
-        normalized_evidence_refs = tuple(
-            sorted(self.evidence_refs, key=_ref_key)
-        )
+        normalized_evidence_refs = tuple(sorted(self.evidence_refs, key=_ref_key))
         if (
             self.mode
             in (
@@ -793,10 +791,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
                 "Authorization use-policy occurrence must differ from embedded "
                 "Attempt prerequisite occurrences"
             )
-        if (
-            applicability_attr.evaluation_event_ref
-            == policy_attr.evaluation_event_ref
-        ):
+        if applicability_attr.evaluation_event_ref == policy_attr.evaluation_event_ref:
             raise ValidationError(
                 "Authorization applicability and use-policy evaluations must have "
                 "distinct occurrences"
@@ -1032,13 +1027,8 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             ):
                 return CapabilityAttemptUseAdmissionResult.AUTHORIZATION_POLICY_CONFLICT
 
-            use_claim_owner = self._use_claim_owners.get(
-                admission.use_claim.identity
-            )
-            if (
-                use_claim_owner is not None
-                and use_claim_owner != attempt_identity
-            ):
+            use_claim_owner = self._use_claim_owners.get(admission.use_claim.identity)
+            if use_claim_owner is not None and use_claim_owner != attempt_identity:
                 return CapabilityAttemptUseAdmissionResult.USE_CONTEXT_CONFLICT
 
             if any(
