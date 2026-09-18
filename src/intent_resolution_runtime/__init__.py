@@ -1,6 +1,10 @@
 """Intent Resolution Runtime public surface."""
 
 from .attempt import AttemptBoundInput, CapabilityAttempt, CapabilityAttemptAttribution
+from .attempt_outcome_continuation import (
+    AttemptOutcomeContinuationFrontier,
+    orchestrate_attempt_outcome_continuation,
+)
 from .authorization_applicability import (
     AuthorizationApplicabilityAttribution,
     AuthorizationApplicabilityEvaluation,
@@ -8,10 +12,6 @@ from .authorization_applicability import (
     AuthorizationConditionAssessment,
     AuthorizationConditionDisposition,
     evaluate_authorization_applicability,
-)
-from .attempt_outcome_continuation import (
-    AttemptOutcomeContinuationFrontier,
-    orchestrate_attempt_outcome_continuation,
 )
 from .binding import (
     BindingAttribute,
