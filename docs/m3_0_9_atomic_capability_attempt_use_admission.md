@@ -63,6 +63,9 @@ Host preference
 UNKNOWN makes the use policy UNRESOLVED and therefore cannot produce a
 CapabilityAttemptUseAdmission.
 
+REUSABLE and EXCLUSIVE_ONCE are positive authority-relevant classifications and must
+reference at least one evidence_ref. UNKNOWN may preserve an empty evidence set.
+
 ## Exact exclusive claim
 
 For every EXCLUSIVE_ONCE assessment, IRR derives the claim key mechanically from:
@@ -110,6 +113,7 @@ Possible results:
 
 - ADMITTED
 - ATTEMPT_ALREADY_ADMITTED
+- ATTEMPT_ADMISSION_CONFLICT
 - AUTHORIZATION_POLICY_CONFLICT
 - EXCLUSIVE_CLAIM_CONFLICT
 
@@ -172,24 +176,28 @@ CapabilityAttempt != effect
 3. IRR never parses GovernanceDirective text into a use mode;
 4. exclusive claims are derived only from Authorization identity + directive ref;
 5. caller cannot omit a derived exclusive claim;
-6. exact Attempt replay is not a second admission;
-7. distinct Attempts with reusable conditions can both admit;
-8. distinct Attempts sharing one exclusive claim cannot both admit;
-9. Authorization use-policy semantics cannot drift after first admitted use;
-10. concurrent competing Attempts produce exactly one ADMITTED result;
-11. same directive ref under different Authorization identities does not alias;
-12. exact canonical roundtrip preserves derived claims;
-13. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
+6. only an exact same CapabilityAttemptUseAdmission is replay; the same Attempt with
+   changed admission lineage fails closed;
+7. applicability and use-policy evaluations use distinct occurrences;
+8. distinct Attempts with reusable conditions can both admit;
+9. distinct Attempts sharing one exclusive claim cannot both admit;
+10. Authorization use-policy semantics cannot drift after first admitted use;
+11. concurrent competing Attempts produce exactly one ADMITTED result;
+12. same directive ref under different Authorization identities does not alias;
+13. exact canonical roundtrip preserves derived claims;
+14. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
 
 ## FAIL
 
 - semantic_type/scope/statement is parsed to infer EXCLUSIVE_ONCE;
 - Host supplies an arbitrary exclusivity key;
 - partial condition use-policy coverage is accepted;
+- REUSABLE or EXCLUSIVE_ONCE is accepted without evidence provenance;
 - UNKNOWN is treated as reusable;
 - a caller can construct an admission while omitting an exclusive claim;
 - a conflict leaves another claim reserved;
 - two competing Attempts can both admit the same exclusive claim;
+- the same Attempt with changed admission lineage is treated as exact replay;
 - repository admission invokes Executor;
 - M3.0.9 claims exactly-once external effects.
 
