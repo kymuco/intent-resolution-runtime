@@ -748,9 +748,17 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
 
         protected_occurrences = {
             self.attempt.attribution.attempt_event_ref,
+            self.attempt.capability_evaluation.attribution.evaluation_event_ref,
+            self.attempt.capability_match.attribution.match_event_ref,
+            self.attempt.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref,
+            authorization.decision.proposal.attribution.proposal_event_ref,
+            authorization.decision.attribution.decision_event_ref,
             applicability_attr.evaluation_event_ref,
             policy_attr.evaluation_event_ref,
-            authorization.decision.attribution.decision_event_ref,
+            *(
+                item.bound_value.binding_attribution.binding_event_ref
+                for item in self.attempt.bound_inputs
+            ),
         }
         if self.attribution.admission_event_ref in protected_occurrences:
             raise ValidationError(
