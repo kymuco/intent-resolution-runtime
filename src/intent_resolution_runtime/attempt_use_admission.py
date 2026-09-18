@@ -362,6 +362,23 @@ class AuthorizationUsePolicyEvaluation(_CanonicalUseAdmissionRecord):
             field="AuthorizationUsePolicyEvaluation.description",
         )
 
+    @property
+    def policy_identity(self) -> RecordIdentity:
+        """Path-neutral identity of directive use modes, excluding occurrence evidence."""
+
+        payload = {
+            "authorization_identity": self.authorization.identity.to_primitive(),
+            "condition_modes": [
+                {
+                    "directive_ref": item.directive_ref.to_primitive(),
+                    "mode": item.mode.value,
+                }
+                for item in self.condition_assessments
+            ],
+            "schema": "irr.authorization_use_policy_semantics.v1",
+        }
+        return identity_for_bytes(canonical_json_bytes(payload))
+
     def to_primitive(self) -> dict[str, object]:
         return {
             "attribution": self.attribution.to_primitive(),
@@ -812,6 +829,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
 class CapabilityAttemptUseAdmissionResult(StrEnum):
     ADMITTED = "admitted"
     ATTEMPT_ALREADY_ADMITTED = "attempt_already_admitted"
+    AUTHORIZATION_POLICY_CONFLICT = "authorization_policy_conflict"
     EXCLUSIVE_CLAIM_CONFLICT = "exclusive_claim_conflict"
 
 
@@ -834,14 +852,27 @@ class CapabilityAttemptUseAdmissionRepository(Protocol):
         claim_identity: RecordIdentity,
     ) -> RecordIdentity | None: ...
 
+    def authorization_policy_identity(
+        self,
+        authorization_identity: RecordIdentity,
+    ) -> RecordIdentity | None: ...
+
 
 class InMemoryCapabilityAttemptUseAdmissionRepository:
     """Reference atomic admission store; production Hosts may use durable storage."""
 
-    __slots__ = ("_admissions", "_claim_owners", "_lock")
+    __slots__ = (
+        "_admissions",
+        "_authorization_policy_identities",
+        "_claim_owners",
+        "_lock",
+    )
 
     def __init__(self) -> None:
         self._admissions: dict[RecordIdentity, CapabilityAttemptUseAdmission] = {}
+        self._authorization_policy_identities: dict[
+            RecordIdentity, RecordIdentity
+        ] = {}
         self._claim_owners: dict[RecordIdentity, RecordIdentity] = {}
         self._lock = Lock()
 
@@ -859,6 +890,21 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             if attempt_identity in self._admissions:
                 return CapabilityAttemptUseAdmissionResult.ATTEMPT_ALREADY_ADMITTED
 
+            authorization_identity = (
+                admission.applicability_evaluation.authorization.identity
+            )
+            policy_identity = admission.use_policy_evaluation.policy_identity
+            existing_policy_identity = self._authorization_policy_identities.get(
+                authorization_identity
+            )
+            if (
+                existing_policy_identity is not None
+                and existing_policy_identity != policy_identity
+            ):
+                return (
+                    CapabilityAttemptUseAdmissionResult.AUTHORIZATION_POLICY_CONFLICT
+                )
+
             if any(
                 claim.identity in self._claim_owners
                 and self._claim_owners[claim.identity] != attempt_identity
@@ -867,6 +913,9 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
                 return CapabilityAttemptUseAdmissionResult.EXCLUSIVE_CLAIM_CONFLICT
 
             self._admissions[attempt_identity] = admission
+            self._authorization_policy_identities[authorization_identity] = (
+                policy_identity
+            )
             for claim in admission.exclusive_claims:
                 self._claim_owners[claim.identity] = attempt_identity
             return CapabilityAttemptUseAdmissionResult.ADMITTED
@@ -893,6 +942,18 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             )
         with self._lock:
             return self._claim_owners.get(claim_identity)
+
+    def authorization_policy_identity(
+        self,
+        authorization_identity: RecordIdentity,
+    ) -> RecordIdentity | None:
+        if type(authorization_identity) is not RecordIdentity:
+            raise ValidationError(
+                "CapabilityAttemptUseAdmissionRepository.authorization_policy_identity "
+                "requires RecordIdentity"
+            )
+        with self._lock:
+            return self._authorization_policy_identities.get(authorization_identity)
 
 
 __all__ = (
