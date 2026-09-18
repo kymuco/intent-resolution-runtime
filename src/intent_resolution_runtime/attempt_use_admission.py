@@ -985,9 +985,9 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
     __slots__ = (
         "_admissions",
         "_authorization_policy_identities",
-        "_use_claim_owners",
         "_claim_owners",
         "_lock",
+        "_use_claim_owners",
     )
 
     def __init__(self) -> None:
