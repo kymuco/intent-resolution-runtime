@@ -76,13 +76,15 @@ reference at least one evidence_ref. UNKNOWN may preserve an empty evidence set.
 ## Exact concrete-use claim
 
 Every CapabilityAttemptUseAdmission mechanically derives one CapabilityUseContextClaim
-from:
+from the exact content-bound:
 
 ~~~text
-use_context_ref
-+
 use_context_identity
 ~~~
+
+The StableRef remains trace metadata in applicability/admission lineage, but it is not
+part of the exclusivity key. Therefore aliasing the same exact use-context identity under
+a different ref cannot create a second claim.
 
 This claim exists for every admitted use, including unconditional and REUSABLE
 Authorizations.
@@ -226,24 +228,25 @@ CapabilityAttempt != effect
 4. IRR never parses GovernanceDirective text into a use mode;
 5. one exact use-context claim is mechanically derived for every admission;
 6. caller cannot omit or redirect the exact use-context claim;
-7. two distinct Attempts for the same exact use-context cannot both admit, even when
+7. ref aliases of one exact use-context identity resolve to the same claim;
+8. two distinct Attempts for the same exact use-context cannot both admit, even when
    Authorization conditions are REUSABLE;
-8. distinct exact use-contexts may both admit under stable REUSABLE policy;
-9. Authorization-level exclusive claims are derived only from Authorization identity +
+9. distinct exact use-contexts may both admit under stable REUSABLE policy;
+10. Authorization-level exclusive claims are derived only from Authorization identity +
    directive ref;
-10. caller cannot omit or redirect a derived Authorization-level exclusive claim;
-11. distinct exact use-contexts sharing one EXCLUSIVE_ONCE claim cannot both admit;
-12. only an exact same CapabilityAttemptUseAdmission is replay; the same Attempt with
+11. caller cannot omit or redirect a derived Authorization-level exclusive claim;
+12. distinct exact use-contexts sharing one EXCLUSIVE_ONCE claim cannot both admit;
+13. only an exact same CapabilityAttemptUseAdmission is replay; the same Attempt with
     changed admission lineage fails closed;
-13. applicability, use-policy, use-admission, and embedded Attempt prerequisite
+14. applicability, use-policy, use-admission, and embedded Attempt prerequisite
     occurrences remain distinct;
-14. Authorization use-policy semantics cannot drift after first admitted use;
-15. concurrent same-use Attempts produce exactly one ADMITTED result;
-16. concurrent distinct-use Attempts sharing one exclusive claim produce exactly one
+15. Authorization use-policy semantics cannot drift after first admitted use;
+16. concurrent same-use Attempts produce exactly one ADMITTED result;
+17. concurrent distinct-use Attempts sharing one exclusive claim produce exactly one
     ADMITTED result;
-17. same directive ref under different Authorization identities does not alias;
-18. exact canonical roundtrip preserves the derived use-context and exclusive claims;
-19. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
+18. same directive ref under different Authorization identities does not alias;
+19. exact canonical roundtrip preserves the derived use-context and exclusive claims;
+20. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
 
 ## FAIL
 
