@@ -484,6 +484,62 @@ def evaluate_authorization_use_policy(
 
 
 @dataclass(frozen=True, slots=True)
+class CapabilityUseContextClaim(_CanonicalUseAdmissionRecord):
+    """Canonical one-Attempt claim for one exact concrete use context."""
+
+    SCHEMA: ClassVar[str] = "irr.capability_use_context_claim.v1"
+
+    use_context_ref: StableRef
+    use_context_identity: RecordIdentity
+
+    def __post_init__(self) -> None:
+        if type(self.use_context_ref) is not StableRef:
+            raise ValidationError(
+                "CapabilityUseContextClaim.use_context_ref must be a StableRef"
+            )
+        if type(self.use_context_identity) is not RecordIdentity:
+            raise ValidationError(
+                "CapabilityUseContextClaim.use_context_identity must be a RecordIdentity"
+            )
+
+    def to_primitive(self) -> dict[str, object]:
+        return {
+            "schema": self.SCHEMA,
+            "use_context_identity": self.use_context_identity.to_primitive(),
+            "use_context_ref": self.use_context_ref.to_primitive(),
+        }
+
+    @classmethod
+    def from_primitive(
+        cls,
+        value: object,
+        *,
+        field: str = "CapabilityUseContextClaim",
+    ) -> CapabilityUseContextClaim:
+        obj = _expect_object(value, field=field)
+        _expect_exact_keys(
+            obj,
+            {"schema", "use_context_ref", "use_context_identity"},
+            field=field,
+        )
+        if obj["schema"] != cls.SCHEMA:
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
+        try:
+            return cls(
+                use_context_ref=StableRef.from_primitive(
+                    obj["use_context_ref"],
+                    field=f"{field}.use_context_ref",
+                ),
+                use_context_identity=RecordIdentity.from_primitive(
+                    obj["use_context_identity"],
+                    field=f"{field}.use_context_identity",
+                ),
+            )
+        except ValidationError as exc:
+            raise SerializationError(f"invalid {field}") from exc
+
+
+@dataclass(frozen=True, slots=True)
 class ExclusiveAuthorizationUseClaim(_CanonicalUseAdmissionRecord):
     """Canonical exclusivity key for one exact Authorization condition."""
 
@@ -650,6 +706,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
     applicability_evaluation: AuthorizationApplicabilityEvaluation
     use_policy_evaluation: AuthorizationUsePolicyEvaluation
     description: str
+    use_claim: CapabilityUseContextClaim = field(init=False)
     exclusive_claims: tuple[ExclusiveAuthorizationUseClaim, ...] = field(init=False)
 
     def __post_init__(self) -> None:
@@ -781,6 +838,14 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
 
         object.__setattr__(
             self,
+            "use_claim",
+            CapabilityUseContextClaim(
+                use_context_ref=self.attribution.use_context_ref,
+                use_context_identity=self.attribution.use_context_identity,
+            ),
+        )
+        object.__setattr__(
+            self,
             "exclusive_claims",
             _derived_exclusive_claims(self.use_policy_evaluation),
         )
@@ -797,6 +862,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
             "description": self.description,
             "exclusive_claims": [item.to_primitive() for item in self.exclusive_claims],
             "schema": self.SCHEMA,
+            "use_claim": self.use_claim.to_primitive(),
             "use_policy_evaluation": self.use_policy_evaluation.to_primitive(),
         }
 
@@ -816,6 +882,7 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
                 "attempt",
                 "applicability_evaluation",
                 "use_policy_evaluation",
+                "use_claim",
                 "exclusive_claims",
                 "description",
             },
@@ -847,6 +914,10 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
                 ),
                 description=obj["description"],
             )
+            exact_use_claim = CapabilityUseContextClaim.from_primitive(
+                obj["use_claim"],
+                field=f"{field}.use_claim",
+            )
             exact_claims = tuple(
                 ExclusiveAuthorizationUseClaim.from_primitive(
                     item,
@@ -856,6 +927,10 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
             )
         except ValidationError as exc:
             raise SerializationError(f"invalid {field}") from exc
+        if exact_use_claim != restored.use_claim:
+            raise SerializationError(
+                f"{field}.use_claim must equal the exact derived use-context claim"
+            )
         if exact_claims != restored.exclusive_claims:
             raise SerializationError(
                 f"{field}.exclusive_claims must equal exact derived claims"
@@ -875,6 +950,7 @@ class CapabilityAttemptUseAdmissionResult(StrEnum):
     ATTEMPT_ALREADY_ADMITTED = "attempt_already_admitted"
     ATTEMPT_ADMISSION_CONFLICT = "attempt_admission_conflict"
     AUTHORIZATION_POLICY_CONFLICT = "authorization_policy_conflict"
+    USE_CONTEXT_CONFLICT = "use_context_conflict"
     EXCLUSIVE_CLAIM_CONFLICT = "exclusive_claim_conflict"
 
 
@@ -891,6 +967,11 @@ class CapabilityAttemptUseAdmissionRepository(Protocol):
         self,
         attempt_identity: RecordIdentity,
     ) -> CapabilityAttemptUseAdmission | None: ...
+
+    def use_claim_owner(
+        self,
+        claim_identity: RecordIdentity,
+    ) -> RecordIdentity | None: ...
 
     def claim_owner(
         self,
@@ -909,6 +990,7 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
     __slots__ = (
         "_admissions",
         "_authorization_policy_identities",
+        "_use_claim_owners",
         "_claim_owners",
         "_lock",
     )
@@ -916,6 +998,7 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
     def __init__(self) -> None:
         self._admissions: dict[RecordIdentity, CapabilityAttemptUseAdmission] = {}
         self._authorization_policy_identities: dict[RecordIdentity, RecordIdentity] = {}
+        self._use_claim_owners: dict[RecordIdentity, RecordIdentity] = {}
         self._claim_owners: dict[RecordIdentity, RecordIdentity] = {}
         self._lock = Lock()
 
@@ -949,6 +1032,15 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             ):
                 return CapabilityAttemptUseAdmissionResult.AUTHORIZATION_POLICY_CONFLICT
 
+            use_claim_owner = self._use_claim_owners.get(
+                admission.use_claim.identity
+            )
+            if (
+                use_claim_owner is not None
+                and use_claim_owner != attempt_identity
+            ):
+                return CapabilityAttemptUseAdmissionResult.USE_CONTEXT_CONFLICT
+
             if any(
                 claim.identity in self._claim_owners
                 and self._claim_owners[claim.identity] != attempt_identity
@@ -960,6 +1052,7 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             self._authorization_policy_identities[authorization_identity] = (
                 policy_identity
             )
+            self._use_claim_owners[admission.use_claim.identity] = attempt_identity
             for claim in admission.exclusive_claims:
                 self._claim_owners[claim.identity] = attempt_identity
             return CapabilityAttemptUseAdmissionResult.ADMITTED
@@ -974,6 +1067,18 @@ class InMemoryCapabilityAttemptUseAdmissionRepository:
             )
         with self._lock:
             return self._admissions.get(attempt_identity)
+
+    def use_claim_owner(
+        self,
+        claim_identity: RecordIdentity,
+    ) -> RecordIdentity | None:
+        if type(claim_identity) is not RecordIdentity:
+            raise ValidationError(
+                "CapabilityAttemptUseAdmissionRepository.use_claim_owner requires "
+                "RecordIdentity"
+            )
+        with self._lock:
+            return self._use_claim_owners.get(claim_identity)
 
     def claim_owner(
         self,
@@ -1010,6 +1115,7 @@ __all__ = (
     "CapabilityAttemptUseAdmissionAttribution",
     "CapabilityAttemptUseAdmissionRepository",
     "CapabilityAttemptUseAdmissionResult",
+    "CapabilityUseContextClaim",
     "ExclusiveAuthorizationUseClaim",
     "InMemoryCapabilityAttemptUseAdmissionRepository",
     "evaluate_authorization_use_policy",
