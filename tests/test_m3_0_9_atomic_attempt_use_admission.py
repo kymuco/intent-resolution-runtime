@@ -349,6 +349,50 @@ def test_same_attempt_replay_is_not_a_second_admission() -> None:
     )
 
 
+def test_authorization_use_policy_cannot_drift_after_first_admitted_use() -> None:
+    directive = _directive("policy-drift")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="policy-drift",
+        directives=(directive,),
+    )
+    reusable_policy = _use_policy(
+        applicability,
+        label="policy-drift-reusable",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    exclusive_policy = _use_policy(
+        applicability,
+        label="policy-drift-exclusive",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.EXCLUSIVE_ONCE},
+    )
+    first = _admission(
+        _attempt(applicability, evaluation, event="attempt-policy-drift-first"),
+        applicability,
+        reusable_policy,
+        event="admission-policy-drift-first",
+    )
+    second = _admission(
+        _attempt(applicability, evaluation, event="attempt-policy-drift-second"),
+        applicability,
+        exclusive_policy,
+        event="admission-policy-drift-second",
+    )
+    repository = InMemoryCapabilityAttemptUseAdmissionRepository()
+
+    assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
+    assert (
+        repository.admit(second)
+        is CapabilityAttemptUseAdmissionResult.AUTHORIZATION_POLICY_CONFLICT
+    )
+    assert repository.get(second.attempt.identity) is None
+    assert (
+        repository.authorization_policy_identity(
+            applicability.authorization.identity
+        )
+        == reusable_policy.policy_identity
+    )
+
+
 def test_same_directive_ref_in_different_authorization_does_not_alias_claim() -> None:
     directive = _directive("shared-ref")
     _auth_a, evaluation_a, applicability_a = _applicability(
