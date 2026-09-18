@@ -714,6 +714,28 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
 
         applicability_attr = self.applicability_evaluation.attribution
         policy_attr = self.use_policy_evaluation.attribution
+        embedded_attempt_occurrences = {
+            self.attempt.attribution.attempt_event_ref,
+            self.attempt.capability_evaluation.attribution.evaluation_event_ref,
+            self.attempt.capability_match.attribution.match_event_ref,
+            self.attempt.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref,
+            authorization.decision.proposal.attribution.proposal_event_ref,
+            authorization.decision.attribution.decision_event_ref,
+            *(
+                item.bound_value.binding_attribution.binding_event_ref
+                for item in self.attempt.bound_inputs
+            ),
+        }
+        if applicability_attr.evaluation_event_ref in embedded_attempt_occurrences:
+            raise ValidationError(
+                "Authorization applicability occurrence must differ from embedded "
+                "Attempt prerequisite occurrences"
+            )
+        if policy_attr.evaluation_event_ref in embedded_attempt_occurrences:
+            raise ValidationError(
+                "Authorization use-policy occurrence must differ from embedded "
+                "Attempt prerequisite occurrences"
+            )
         if (
             applicability_attr.evaluation_event_ref
             == policy_attr.evaluation_event_ref
@@ -747,18 +769,9 @@ class CapabilityAttemptUseAdmission(_CanonicalUseAdmissionRecord):
             )
 
         protected_occurrences = {
-            self.attempt.attribution.attempt_event_ref,
-            self.attempt.capability_evaluation.attribution.evaluation_event_ref,
-            self.attempt.capability_match.attribution.match_event_ref,
-            self.attempt.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref,
-            authorization.decision.proposal.attribution.proposal_event_ref,
-            authorization.decision.attribution.decision_event_ref,
+            *embedded_attempt_occurrences,
             applicability_attr.evaluation_event_ref,
             policy_attr.evaluation_event_ref,
-            *(
-                item.bound_value.binding_attribution.binding_event_ref
-                for item in self.attempt.bound_inputs
-            ),
         }
         if self.attribution.admission_event_ref in protected_occurrences:
             raise ValidationError(
