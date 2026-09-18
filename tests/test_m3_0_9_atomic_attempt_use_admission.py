@@ -352,6 +352,62 @@ def test_reusable_authorization_allows_distinct_concrete_uses() -> None:
     assert second.exclusive_claims == ()
 
 
+def test_same_use_context_identity_cannot_escape_by_ref_alias() -> None:
+    directive = _directive("use-ref-alias", semantic_type="scope_at_use")
+    _authorization_record, evaluation, applicability = _applicability(
+        label="use-ref-alias",
+        directives=(directive,),
+    )
+    aliased_applicability = replace(
+        applicability,
+        attribution=replace(
+            applicability.attribution,
+            evaluation_event_ref=_ref("irr.event", "applicability-use-ref-alias-2"),
+            use_context_ref=_ref("irr.authorization_use_context", "alias-ref"),
+        ),
+    )
+    first_policy = _use_policy(
+        applicability,
+        label="use-ref-alias-first",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    second_policy = _use_policy(
+        aliased_applicability,
+        label="use-ref-alias-second",
+        modes={directive.directive_ref: AuthorizationConditionUseMode.REUSABLE},
+    )
+    first = _admission(
+        _attempt(applicability, evaluation, event="attempt-use-ref-alias-first"),
+        applicability,
+        first_policy,
+        event="admission-use-ref-alias-first",
+    )
+    second = _admission(
+        _attempt(
+            aliased_applicability,
+            evaluation,
+            event="attempt-use-ref-alias-second",
+        ),
+        aliased_applicability,
+        second_policy,
+        event="admission-use-ref-alias-second",
+    )
+    repository = InMemoryCapabilityAttemptUseAdmissionRepository()
+
+    assert applicability.attribution.use_context_ref != (
+        aliased_applicability.attribution.use_context_ref
+    )
+    assert applicability.attribution.use_context_identity == (
+        aliased_applicability.attribution.use_context_identity
+    )
+    assert first.use_claim == second.use_claim
+    assert repository.admit(first) is CapabilityAttemptUseAdmissionResult.ADMITTED
+    assert (
+        repository.admit(second)
+        is CapabilityAttemptUseAdmissionResult.USE_CONTEXT_CONFLICT
+    )
+
+
 def test_same_concrete_use_blocks_distinct_attempts_even_when_reusable() -> None:
     directive = _directive("same-use-reusable", semantic_type="scope_at_use")
     _authorization_record, evaluation, applicability = _applicability(
@@ -823,7 +879,6 @@ def test_serialized_use_claim_cannot_be_redirected() -> None:
     )
     primitive = admission.to_primitive()
     primitive["use_claim"] = CapabilityUseContextClaim(
-        use_context_ref=_ref("irr.authorization_use_context", "redirected"),
         use_context_identity=RecordIdentity("sha256", "f" * 64),
     ).to_primitive()
 
