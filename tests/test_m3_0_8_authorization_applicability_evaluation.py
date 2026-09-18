@@ -140,7 +140,12 @@ def test_all_conditions_satisfied_is_applicable() -> None:
 
     assert tuple(
         item.directive_ref for item in applicability.condition_assessments
-    ) == tuple(sorted((first.directive_ref, second.directive_ref), key=lambda item: (item.namespace, item.value)))
+    ) == tuple(
+        sorted(
+            (first.directive_ref, second.directive_ref),
+            key=lambda item: (item.namespace, item.value),
+        )
+    )
     assert (
         evaluate_authorization_applicability(applicability)
         is AuthorizationApplicabilityResult.APPLICABLE
