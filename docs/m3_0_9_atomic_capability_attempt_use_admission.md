@@ -110,6 +110,7 @@ Possible results:
 
 - ADMITTED
 - ATTEMPT_ALREADY_ADMITTED
+- AUTHORIZATION_POLICY_CONFLICT
 - EXCLUSIVE_CLAIM_CONFLICT
 
 For a fresh Attempt the repository must either:
@@ -118,6 +119,12 @@ For a fresh Attempt the repository must either:
 2. commit nothing.
 
 A conflict on any one claim must not leak the remaining claims.
+
+The repository also freezes one normalized condition-mode mapping per Authorization on
+the first successful use admission. A later Attempt that presents a different mapping
+for the same Authorization fails closed with AUTHORIZATION_POLICY_CONFLICT. The
+normalized policy identity excludes evaluator occurrence and evidence details and commits
+only to Authorization identity plus exact directive_ref → mode semantics.
 
 The reference in-memory repository serializes admission with a lock so concurrent
 competing Attempts demonstrate exactly-one admission behavior. Production Hosts may use
@@ -172,11 +179,12 @@ CapabilityAttempt != effect
 6. exact Attempt replay is not a second admission;
 7. distinct Attempts with reusable conditions can both admit;
 8. distinct Attempts sharing one exclusive claim cannot both admit;
-9. multi-claim conflict is all-or-nothing;
-10. concurrent competing Attempts produce exactly one ADMITTED result;
-11. same directive ref under different Authorization identities does not alias;
-12. exact canonical roundtrip preserves derived claims;
-13. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
+9. Authorization use-policy semantics cannot drift after first admitted use;
+10. multi-claim conflict is all-or-nothing;
+11. concurrent competing Attempts produce exactly one ADMITTED result;
+12. same directive ref under different Authorization identities does not alias;
+13. exact canonical roundtrip preserves derived claims;
+14. no ExecutorPort call, CapabilityOutcome, retry, fallback, or effect occurs.
 
 ## FAIL
 
