@@ -12,13 +12,18 @@ from intent_resolution_runtime import (
     RecordIdentity,
     SerializationError,
     StableRef,
+    ValidationError,
 )
 from intent_resolution_runtime.persistent_deduplicated_reinvocation import (
+    AdmittedPersistentDeduplicationContract,
+    CandidatePersistentDeduplicationContract,
     CapabilityIdempotencyKey,
     DeduplicatedCapabilityInvocationRequest,
     DeduplicatedReinvocationContractError,
     PersistentDeduplicatedReinvocationContract,
+    PersistentDeduplicationContractAdmissionAttribution,
     PersistentDeduplicationContractAttribution,
+    PersistentDeduplicationContractProposalAttribution,
     build_deduplicated_capability_invocation_request,
     derive_capability_idempotency_key,
 )
@@ -58,40 +63,190 @@ def _contract(
         executor_ref=attempt.attribution.executor_ref,
         deduplication_domain_ref=_ref("irr.deduplication_domain", domain),
         statement=(
-            "The external target persistently deduplicates repeated exact invocation "
-            "submissions carrying the same derived idempotency key to at most one "
+            "The external target persistently deduplicates all submissions carrying "
+            "one exact idempotency key inside this domain to at most one protected "
             "target effect."
         ),
     )
 
 
-def test_exact_contract_and_attempt_derive_stable_key() -> None:
-    attempt = _exact_attempt()
-    contract = _contract(attempt)
+def _candidate(
+    contract: PersistentDeduplicatedReinvocationContract,
+    *,
+    label: str,
+) -> CandidatePersistentDeduplicationContract:
+    return CandidatePersistentDeduplicationContract(
+        attribution=PersistentDeduplicationContractProposalAttribution(
+            proposer_ref=_ref("irr.deduplication_contract_proposer", "test-host"),
+            proposal_event_ref=_ref("irr.event", f"proposal-{label}"),
+        ),
+        contract=contract,
+        rationale="Propose the exact downstream deduplication guarantee for admission.",
+    )
 
-    first = derive_capability_idempotency_key(contract, attempt)
-    second = derive_capability_idempotency_key(contract, attempt)
+
+def _admit_contract(
+    contract: PersistentDeduplicatedReinvocationContract,
+    *,
+    label: str,
+) -> AdmittedPersistentDeduplicationContract:
+    candidate = _candidate(contract, label=label)
+    return AdmittedPersistentDeduplicationContract(
+        admission_attribution=PersistentDeduplicationContractAdmissionAttribution(
+            resolver_ref=_ref("irr.deduplication_contract_admitter", "test-host"),
+            admission_event_ref=_ref("irr.event", f"admission-{label}"),
+        ),
+        contract=contract,
+        candidate_inputs=(candidate,),
+    )
+
+
+def _admitted(
+    attempt,
+    *,
+    label: str = "dedup",
+) -> AdmittedPersistentDeduplicationContract:
+    return _admit_contract(
+        _contract(attempt, event=f"contract-{label}"),
+        label=label,
+    )
+
+
+def test_exact_admitted_contract_and_attempt_derive_stable_key() -> None:
+    attempt = _exact_attempt()
+    admitted = _admitted(attempt)
+
+    first = derive_capability_idempotency_key(admitted, attempt)
+    second = derive_capability_idempotency_key(admitted, attempt)
 
     assert first.__class__ is CapabilityIdempotencyKey
     assert first == second
     assert first.identity == second.identity
-    assert first.contract_identity == contract.identity
-    assert first.attempt_identity == attempt.identity
-    assert first.deduplication_domain_ref == contract.deduplication_domain_ref
+    assert first.admitted_contract_identity == admitted.identity
+    assert first.original_attempt_identity == attempt.identity
+    assert (
+        first.deduplication_domain_ref
+        == admitted.contract.deduplication_domain_ref
+    )
     assert first.external_token == first.identity.digest
     assert len(first.external_token) == 64
 
 
-def test_distinct_fresh_attempt_occurrence_derives_distinct_key() -> None:
+def test_raw_downstream_contract_cannot_derive_key_without_admission() -> None:
+    attempt = _exact_attempt()
+    raw = _contract(attempt)
+
+    with pytest.raises(
+        ValidationError,
+        match="admitted_contract must be an AdmittedPersistentDeduplicationContract",
+    ):
+        derive_capability_idempotency_key(raw, attempt)  # type: ignore[arg-type]
+
+
+def test_admission_requires_explicit_candidate_provenance() -> None:
+    attempt = _exact_attempt()
+    contract = _contract(attempt)
+
+    with pytest.raises(
+        ValidationError,
+        match="requires explicit candidate provenance",
+    ):
+        AdmittedPersistentDeduplicationContract(
+            admission_attribution=(
+                PersistentDeduplicationContractAdmissionAttribution(
+                    resolver_ref=_ref(
+                        "irr.deduplication_contract_admitter",
+                        "test-host",
+                    ),
+                    admission_event_ref=_ref("irr.event", "admission-empty"),
+                )
+            ),
+            contract=contract,
+            candidate_inputs=(),
+        )
+
+
+def test_admission_must_equal_one_exact_proposed_contract() -> None:
+    attempt = _exact_attempt()
+    admitted_contract = _contract(attempt, event="contract-admitted")
+    foreign_candidate = _candidate(
+        _contract(
+            attempt,
+            event="contract-foreign",
+            domain="foreign-domain",
+        ),
+        label="foreign-candidate",
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="must equal one exact proposed downstream contract",
+    ):
+        AdmittedPersistentDeduplicationContract(
+            admission_attribution=(
+                PersistentDeduplicationContractAdmissionAttribution(
+                    resolver_ref=_ref(
+                        "irr.deduplication_contract_admitter",
+                        "test-host",
+                    ),
+                    admission_event_ref=_ref("irr.event", "admission-foreign"),
+                )
+            ),
+            contract=admitted_contract,
+            candidate_inputs=(foreign_candidate,),
+        )
+
+
+def test_contract_proposal_and_admission_occurrences_cannot_alias() -> None:
+    attempt = _exact_attempt()
+    contract = _contract(attempt, event="contract-occurrence")
+
+    with pytest.raises(
+        ValidationError,
+        match="proposal occurrence must differ",
+    ):
+        CandidatePersistentDeduplicationContract(
+            attribution=PersistentDeduplicationContractProposalAttribution(
+                proposer_ref=_ref(
+                    "irr.deduplication_contract_proposer",
+                    "test-host",
+                ),
+                proposal_event_ref=contract.attribution.contract_event_ref,
+            ),
+            contract=contract,
+            rationale="Aliased occurrence must fail closed.",
+        )
+
+    candidate = _candidate(contract, label="occurrence")
+    with pytest.raises(
+        ValidationError,
+        match="admission occurrence must differ",
+    ):
+        AdmittedPersistentDeduplicationContract(
+            admission_attribution=(
+                PersistentDeduplicationContractAdmissionAttribution(
+                    resolver_ref=_ref(
+                        "irr.deduplication_contract_admitter",
+                        "test-host",
+                    ),
+                    admission_event_ref=candidate.attribution.proposal_event_ref,
+                )
+            ),
+            contract=contract,
+            candidate_inputs=(candidate,),
+        )
+
+
+def test_distinct_fresh_attempt_occurrence_derives_distinct_original_key() -> None:
     first_attempt = _exact_attempt(event="attempt-dedup-first")
     second_attempt = _exact_attempt(event="attempt-dedup-second")
-    contract = _contract(first_attempt)
+    admitted = _admitted(first_attempt, label="fresh-attempts")
 
     assert first_attempt.capability_match == second_attempt.capability_match
     assert first_attempt.identity != second_attempt.identity
 
-    first_key = derive_capability_idempotency_key(contract, first_attempt)
-    second_key = derive_capability_idempotency_key(contract, second_attempt)
+    first_key = derive_capability_idempotency_key(admitted, first_attempt)
+    second_key = derive_capability_idempotency_key(admitted, second_attempt)
 
     assert first_key != second_key
     assert first_key.external_token != second_key.external_token
@@ -99,27 +254,30 @@ def test_distinct_fresh_attempt_occurrence_derives_distinct_key() -> None:
 
 def test_first_dispatch_request_carries_exact_original_key() -> None:
     attempt = _exact_attempt()
-    contract = _contract(attempt)
+    admitted = _admitted(attempt, label="first-dispatch")
 
-    request = build_deduplicated_capability_invocation_request(contract, attempt)
+    request = build_deduplicated_capability_invocation_request(
+        admitted,
+        attempt,
+    )
 
     assert request.__class__ is DeduplicatedCapabilityInvocationRequest
     assert request.attempt == attempt
-    assert request.contract == contract
+    assert request.admitted_contract == admitted
     assert request.idempotency_key == derive_capability_idempotency_key(
-        contract,
+        admitted,
         attempt,
     )
-    assert request.idempotency_key.attempt_identity == attempt.identity
+    assert request.idempotency_key.original_attempt_identity == attempt.identity
 
 
 def test_first_dispatch_request_rejects_forged_key() -> None:
     attempt = _exact_attempt()
-    contract = _contract(attempt)
+    admitted = _admitted(attempt, label="forged-key")
     forged = CapabilityIdempotencyKey(
-        contract_identity=contract.identity,
-        attempt_identity=RecordIdentity("sha256", "d" * 64),
-        deduplication_domain_ref=contract.deduplication_domain_ref,
+        admitted_contract_identity=admitted.identity,
+        original_attempt_identity=RecordIdentity("sha256", "d" * 64),
+        deduplication_domain_ref=admitted.contract.deduplication_domain_ref,
     )
 
     with pytest.raises(
@@ -128,7 +286,7 @@ def test_first_dispatch_request_rejects_forged_key() -> None:
     ):
         DeduplicatedCapabilityInvocationRequest(
             attempt=attempt,
-            contract=contract,
+            admitted_contract=admitted,
             idempotency_key=forged,
         )
 
@@ -136,7 +294,7 @@ def test_first_dispatch_request_rejects_forged_key() -> None:
 def test_deduplicated_invocation_request_is_mechanism_state_not_canonical_ir() -> None:
     attempt = _exact_attempt()
     request = build_deduplicated_capability_invocation_request(
-        _contract(attempt),
+        _admitted(attempt, label="mechanism-state"),
         attempt,
     )
 
@@ -145,15 +303,17 @@ def test_deduplicated_invocation_request_is_mechanism_state_not_canonical_ir() -
     assert not hasattr(request, "canonical_bytes")
 
 
-def test_contract_identity_change_changes_key() -> None:
+def test_admission_identity_change_changes_original_key() -> None:
     attempt = _exact_attempt()
-    first_contract = _contract(attempt, event="contract-first")
-    second_contract = _contract(attempt, event="contract-second")
+    contract = _contract(attempt, event="contract-shared")
+    first = _admit_contract(contract, label="admission-first")
+    second = _admit_contract(contract, label="admission-second")
 
-    assert first_contract.identity != second_contract.identity
+    assert first.contract == second.contract
+    assert first.identity != second.identity
 
-    first_key = derive_capability_idempotency_key(first_contract, attempt)
-    second_key = derive_capability_idempotency_key(second_contract, attempt)
+    first_key = derive_capability_idempotency_key(first, attempt)
+    second_key = derive_capability_idempotency_key(second, attempt)
 
     assert first_key != second_key
     assert first_key.external_token != second_key.external_token
@@ -180,15 +340,19 @@ def test_contract_identity_change_changes_key() -> None:
         ),
     ),
 )
-def test_contract_lineage_mismatch_fails_closed(field: str, value: object) -> None:
+def test_admitted_contract_lineage_mismatch_fails_closed(
+    field: str,
+    value: object,
+) -> None:
     attempt = _exact_attempt()
-    contract = replace(_contract(attempt), **{field: value})
+    foreign_contract = replace(_contract(attempt), **{field: value})
+    admitted = _admit_contract(foreign_contract, label=f"foreign-{field}")
 
     with pytest.raises(DeduplicatedReinvocationContractError):
-        derive_capability_idempotency_key(contract, attempt)
+        derive_capability_idempotency_key(admitted, attempt)
 
 
-def test_contract_supplier_must_match_exact_catalog_supplier() -> None:
+def test_admitted_contract_supplier_must_match_exact_catalog_supplier() -> None:
     attempt = _exact_attempt()
     contract = _contract(attempt)
     foreign = replace(
@@ -198,12 +362,13 @@ def test_contract_supplier_must_match_exact_catalog_supplier() -> None:
             supplier_ref=_ref("irr.host", "foreign-supplier"),
         ),
     )
+    admitted = _admit_contract(foreign, label="foreign-supplier")
 
     with pytest.raises(
         DeduplicatedReinvocationContractError,
         match="supplier does not match",
     ):
-        derive_capability_idempotency_key(foreign, attempt)
+        derive_capability_idempotency_key(admitted, attempt)
 
 
 def test_contract_requires_exactly_one_explicit_executor_boundary() -> None:
@@ -211,13 +376,13 @@ def test_contract_requires_exactly_one_explicit_executor_boundary() -> None:
         executor="artifact-executor",
         executor_boundaries=(),
     )
-    no_executor_contract = _contract(no_executor)
+    no_executor_admitted = _admitted(no_executor, label="no-executor")
 
     with pytest.raises(
         DeduplicatedReinvocationContractError,
         match="exactly one explicit Executor boundary",
     ):
-        derive_capability_idempotency_key(no_executor_contract, no_executor)
+        derive_capability_idempotency_key(no_executor_admitted, no_executor)
 
     multiple = _attempt(
         executor="artifact-executor",
@@ -226,13 +391,13 @@ def test_contract_requires_exactly_one_explicit_executor_boundary() -> None:
             _executor_boundary("secondary-executor"),
         ),
     )
-    multiple_contract = _contract(multiple)
+    multiple_admitted = _admitted(multiple, label="multiple-executors")
 
     with pytest.raises(
         DeduplicatedReinvocationContractError,
         match="exactly one explicit Executor boundary",
     ):
-        derive_capability_idempotency_key(multiple_contract, multiple)
+        derive_capability_idempotency_key(multiple_admitted, multiple)
 
 
 def test_non_executor_boundary_cannot_substitute_for_executor_contract() -> None:
@@ -245,27 +410,32 @@ def test_non_executor_boundary_cannot_substitute_for_executor_contract() -> None
         executor="artifact-executor",
         executor_boundaries=(service,),
     )
-    contract = _contract(attempt)
+    admitted = _admitted(attempt, label="service-only")
 
     with pytest.raises(
         DeduplicatedReinvocationContractError,
         match="exactly one explicit Executor boundary",
     ):
-        derive_capability_idempotency_key(contract, attempt)
+        derive_capability_idempotency_key(admitted, attempt)
 
 
-def test_contract_and_key_roundtrip_preserve_exact_identity() -> None:
+def test_contract_admission_and_key_roundtrip_preserve_exact_identity() -> None:
     attempt = _exact_attempt()
-    contract = _contract(attempt)
-    key = derive_capability_idempotency_key(contract, attempt)
+    admitted = _admitted(attempt, label="roundtrip")
+    key = derive_capability_idempotency_key(admitted, attempt)
 
     restored_contract = PersistentDeduplicatedReinvocationContract.from_json_bytes(
-        contract.canonical_bytes()
+        admitted.contract.canonical_bytes()
+    )
+    restored_admitted = AdmittedPersistentDeduplicationContract.from_json_bytes(
+        admitted.canonical_bytes()
     )
     restored_key = CapabilityIdempotencyKey.from_json_bytes(key.canonical_bytes())
 
-    assert restored_contract == contract
-    assert restored_contract.identity == contract.identity
+    assert restored_contract == admitted.contract
+    assert restored_contract.identity == admitted.contract.identity
+    assert restored_admitted == admitted
+    assert restored_admitted.identity == admitted.identity
     assert restored_key == key
     assert restored_key.identity == key.identity
     assert restored_key.external_token == key.external_token
@@ -287,8 +457,8 @@ def test_public_surface_exposes_first_dispatch_material_not_retry_execution() ->
     build_parameters = inspect.signature(
         build_deduplicated_capability_invocation_request
     ).parameters
-    assert set(derive_parameters) == {"contract", "attempt"}
-    assert set(build_parameters) == {"contract", "attempt"}
+    assert set(derive_parameters) == {"admitted_contract", "attempt"}
+    assert set(build_parameters) == {"admitted_contract", "attempt"}
 
     for parameters in (derive_parameters, build_parameters):
         for forbidden in (
@@ -324,16 +494,20 @@ def test_v1_contract_has_no_finite_window_or_clock_surface() -> None:
         assert forbidden not in fields
 
 
-def test_raw_key_construction_is_not_contract_validation() -> None:
+def test_raw_key_construction_is_not_admission_validation() -> None:
     attempt = _exact_attempt()
+    admitted = _admitted(attempt, label="raw-key")
     forged = CapabilityIdempotencyKey(
-        contract_identity=RecordIdentity("sha256", "d" * 64),
-        attempt_identity=attempt.identity,
-        deduplication_domain_ref=_ref("irr.deduplication_domain", "forged"),
+        admitted_contract_identity=RecordIdentity("sha256", "d" * 64),
+        original_attempt_identity=attempt.identity,
+        deduplication_domain_ref=_ref(
+            "irr.deduplication_domain",
+            "forged",
+        ),
     )
 
-    assert forged.contract_identity != _contract(attempt).identity
+    assert forged.admitted_contract_identity != admitted.identity
     assert forged.external_token != derive_capability_idempotency_key(
-        _contract(attempt),
+        admitted,
         attempt,
     ).external_token
