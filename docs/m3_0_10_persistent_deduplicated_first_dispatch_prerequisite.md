@@ -36,12 +36,14 @@ unknown outcome != automatic retry
 Authorization != retry safety
 ~~~
 
-Therefore M3.0.10 does not permit replay of the same exact CapabilityAttempt and does not
+Therefore M3.0.10 does not permit replay of the same exact CapabilityAttempt and does
+not
 reinterpret M3.4 ALREADY_PRESENT as permission to reinvoke.
 
 A future recovery Attempt will be a new Attempt.
 
-However, a new recovery Attempt must **not independently derive a new idempotency key** if
+However, a new recovery Attempt must **not independently derive a new idempotency
+key** if
 it is intended to deduplicate against the original ambiguous dispatch.
 
 Future recovery semantics must explicitly reference the original key created and
@@ -96,8 +98,9 @@ DeduplicatedCapabilityInvocationRequest
 The request has no SCHEMA, canonical identity, or canonical bytes. It is Host mechanism
 state, not a second lifecycle record.
 
-M3.0.10 does not invoke an Executor. A later Host integration boundary must transport this
-request on the first external dispatch for capabilities that want persistent deduplication
+M3.0.10 does not invoke an Executor. A later Host integration boundary must transport
+this request on the first external dispatch for capabilities that want persistent
+deduplication
 recovery semantics.
 
 ## Persistent guarantee only
@@ -258,7 +261,8 @@ different dedup domain
 
 The second statement does **not** define future recovery behavior.
 
-A future recovery Attempt must not derive a fresh key merely because it is a new Attempt.
+A future recovery Attempt must not derive a fresh key merely because it is a new
+Attempt.
 It must explicitly inherit the original key through a future recovery-lineage contract.
 
 ## M3.4 remains frozen
