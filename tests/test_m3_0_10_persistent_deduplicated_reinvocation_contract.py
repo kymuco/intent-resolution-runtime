@@ -7,16 +7,10 @@ import pytest
 
 import intent_resolution_runtime.persistent_deduplicated_reinvocation as dedup_module
 from intent_resolution_runtime import (
-    CapabilityExecutionBoundary,
-    CapabilityExecutionBoundaryKind,
-    RecordIdentity,
-    SerializationError,
-    StableRef,
-    ValidationError,
-)
-from intent_resolution_runtime.persistent_deduplicated_reinvocation import (
     AdmittedPersistentDeduplicationContract,
     CandidatePersistentDeduplicationContract,
+    CapabilityExecutionBoundary,
+    CapabilityExecutionBoundaryKind,
     CapabilityIdempotencyKey,
     DeduplicatedCapabilityInvocationRequest,
     DeduplicatedReinvocationContractError,
@@ -24,6 +18,10 @@ from intent_resolution_runtime.persistent_deduplicated_reinvocation import (
     PersistentDeduplicationContractAdmissionAttribution,
     PersistentDeduplicationContractAttribution,
     PersistentDeduplicationContractProposalAttribution,
+    RecordIdentity,
+    SerializationError,
+    StableRef,
+    ValidationError,
     build_deduplicated_capability_invocation_request,
     derive_capability_idempotency_key,
 )
