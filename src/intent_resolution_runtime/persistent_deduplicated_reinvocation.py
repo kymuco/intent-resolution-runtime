@@ -141,8 +141,9 @@ class PersistentDeduplicatedReinvocationContract(_CanonicalDeduplicationRecord):
     """Declared persistent exact-key deduplication guarantee for one capability contract.
 
     This record is not retry authority and does not verify the external system. It states
-    that the same exact invocation, submitted repeatedly to the same deduplication domain
-    with the same derived key, is externally deduplicated to at most one target effect.
+    that submissions inside the same deduplication domain carrying one exact idempotency
+    key are externally deduplicated to at most one protected target effect. Incompatible
+    reuse of that key must not create a second protected target effect.
     """
 
     SCHEMA: ClassVar[str] = (
@@ -274,7 +275,7 @@ class PersistentDeduplicatedReinvocationContract(_CanonicalDeduplicationRecord):
 
 @dataclass(frozen=True, slots=True)
 class CapabilityIdempotencyKey(_CanonicalDeduplicationRecord):
-    """Stable exact-key material for one Attempt under one persistent contract."""
+    """Stable key derived for one original source Attempt under one persistent contract."""
 
     SCHEMA: ClassVar[str] = "irr.capability_idempotency_key.v1"
 
@@ -358,6 +359,43 @@ class CapabilityIdempotencyKey(_CanonicalDeduplicationRecord):
         return cls.from_primitive(parse_json_object(data))
 
 
+@dataclass(frozen=True, slots=True)
+class DeduplicatedCapabilityInvocationRequest:
+    """Mechanism state that carries the original Attempt and exact deduplication key.
+
+    This request is deliberately not canonical IR and grants no retry authority. Its
+    purpose is to make the persistent key available on the first external dispatch so a
+    future recovery path can prove which key protected that original effort.
+    """
+
+    attempt: CapabilityAttempt
+    contract: PersistentDeduplicatedReinvocationContract
+    idempotency_key: CapabilityIdempotencyKey
+
+    def __post_init__(self) -> None:
+        if type(self.attempt) is not CapabilityAttempt:
+            raise ValidationError(
+                "DeduplicatedCapabilityInvocationRequest.attempt "
+                "must be a CapabilityAttempt"
+            )
+        if type(self.contract) is not PersistentDeduplicatedReinvocationContract:
+            raise ValidationError(
+                "DeduplicatedCapabilityInvocationRequest.contract must be a "
+                "PersistentDeduplicatedReinvocationContract"
+            )
+        if type(self.idempotency_key) is not CapabilityIdempotencyKey:
+            raise ValidationError(
+                "DeduplicatedCapabilityInvocationRequest.idempotency_key "
+                "must be a CapabilityIdempotencyKey"
+            )
+        expected = derive_capability_idempotency_key(self.contract, self.attempt)
+        if self.idempotency_key != expected:
+            raise DeduplicatedReinvocationContractError(
+                "deduplicated invocation request must carry the exact key derived "
+                "from its original Attempt and persistent contract"
+            )
+
+
 def derive_capability_idempotency_key(
     contract: PersistentDeduplicatedReinvocationContract,
     attempt: CapabilityAttempt,
@@ -428,10 +466,26 @@ def derive_capability_idempotency_key(
     )
 
 
+def build_deduplicated_capability_invocation_request(
+    contract: PersistentDeduplicatedReinvocationContract,
+    attempt: CapabilityAttempt,
+) -> DeduplicatedCapabilityInvocationRequest:
+    """Build first-dispatch mechanism state carrying the exact persistent key."""
+
+    key = derive_capability_idempotency_key(contract, attempt)
+    return DeduplicatedCapabilityInvocationRequest(
+        attempt=attempt,
+        contract=contract,
+        idempotency_key=key,
+    )
+
+
 __all__ = (
     "CapabilityIdempotencyKey",
+    "DeduplicatedCapabilityInvocationRequest",
     "DeduplicatedReinvocationContractError",
     "PersistentDeduplicatedReinvocationContract",
     "PersistentDeduplicationContractAttribution",
+    "build_deduplicated_capability_invocation_request",
     "derive_capability_idempotency_key",
 )
