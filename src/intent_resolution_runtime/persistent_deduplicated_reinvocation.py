@@ -75,7 +75,9 @@ class _CanonicalDeduplicationRecord:
 
 @dataclass(frozen=True, slots=True)
 class PersistentDeduplicationContractAttribution(_CanonicalDeduplicationRecord):
-    """Supplier attribution for one declared persistent external deduplication contract."""
+    """Supplier attribution for one declared persistent external deduplication
+    contract."""
+
 
     SCHEMA: ClassVar[str] = (
         "irr.persistent_deduplication_contract_attribution.v1"
@@ -146,7 +148,8 @@ class PersistentDeduplicationContractAttribution(_CanonicalDeduplicationRecord):
 class PersistentDeduplicatedReinvocationContract(_CanonicalDeduplicationRecord):
     """Declared persistent exact-key suppression guarantee for one capability contract.
 
-    This record is not retry authority and does not verify the external system. It states
+    This record is not retry authority and does not verify the external system.
+    It states
     that submissions inside the same deduplication domain carrying one exact idempotency
     key are externally deduplicated to at most one protected target effect. Incompatible
     reuse of that key must not create a second protected target effect.
@@ -340,6 +343,13 @@ class PersistentDeduplicationContractProposalAttribution(
         except ValidationError as exc:
             raise SerializationError(f"invalid {field}") from exc
 
+    @classmethod
+    def from_json_bytes(
+        cls,
+        data: bytes | bytearray | memoryview,
+    ) -> PersistentDeduplicationContractProposalAttribution:
+        return cls.from_primitive(parse_json_object(data))
+
 
 @dataclass(frozen=True, slots=True)
 class CandidatePersistentDeduplicationContract(_CanonicalDeduplicationRecord):
@@ -352,7 +362,10 @@ class CandidatePersistentDeduplicationContract(_CanonicalDeduplicationRecord):
     rationale: str
 
     def __post_init__(self) -> None:
-        if type(self.attribution) is not PersistentDeduplicationContractProposalAttribution:
+        if (
+            type(self.attribution)
+            is not PersistentDeduplicationContractProposalAttribution
+        ):
             raise ValidationError(
                 "CandidatePersistentDeduplicationContract.attribution must be "
                 "PersistentDeduplicationContractProposalAttribution"
@@ -362,7 +375,10 @@ class CandidatePersistentDeduplicationContract(_CanonicalDeduplicationRecord):
                 "CandidatePersistentDeduplicationContract.contract must be "
                 "PersistentDeduplicatedReinvocationContract"
             )
-        if self.attribution.proposal_event_ref == self.contract.attribution.contract_event_ref:
+        if (
+            self.attribution.proposal_event_ref
+            == self.contract.attribution.contract_event_ref
+        ):
             raise ValidationError(
                 "persistent deduplication proposal occurrence must differ from "
                 "the downstream contract occurrence"
@@ -414,6 +430,13 @@ class CandidatePersistentDeduplicationContract(_CanonicalDeduplicationRecord):
         except ValidationError as exc:
             raise SerializationError(f"invalid {field}") from exc
 
+    @classmethod
+    def from_json_bytes(
+        cls,
+        data: bytes | bytearray | memoryview,
+    ) -> CandidatePersistentDeduplicationContract:
+        return cls.from_primitive(parse_json_object(data))
+
 
 def _normalize_candidates(
     value: object,
@@ -422,7 +445,9 @@ def _normalize_candidates(
 ) -> tuple[CandidatePersistentDeduplicationContract, ...]:
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
-    if not all(type(item) is CandidatePersistentDeduplicationContract for item in value):
+    if not all(
+        type(item) is CandidatePersistentDeduplicationContract for item in value
+    ):
         raise ValidationError(
             f"{field} must contain CandidatePersistentDeduplicationContract values"
         )
@@ -493,6 +518,13 @@ class PersistentDeduplicationContractAdmissionAttribution(
             )
         except ValidationError as exc:
             raise SerializationError(f"invalid {field}") from exc
+
+    @classmethod
+    def from_json_bytes(
+        cls,
+        data: bytes | bytearray | memoryview,
+    ) -> PersistentDeduplicationContractAdmissionAttribution:
+        return cls.from_primitive(parse_json_object(data))
 
 
 @dataclass(frozen=True, slots=True)
@@ -640,7 +672,9 @@ class CapabilityIdempotencyKey(_CanonicalDeduplicationRecord):
 
     def to_primitive(self) -> dict[str, object]:
         return {
-            "admitted_contract_identity": self.admitted_contract_identity.to_primitive(),
+            "admitted_contract_identity": (
+                self.admitted_contract_identity.to_primitive()
+            ),
             "deduplication_domain_ref": self.deduplication_domain_ref.to_primitive(),
             "original_attempt_identity": self.original_attempt_identity.to_primitive(),
             "schema": self.SCHEMA,
@@ -701,14 +735,19 @@ def _validate_admitted_contract_for_attempt(
     contract = admitted_contract.contract
     match = evaluate_capability_match_evaluation(attempt.capability_evaluation)
     if type(match) is not CapabilityMatch:
-        raise AssertionError("validated CapabilityAttempt lost its exact CapabilityMatch")
+        raise AssertionError(
+            "validated CapabilityAttempt lost its exact CapabilityMatch"
+        )
 
     if contract.catalog_snapshot_identity != match.catalog_snapshot.identity:
         raise DeduplicatedReinvocationContractError(
             "persistent deduplication contract catalog snapshot does not match "
             "the exact CapabilityAttempt"
         )
-    if contract.attribution.supplier_ref != match.catalog_snapshot.attribution.supplier_ref:
+    if (
+        contract.attribution.supplier_ref
+        != match.catalog_snapshot.attribution.supplier_ref
+    ):
         raise DeduplicatedReinvocationContractError(
             "persistent deduplication contract supplier does not match "
             "the exact Capability Catalog supplier"
