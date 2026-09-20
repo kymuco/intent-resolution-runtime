@@ -15,9 +15,11 @@ from intent_resolution_runtime import (
 )
 from intent_resolution_runtime.persistent_deduplicated_reinvocation import (
     CapabilityIdempotencyKey,
+    DeduplicatedCapabilityInvocationRequest,
     DeduplicatedReinvocationContractError,
     PersistentDeduplicatedReinvocationContract,
     PersistentDeduplicationContractAttribution,
+    build_deduplicated_capability_invocation_request,
     derive_capability_idempotency_key,
 )
 from tests.test_m3_4_executor_capability_invocation_port import (
@@ -80,7 +82,7 @@ def test_exact_contract_and_attempt_derive_stable_key() -> None:
     assert len(first.external_token) == 64
 
 
-def test_distinct_attempt_occurrence_gets_distinct_key() -> None:
+def test_distinct_fresh_attempt_occurrence_derives_distinct_key() -> None:
     first_attempt = _exact_attempt(event="attempt-dedup-first")
     second_attempt = _exact_attempt(event="attempt-dedup-second")
     contract = _contract(first_attempt)
@@ -93,6 +95,54 @@ def test_distinct_attempt_occurrence_gets_distinct_key() -> None:
 
     assert first_key != second_key
     assert first_key.external_token != second_key.external_token
+
+
+def test_first_dispatch_request_carries_exact_original_key() -> None:
+    attempt = _exact_attempt()
+    contract = _contract(attempt)
+
+    request = build_deduplicated_capability_invocation_request(contract, attempt)
+
+    assert request.__class__ is DeduplicatedCapabilityInvocationRequest
+    assert request.attempt == attempt
+    assert request.contract == contract
+    assert request.idempotency_key == derive_capability_idempotency_key(
+        contract,
+        attempt,
+    )
+    assert request.idempotency_key.attempt_identity == attempt.identity
+
+
+def test_first_dispatch_request_rejects_forged_key() -> None:
+    attempt = _exact_attempt()
+    contract = _contract(attempt)
+    forged = CapabilityIdempotencyKey(
+        contract_identity=contract.identity,
+        attempt_identity=RecordIdentity("sha256", "d" * 64),
+        deduplication_domain_ref=contract.deduplication_domain_ref,
+    )
+
+    with pytest.raises(
+        DeduplicatedReinvocationContractError,
+        match="must carry the exact key derived",
+    ):
+        DeduplicatedCapabilityInvocationRequest(
+            attempt=attempt,
+            contract=contract,
+            idempotency_key=forged,
+        )
+
+
+def test_deduplicated_invocation_request_is_mechanism_state_not_canonical_ir() -> None:
+    attempt = _exact_attempt()
+    request = build_deduplicated_capability_invocation_request(
+        _contract(attempt),
+        attempt,
+    )
+
+    assert not hasattr(request, "SCHEMA")
+    assert not hasattr(request, "identity")
+    assert not hasattr(request, "canonical_bytes")
 
 
 def test_contract_identity_change_changes_key() -> None:
@@ -230,21 +280,29 @@ def test_serialized_contract_cannot_change_schema_or_lineage_shape() -> None:
         PersistentDeduplicatedReinvocationContract.from_primitive(primitive)
 
 
-def test_public_surface_exposes_key_derivation_not_retry_execution() -> None:
-    parameters = inspect.signature(derive_capability_idempotency_key).parameters
-    assert set(parameters) == {"contract", "attempt"}
+def test_public_surface_exposes_first_dispatch_material_not_retry_execution() -> None:
+    derive_parameters = inspect.signature(
+        derive_capability_idempotency_key
+    ).parameters
+    build_parameters = inspect.signature(
+        build_deduplicated_capability_invocation_request
+    ).parameters
+    assert set(derive_parameters) == {"contract", "attempt"}
+    assert set(build_parameters) == {"contract", "attempt"}
 
-    for forbidden in (
-        "retry",
-        "reinvoke",
-        "resend",
-        "executor",
-        "outcome",
-        "authorization",
-        "governance",
-        "continuation",
-    ):
-        assert forbidden not in parameters
+    for parameters in (derive_parameters, build_parameters):
+        for forbidden in (
+            "retry",
+            "recovery_attempt",
+            "reinvoke",
+            "resend",
+            "executor",
+            "outcome",
+            "authorization",
+            "governance",
+            "continuation",
+        ):
+            assert forbidden not in parameters
 
     assert not hasattr(dedup_module, "retry_capability")
     assert not hasattr(dedup_module, "reinvoke_capability")
