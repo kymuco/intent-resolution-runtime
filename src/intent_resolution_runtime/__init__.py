@@ -227,9 +227,11 @@ from .outcome import (
 )
 from .persistent_deduplicated_reinvocation import (
     CapabilityIdempotencyKey,
+    DeduplicatedCapabilityInvocationRequest,
     DeduplicatedReinvocationContractError,
     PersistentDeduplicatedReinvocationContract,
     PersistentDeduplicationContractAttribution,
+    build_deduplicated_capability_invocation_request,
     derive_capability_idempotency_key,
 )
 from .resolution import (
@@ -541,6 +543,7 @@ __all__ = [
     "ContinuationInputAttribution",
     "ContinuationSource",
     "ContinuationSourceKind",
+    "DeduplicatedCapabilityInvocationRequest",
     "DeduplicatedReinvocationContractError",
     "DelegatedCapabilityAllowance",
     "DelegatedContextReference",
@@ -652,6 +655,7 @@ __all__ = [
     "build_capability_invocation_request",
     "build_capability_match_evaluation",
     "build_cognitive_provider_request",
+    "build_deduplicated_capability_invocation_request",
     "build_governance_review_request",
     "build_worker_handoff_request",
     "derive_capability_idempotency_key",
