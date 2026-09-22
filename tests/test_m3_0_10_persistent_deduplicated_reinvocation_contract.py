@@ -122,10 +122,7 @@ def test_exact_admitted_contract_and_attempt_derive_stable_key() -> None:
     assert first.identity == second.identity
     assert first.admitted_contract_identity == admitted.identity
     assert first.original_attempt_identity == attempt.identity
-    assert (
-        first.deduplication_domain_ref
-        == admitted.contract.deduplication_domain_ref
-    )
+    assert first.deduplication_domain_ref == admitted.contract.deduplication_domain_ref
     assert first.external_token == first.identity.digest
     assert len(first.external_token) == 64
 
@@ -449,9 +446,7 @@ def test_serialized_contract_cannot_change_schema_or_lineage_shape() -> None:
 
 
 def test_public_surface_exposes_first_dispatch_material_not_retry_execution() -> None:
-    derive_parameters = inspect.signature(
-        derive_capability_idempotency_key
-    ).parameters
+    derive_parameters = inspect.signature(derive_capability_idempotency_key).parameters
     build_parameters = inspect.signature(
         build_deduplicated_capability_invocation_request
     ).parameters
@@ -505,7 +500,10 @@ def test_raw_key_construction_is_not_admission_validation() -> None:
     )
 
     assert forged.admitted_contract_identity != admitted.identity
-    assert forged.external_token != derive_capability_idempotency_key(
-        admitted,
-        attempt,
-    ).external_token
+    assert (
+        forged.external_token
+        != derive_capability_idempotency_key(
+            admitted,
+            attempt,
+        ).external_token
+    )
