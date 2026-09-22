@@ -191,7 +191,7 @@ def _lineage(original, recovery, *, label: str):
     return binding, lineage
 
 
-def test_original_binding_requires_exact_m3_0_10_first_dispatch_request() -> None:
+def test_binding_builder_rejects_ordinary_m3_4_request() -> None:
     original = _exact_attempt()
     ordinary_request = build_capability_invocation_request(original)
     attribution = OriginalDeduplicatedDispatchBindingAttribution(
