@@ -46,9 +46,7 @@ def _expect_exact_keys(
             detail.append(f"missing={missing}")
         if extra:
             detail.append(f"extra={extra}")
-        raise SerializationError(
-            f"{field} has invalid fields ({', '.join(detail)})"
-        )
+        raise SerializationError(f"{field} has invalid fields ({', '.join(detail)})")
 
 
 def _require_text(value: object, *, field: str) -> str:
@@ -79,9 +77,7 @@ class PersistentDeduplicationContractAttribution(_CanonicalDeduplicationRecord):
     contract."""
 
 
-    SCHEMA: ClassVar[str] = (
-        "irr.persistent_deduplication_contract_attribution.v1"
-    )
+    SCHEMA: ClassVar[str] = "irr.persistent_deduplication_contract_attribution.v1"
 
     supplier_ref: StableRef
     contract_event_ref: StableRef
@@ -119,9 +115,7 @@ class PersistentDeduplicationContractAttribution(_CanonicalDeduplicationRecord):
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
                 supplier_ref=StableRef.from_primitive(
@@ -155,9 +149,7 @@ class PersistentDeduplicatedReinvocationContract(_CanonicalDeduplicationRecord):
     reuse of that key must not create a second protected target effect.
     """
 
-    SCHEMA: ClassVar[str] = (
-        "irr.persistent_deduplicated_reinvocation_contract.v1"
-    )
+    SCHEMA: ClassVar[str] = "irr.persistent_deduplicated_reinvocation_contract.v1"
 
     attribution: PersistentDeduplicationContractAttribution
     catalog_snapshot_identity: RecordIdentity
@@ -240,9 +232,7 @@ class PersistentDeduplicatedReinvocationContract(_CanonicalDeduplicationRecord):
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
                 attribution=PersistentDeduplicationContractAttribution.from_primitive(
@@ -283,9 +273,7 @@ class PersistentDeduplicatedReinvocationContract(_CanonicalDeduplicationRecord):
 
 
 @dataclass(frozen=True, slots=True)
-class PersistentDeduplicationContractProposalAttribution(
-    _CanonicalDeduplicationRecord
-):
+class PersistentDeduplicationContractProposalAttribution(_CanonicalDeduplicationRecord):
     SCHEMA: ClassVar[str] = (
         "irr.persistent_deduplication_contract_proposal_attribution.v1"
     )
@@ -326,9 +314,7 @@ class PersistentDeduplicationContractProposalAttribution(
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
                 proposer_ref=StableRef.from_primitive(
@@ -410,9 +396,7 @@ class CandidatePersistentDeduplicationContract(_CanonicalDeduplicationRecord):
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
                 attribution=(
@@ -502,9 +486,7 @@ class PersistentDeduplicationContractAdmissionAttribution(
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
                 resolver_ref=StableRef.from_primitive(
@@ -600,9 +582,7 @@ class AdmittedPersistentDeduplicationContract(_CanonicalDeduplicationRecord):
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         candidates = _expect_array(
             obj["candidate_inputs"],
             field=f"{field}.candidate_inputs",
@@ -699,9 +679,7 @@ class CapabilityIdempotencyKey(_CanonicalDeduplicationRecord):
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
                 admitted_contract_identity=RecordIdentity.from_primitive(
