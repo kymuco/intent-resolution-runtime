@@ -439,6 +439,18 @@ def _normalize_candidates(
     identities = [item.identity for item in items]
     if len(set(identities)) != len(identities):
         raise ValidationError(f"{field} must not contain duplicate candidates")
+
+    contract_event_identities: dict[StableRef, RecordIdentity] = {}
+    for item in items:
+        event_ref = item.contract.attribution.contract_event_ref
+        prior_identity = contract_event_identities.get(event_ref)
+        if prior_identity is not None and prior_identity != item.contract.identity:
+            raise ValidationError(
+                f"{field} assigns one downstream contract occurrence to "
+                "multiple contract identities"
+            )
+        contract_event_identities[event_ref] = item.contract.identity
+
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
