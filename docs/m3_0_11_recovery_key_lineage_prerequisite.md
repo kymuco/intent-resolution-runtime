@@ -69,7 +69,12 @@ M3.0.11 therefore introduces:
 OriginalDeduplicatedDispatchBinding
 ~~~
 
-built only from one exact M3.0.10 `DeduplicatedCapabilityInvocationRequest`.
+The public builder accepts only one exact M3.0.10
+`DeduplicatedCapabilityInvocationRequest`. Like other canonical IR records, however,
+the binding dataclass itself remains directly constructible when all invariants hold.
+
+Therefore the record proves an exact Attempt/contract/key relation, not that the
+M3.0.10 mechanism request historically existed before dispatch.
 
 The binding canonically contains:
 
@@ -85,8 +90,11 @@ ordinary CapabilityInvocationRequest
 != key-protected first-dispatch binding
 ~~~
 
-Historical ordinary M3.4 requests cannot be retroactively promoted into deduplicated
-first-dispatch state.
+An ordinary M3.4 request cannot be passed through the M3.0.11 binding builder as
+deduplicated first-dispatch mechanism state.
+
+This does **not** by itself prevent later direct construction of the same canonical
+relation. Preventing retroactive promotion is a temporal/durable Host responsibility.
 
 ## Binding is not proof of external dispatch
 
@@ -110,8 +118,15 @@ It does **not** prove:
 
 Those are Host/runtime evidence questions.
 
-A later HDE integration boundary must bind this IRR record to durable dispatch evidence
+A later HDE integration boundary must durably record or otherwise authenticate the exact
+binding as part of the pre-dispatch path, then bind it to durable dispatch evidence,
 before any recovery execution can become eligible.
+
+~~~text
+canonical binding != proof of pre-dispatch existence
+builder input restriction != temporal proof
+durable pre-dispatch Host record = required future evidence
+~~~
 
 ## Recovery Attempt
 
@@ -309,8 +324,8 @@ The mechanism request is deliberately not canonical lifecycle IR.
 
 ## PASS
 
-1. ordinary M3.4 CapabilityInvocationRequest cannot create a first-dispatch binding;
-2. exact M3.0.10 deduplicated request creates one canonical binding;
+1. the public binding builder rejects ordinary M3.4 CapabilityInvocationRequest;
+2. exact M3.0.10 deduplicated request builds one canonical relation;
 3. binding preserves exact original Attempt/admitted contract/key;
 4. binding occurrence cannot alias protected predecessor occurrences;
 5. recovery Attempt must have a new identity;
@@ -332,8 +347,9 @@ The mechanism request is deliberately not canonical lifecycle IR.
 
 ## FAIL
 
-- historical ordinary M3.4 dispatch is treated as key-protected;
-- original key is re-derived after the fact without a first-dispatch binding;
+- public builder accepts an ordinary M3.4 request as deduplicated mechanism state;
+- canonical binding is treated as proof it existed before dispatch;
+- Host recovery proceeds without durable pre-dispatch evidence for the binding;
 - same CapabilityAttempt occurrence is reused as recovery;
 - recovery changes target scope or requested effect;
 - recovery changes concrete bound inputs;
