@@ -7,7 +7,7 @@ from typing import Any, ClassVar
 
 from .attempt import CapabilityAttempt
 from .canonical import canonical_json_bytes, parse_json_object
-from .errors import IntentIRError, SerializationError, ValidationError
+from .errors import SerializationError, ValidationError
 from .identity import RecordIdentity, identity_for_bytes
 from .intent import StableRef
 from .persistent_deduplicated_reinvocation import (
@@ -18,7 +18,7 @@ from .persistent_deduplicated_reinvocation import (
 )
 
 
-class RecoveryKeyLineageError(IntentIRError):
+class RecoveryKeyLineageError(ValidationError):
     """Raised when recovery cannot inherit one exact original deduplication key."""
 
 
