@@ -215,7 +215,10 @@ The lineage occurrence must differ from:
 
 - original binding occurrence;
 - original Attempt occurrence;
-- recovery Attempt occurrence.
+- recovery Attempt occurrence;
+- admitted dedup-contract admission occurrence;
+- selected and candidate downstream-contract occurrences;
+- candidate proposal occurrences.
 
 ## Recovery invocation mechanism state
 
@@ -249,7 +252,8 @@ dispatch committed
 + no durable Outcome
 ~~~
 
-M3.4 intentionally treats missing Outcome after dispatch as a mechanism/runtime ambiguity,
+M3.4 intentionally treats missing Outcome after dispatch as a mechanism/runtime
+ambiguity,
 not as a synthetic CapabilityOutcome.
 
 Therefore M3.0.11 does not accept or manufacture:
@@ -343,7 +347,8 @@ The mechanism request is deliberately not canonical lifecycle IR.
 ## EXIT
 
 M3.0.11 is complete when IRR can canonically anchor one exact M3.0.10 key-protected
-first-dispatch request and link one new same-concrete-use recovery Attempt to the original
+first-dispatch request and link one new same-concrete-use recovery Attempt to the
+original
 idempotency key, while stopping before any external reinvocation.
 
 The next Host/HDE milestone may combine this lineage with durable dispatch ambiguity,
