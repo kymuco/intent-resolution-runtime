@@ -219,17 +219,21 @@ class OriginalDeduplicatedDispatchBinding(_CanonicalRecoveryKeyRecord):
             raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         try:
             return cls(
-                attribution=OriginalDeduplicatedDispatchBindingAttribution.from_primitive(
-                    obj["attribution"],
-                    field=f"{field}.attribution",
+                attribution=(
+                    OriginalDeduplicatedDispatchBindingAttribution.from_primitive(
+                        obj["attribution"],
+                        field=f"{field}.attribution",
+                    )
                 ),
                 original_attempt=CapabilityAttempt.from_primitive(
                     obj["original_attempt"],
                     field=f"{field}.original_attempt",
                 ),
-                admitted_contract=AdmittedPersistentDeduplicationContract.from_primitive(
-                    obj["admitted_contract"],
-                    field=f"{field}.admitted_contract",
+                admitted_contract=(
+                    AdmittedPersistentDeduplicationContract.from_primitive(
+                        obj["admitted_contract"],
+                        field=f"{field}.admitted_contract",
+                    )
                 ),
                 idempotency_key=CapabilityIdempotencyKey.from_primitive(
                     obj["idempotency_key"],
@@ -441,10 +445,21 @@ class RecoveryKeyLineage(_CanonicalRecoveryKeyRecord):
         original = self.original_dispatch_binding.original_attempt
         _validate_same_concrete_use(original, self.recovery_attempt)
 
+        admitted = self.original_dispatch_binding.admitted_contract
         protected_events = {
             self.original_dispatch_binding.attribution.binding_event_ref,
             original.attribution.attempt_event_ref,
             self.recovery_attempt.attribution.attempt_event_ref,
+            admitted.admission_attribution.admission_event_ref,
+            admitted.contract.attribution.contract_event_ref,
+            *(
+                candidate.attribution.proposal_event_ref
+                for candidate in admitted.candidate_inputs
+            ),
+            *(
+                candidate.contract.attribution.contract_event_ref
+                for candidate in admitted.candidate_inputs
+            ),
         }
         if self.attribution.lineage_event_ref in protected_events:
             raise ValidationError(
@@ -573,14 +588,16 @@ class DeduplicatedRecoveryInvocationRequest:
             )
         if self.recovery_attempt != self.recovery_key_lineage.recovery_attempt:
             raise RecoveryKeyLineageError(
-                "recovery invocation request must carry the exact lineage recovery Attempt"
+                "recovery invocation request must carry the exact lineage "
+                "recovery Attempt"
             )
         if (
             self.idempotency_key
             != self.recovery_key_lineage.inherited_idempotency_key
         ):
             raise RecoveryKeyLineageError(
-                "recovery invocation request must carry the exact inherited original key"
+                "recovery invocation request must carry the exact inherited "
+                "original key"
             )
 
 
