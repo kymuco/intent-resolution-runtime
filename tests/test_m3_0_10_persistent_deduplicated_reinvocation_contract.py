@@ -192,6 +192,39 @@ def test_admission_must_equal_one_exact_proposed_contract() -> None:
         )
 
 
+def test_admission_rejects_candidate_for_foreign_capability_target() -> None:
+    attempt = _exact_attempt()
+    selected_contract = _contract(attempt, event="contract-selected")
+    selected_candidate = _candidate(selected_contract, label="selected")
+
+    foreign_contract = replace(
+        _contract(attempt, event="contract-foreign-target"),
+        capability_ref=_ref("irr.capability", "foreign-capability"),
+    )
+    foreign_candidate = _candidate(foreign_contract, label="foreign-target")
+
+    with pytest.raises(
+        ValidationError,
+        match="foreign capability target",
+    ):
+        AdmittedPersistentDeduplicationContract(
+            admission_attribution=(
+                PersistentDeduplicationContractAdmissionAttribution(
+                    resolver_ref=_ref(
+                        "irr.deduplication_contract_admitter",
+                        "test-host",
+                    ),
+                    admission_event_ref=_ref(
+                        "irr.event",
+                        "admission-mixed-target",
+                    ),
+                )
+            ),
+            contract=selected_contract,
+            candidate_inputs=(selected_candidate, foreign_candidate),
+        )
+
+
 def test_contract_proposal_and_admission_occurrences_cannot_alias() -> None:
     attempt = _exact_attempt()
     contract = _contract(attempt, event="contract-occurrence")
@@ -229,6 +262,44 @@ def test_contract_proposal_and_admission_occurrences_cannot_alias() -> None:
             ),
             contract=contract,
             candidate_inputs=(candidate,),
+        )
+
+
+def test_admission_occurrence_cannot_alias_unselected_contract_occurrence() -> None:
+    attempt = _exact_attempt()
+    selected_contract = _contract(attempt, event="contract-selected-occurrence")
+    selected_candidate = _candidate(selected_contract, label="selected-occurrence")
+    aliased_event = _ref("irr.event", "admission-contract-alias")
+    other_contract = _contract(attempt, event=aliased_event.value)
+    other_contract = replace(
+        other_contract,
+        attribution=replace(
+            other_contract.attribution,
+            contract_event_ref=aliased_event,
+        ),
+        deduplication_domain_ref=_ref(
+            "irr.deduplication_domain",
+            "other-domain",
+        ),
+    )
+    other_candidate = _candidate(other_contract, label="other-occurrence")
+
+    with pytest.raises(
+        ValidationError,
+        match="admission occurrence must differ",
+    ):
+        AdmittedPersistentDeduplicationContract(
+            admission_attribution=(
+                PersistentDeduplicationContractAdmissionAttribution(
+                    resolver_ref=_ref(
+                        "irr.deduplication_contract_admitter",
+                        "test-host",
+                    ),
+                    admission_event_ref=aliased_event,
+                )
+            ),
+            contract=selected_contract,
+            candidate_inputs=(selected_candidate, other_candidate),
         )
 
 
