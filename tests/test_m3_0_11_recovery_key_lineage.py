@@ -15,7 +15,6 @@ from intent_resolution_runtime import (
     RecoveryKeyLineage,
     RecoveryKeyLineageAttribution,
     RecoveryKeyLineageError,
-    StableRef,
     ValidationError,
     build_capability_invocation_request,
     build_deduplicated_capability_invocation_request,
@@ -30,6 +29,8 @@ from tests.test_m3_0_10_persistent_deduplicated_reinvocation_contract import (
 )
 from tests.test_m3_4_executor_capability_invocation_port import (
     _attempt as _m34_attempt,
+)
+from tests.test_m3_4_executor_capability_invocation_port import (
     _executor_boundary,
 )
 
@@ -270,10 +271,7 @@ def test_recovery_lineage_inherits_exact_original_key_for_new_attempt() -> None:
         lineage.inherited_idempotency_key.external_token
         == binding.idempotency_key.external_token
     )
-    assert (
-        lineage.inherited_idempotency_key.original_attempt_identity
-        == original.identity
-    )
+    assert lineage.inherited_idempotency_key.original_attempt_identity == original.identity
 
 
 def test_same_exact_attempt_cannot_be_used_as_recovery_attempt() -> None:
@@ -304,10 +302,7 @@ def test_recovery_attempt_must_have_new_attempt_occurrence() -> None:
         description="Different identity but deliberately reused occurrence.",
     )
     assert recovery.identity != original.identity
-    assert (
-        recovery.attribution.attempt_event_ref
-        == original.attribution.attempt_event_ref
-    )
+    assert recovery.attribution.attempt_event_ref == original.attribution.attempt_event_ref
 
     _admitted_contract, _request, binding = _binding(
         original,
