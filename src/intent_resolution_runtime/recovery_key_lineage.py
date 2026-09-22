@@ -332,6 +332,18 @@ class RecoveryKeyLineageAttribution(_CanonicalRecoveryKeyRecord):
         return cls.from_primitive(parse_json_object(data))
 
 
+def _without_descriptions(value: object) -> object:
+    if isinstance(value, dict):
+        return {
+            key: _without_descriptions(item)
+            for key, item in value.items()
+            if key != "description"
+        }
+    if isinstance(value, list):
+        return [_without_descriptions(item) for item in value]
+    return value
+
+
 def _validate_same_concrete_use(
     original: CapabilityAttempt,
     recovery: CapabilityAttempt,
@@ -347,11 +359,15 @@ def _validate_same_concrete_use(
         raise RecoveryKeyLineageError(
             "recovery Attempt must use a distinct attempt occurrence"
         )
-    if original.capability_evaluation.requirement != (
-        recovery.capability_evaluation.requirement
-    ):
+    original_requirement = _without_descriptions(
+        original.capability_evaluation.requirement.to_primitive()
+    )
+    recovery_requirement = _without_descriptions(
+        recovery.capability_evaluation.requirement.to_primitive()
+    )
+    if original_requirement != recovery_requirement:
         raise RecoveryKeyLineageError(
-            "recovery Attempt must preserve the exact CapabilityRequirement"
+            "recovery Attempt must preserve the exact semantic CapabilityRequirement"
         )
     if original.step_ref != recovery.step_ref:
         raise RecoveryKeyLineageError(
