@@ -347,23 +347,41 @@ def test_admitted_contract_lineage_mismatch_fails_closed(
         derive_capability_idempotency_key(admitted, attempt)
 
 
-def test_admitted_contract_supplier_must_match_exact_catalog_supplier() -> None:
+def test_dedup_supplier_is_independent_provenance_and_identity_covered() -> None:
     attempt = _exact_attempt()
-    contract = _contract(attempt)
-    foreign = replace(
-        contract,
+    base = _contract(attempt)
+    external_supplier = replace(
+        base,
         attribution=replace(
-            contract.attribution,
-            supplier_ref=_ref("irr.host", "foreign-supplier"),
+            base.attribution,
+            supplier_ref=_ref("irr.deduplication_supplier", "external-provider"),
         ),
     )
-    admitted = _admit_contract(foreign, label="foreign-supplier")
 
-    with pytest.raises(
-        DeduplicatedReinvocationContractError,
-        match="supplier does not match",
-    ):
-        derive_capability_idempotency_key(admitted, attempt)
+    assert external_supplier.attribution.supplier_ref != (
+        attempt.capability_match.catalog_snapshot.attribution.supplier_ref
+    )
+
+    admitted = _admit_contract(external_supplier, label="external-supplier")
+    key = derive_capability_idempotency_key(admitted, attempt)
+
+    assert key.admitted_contract_identity == admitted.identity
+    assert admitted.contract.attribution.supplier_ref == (
+        external_supplier.attribution.supplier_ref
+    )
+
+    changed_supplier = replace(
+        external_supplier,
+        attribution=replace(
+            external_supplier.attribution,
+            supplier_ref=_ref("irr.deduplication_supplier", "other-provider"),
+        ),
+    )
+    changed_admitted = _admit_contract(changed_supplier, label="changed-supplier")
+    changed_key = derive_capability_idempotency_key(changed_admitted, attempt)
+
+    assert changed_admitted.identity != admitted.identity
+    assert changed_key != key
 
 
 def test_contract_requires_exactly_one_explicit_executor_boundary() -> None:
