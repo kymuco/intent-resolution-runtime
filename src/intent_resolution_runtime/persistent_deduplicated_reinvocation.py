@@ -76,7 +76,6 @@ class PersistentDeduplicationContractAttribution(_CanonicalDeduplicationRecord):
     """Supplier attribution for one declared persistent external deduplication
     contract."""
 
-
     SCHEMA: ClassVar[str] = "irr.persistent_deduplication_contract_attribution.v1"
 
     supplier_ref: StableRef
