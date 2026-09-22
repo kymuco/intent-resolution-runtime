@@ -192,6 +192,50 @@ def test_admission_must_equal_one_exact_proposed_contract() -> None:
         )
 
 
+def test_one_downstream_contract_occurrence_cannot_name_two_contracts() -> None:
+    attempt = _exact_attempt()
+    shared_event = _ref("irr.event", "shared-downstream-contract")
+    first_contract = _contract(attempt, event=shared_event.value)
+    first_contract = replace(
+        first_contract,
+        attribution=replace(
+            first_contract.attribution,
+            contract_event_ref=shared_event,
+        ),
+    )
+    second_contract = replace(
+        first_contract,
+        deduplication_domain_ref=_ref(
+            "irr.deduplication_domain",
+            "second-domain",
+        ),
+    )
+
+    first_candidate = _candidate(first_contract, label="shared-event-first")
+    second_candidate = _candidate(second_contract, label="shared-event-second")
+
+    with pytest.raises(
+        ValidationError,
+        match="one downstream contract occurrence",
+    ):
+        AdmittedPersistentDeduplicationContract(
+            admission_attribution=(
+                PersistentDeduplicationContractAdmissionAttribution(
+                    resolver_ref=_ref(
+                        "irr.deduplication_contract_admitter",
+                        "test-host",
+                    ),
+                    admission_event_ref=_ref(
+                        "irr.event",
+                        "shared-event-admission",
+                    ),
+                )
+            ),
+            contract=first_contract,
+            candidate_inputs=(first_candidate, second_candidate),
+        )
+
+
 def test_admission_rejects_candidate_for_foreign_capability_target() -> None:
     attempt = _exact_attempt()
     selected_contract = _contract(attempt, event="contract-selected")
