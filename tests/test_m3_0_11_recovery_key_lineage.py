@@ -224,7 +224,10 @@ def test_original_binding_canonicalizes_exact_first_dispatch_material() -> None:
     assert restored.identity == binding.identity
 
 
-@pytest.mark.parametrize("event_source", ("attempt", "admission", "contract", "proposal"))
+@pytest.mark.parametrize(
+    "event_source",
+    ("attempt", "admission", "contract", "proposal"),
+)
 def test_original_binding_occurrence_cannot_alias_protected_lineage(
     event_source: str,
 ) -> None:
@@ -457,7 +460,17 @@ def test_forged_inherited_key_is_rejected() -> None:
         )
 
 
-@pytest.mark.parametrize("alias", ("binding", "original", "recovery"))
+@pytest.mark.parametrize(
+    "alias",
+    (
+        "binding",
+        "original",
+        "recovery",
+        "admission",
+        "contract",
+        "proposal",
+    ),
+)
 def test_recovery_lineage_occurrence_cannot_alias_related_occurrences(
     alias: str,
 ) -> None:
@@ -467,10 +480,14 @@ def test_recovery_lineage_occurrence_cannot_alias_related_occurrences(
         original,
         label=f"lineage-alias-{alias}",
     )
+    admitted = binding.admitted_contract
     events = {
         "binding": binding.attribution.binding_event_ref,
         "original": original.attribution.attempt_event_ref,
         "recovery": recovery.attribution.attempt_event_ref,
+        "admission": admitted.admission_attribution.admission_event_ref,
+        "contract": admitted.contract.attribution.contract_event_ref,
+        "proposal": admitted.candidate_inputs[0].attribution.proposal_event_ref,
     }
 
     with pytest.raises(
