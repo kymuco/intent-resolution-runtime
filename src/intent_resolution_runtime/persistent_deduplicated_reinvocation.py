@@ -722,14 +722,6 @@ def _validate_admitted_contract_for_attempt(
             "persistent deduplication contract catalog snapshot does not match "
             "the exact CapabilityAttempt"
         )
-    if (
-        contract.attribution.supplier_ref
-        != match.catalog_snapshot.attribution.supplier_ref
-    ):
-        raise DeduplicatedReinvocationContractError(
-            "persistent deduplication contract supplier does not match "
-            "the exact Capability Catalog supplier"
-        )
     if contract.capability_ref != match.capability_ref:
         raise DeduplicatedReinvocationContractError(
             "persistent deduplication contract capability_ref does not match "
