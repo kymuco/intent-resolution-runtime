@@ -189,7 +189,26 @@ Admission has its own resolver and occurrence.
 
 The admitted contract must equal one exact candidate contract.
 
+All candidates in one admission set must target the same exact capability lineage:
+
+~~~text
+catalog_snapshot_identity
+capability_ref
+capability_contract_identity
+executor_ref
+~~~
+
+Supplier provenance and deduplication_domain_ref may differ across competing candidates;
+those are precisely the kinds of downstream guarantee differences admission may
+adjudicate.
+
+One downstream contract occurrence may not name two different canonical contracts.
+Repeated candidate proposals may reference the same exact downstream contract, but one
+`contract_event_ref` cannot be reused for conflicting contract identities.
+
 Contract occurrence, proposal occurrence, and admission occurrence remain distinct.
+The admission occurrence must differ from every candidate proposal occurrence and every
+candidate downstream-contract occurrence in the admitted provenance set.
 
 Only `AdmittedPersistentDeduplicationContract` may derive an idempotency key.
 
@@ -348,24 +367,26 @@ The request is immutable but deliberately has no canonical identity.
 1. raw downstream contract cannot derive a key;
 2. explicit candidate provenance is required;
 3. admitted contract equals one exact candidate contract;
-4. contract/proposal/admission occurrences are distinct;
-5. catalog snapshot identity matches exact Attempt lineage;
-6. dedup supplier provenance is identity-covered independently from Catalog supplier;
-7. capability_ref matches exact CapabilityMatch;
-8. capability contract identity matches exact CapabilityMatch;
-9. exactly one explicit EXECUTOR boundary is required;
-10. contract executor_ref equals descriptor Executor boundary;
-11. contract executor_ref equals Attempt executor_ref;
-12. same admitted contract + same original Attempt derives one stable key;
-13. different fresh Attempt derives a different independently-derived key;
-14. different admission identity changes the key;
-15. changing dedup supplier provenance changes admitted-contract/key identity;
-16. first-dispatch request carries the exact derived key;
-17. forged key cannot be inserted into first-dispatch request;
-18. request is mechanism state, not canonical IR;
-19. canonical records roundtrip with exact identity;
-20. no TTL/window/clock/retry-count surface exists;
-21. no retry/reinvoke/resend/Executor API is introduced.
+4. all admission candidates target one exact capability/executor lineage;
+5. one downstream contract occurrence cannot name conflicting contract identities;
+6. contract/proposal/admission occurrences are distinct across the full candidate set;
+7. catalog snapshot identity matches exact Attempt lineage;
+8. dedup supplier provenance is identity-covered independently from Catalog supplier;
+9. capability_ref matches exact CapabilityMatch;
+10. capability contract identity matches exact CapabilityMatch;
+11. exactly one explicit EXECUTOR boundary is required;
+12. contract executor_ref equals descriptor Executor boundary;
+13. contract executor_ref equals Attempt executor_ref;
+14. same admitted contract + same original Attempt derives one stable key;
+15. different fresh Attempt derives a different independently-derived key;
+16. different admission identity changes the key;
+17. changing dedup supplier provenance changes admitted-contract/key identity;
+18. first-dispatch request carries the exact derived key;
+19. forged key cannot be inserted into first-dispatch request;
+20. request is mechanism state, not canonical IR;
+21. canonical records roundtrip with exact identity;
+22. no TTL/window/clock/retry-count surface exists;
+23. no retry/reinvoke/resend/Executor API is introduced.
 
 ## FAIL
 
@@ -380,7 +401,10 @@ The request is immutable but deliberately has no canonical identity.
 - new recovery Attempt is told to derive a new key;
 - M3.0.10 reinvokes an Executor;
 - finite dedup window semantics are silently invented;
-- admitted dedup contract is treated as Authorization.
+- admitted dedup contract is treated as Authorization;
+- one admission set mixes foreign capability/executor targets;
+- one downstream contract occurrence is reused for conflicting contract identities;
+- admission occurrence aliases any candidate contract/proposal occurrence.
 
 ## EXIT
 
