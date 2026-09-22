@@ -152,14 +152,24 @@ bound to the exact:
 - capability contract identity;
 - executor_ref;
 - deduplication_domain_ref;
-- downstream supplier attribution.
+- downstream deduplication-contract supplier attribution.
+
+The deduplication-contract supplier is independent provenance. It may be the Catalog
+supplier, Executor/provider operator, adapter owner, or another explicitly identified
+source of the downstream guarantee.
+
+M3.0.10 does not equate those roles merely because they all use StableRef values.
 
 The supplier attribution is provenance, not source verification.
 
 ~~~text
+dedup supplier_ref != Catalog supplier_ref necessarily
 supplier_ref != proof the supplier is truthful
 declared contract != observed external guarantee
 ~~~
+
+Whether that exact supplier/guarantee is trusted is represented by explicit admission,
+not by forced identity equality with the Catalog supplier.
 
 ## Explicit admission
 
@@ -200,8 +210,8 @@ contract.catalog_snapshot_identity
 attempt.capability_match.catalog_snapshot.identity
 
 contract.supplier_ref
-==
-attempt.capability_match.catalog_snapshot.attribution.supplier_ref
+→ identity-covered downstream contract provenance
+→ does not have to equal Catalog supplier_ref
 
 contract.capability_ref
 ==
@@ -340,7 +350,7 @@ The request is immutable but deliberately has no canonical identity.
 3. admitted contract equals one exact candidate contract;
 4. contract/proposal/admission occurrences are distinct;
 5. catalog snapshot identity matches exact Attempt lineage;
-6. supplier matches exact Catalog supplier;
+6. dedup supplier provenance is identity-covered independently from Catalog supplier;
 7. capability_ref matches exact CapabilityMatch;
 8. capability contract identity matches exact CapabilityMatch;
 9. exactly one explicit EXECUTOR boundary is required;
@@ -349,18 +359,19 @@ The request is immutable but deliberately has no canonical identity.
 12. same admitted contract + same original Attempt derives one stable key;
 13. different fresh Attempt derives a different independently-derived key;
 14. different admission identity changes the key;
-15. first-dispatch request carries the exact derived key;
-16. forged key cannot be inserted into first-dispatch request;
-17. request is mechanism state, not canonical IR;
-18. canonical records roundtrip with exact identity;
-19. no TTL/window/clock/retry-count surface exists;
-20. no retry/reinvoke/resend/Executor API is introduced.
+15. changing dedup supplier provenance changes admitted-contract/key identity;
+16. first-dispatch request carries the exact derived key;
+17. forged key cannot be inserted into first-dispatch request;
+18. request is mechanism state, not canonical IR;
+19. canonical records roundtrip with exact identity;
+20. no TTL/window/clock/retry-count surface exists;
+21. no retry/reinvoke/resend/Executor API is introduced.
 
 ## FAIL
 
 - raw contract is sufficient for key derivation;
 - self-asserted idempotency flag is accepted;
-- Catalog supplier lineage may drift;
+- dedup supplier provenance is not identity-covered;
 - capability contract may drift;
 - Executor may be selected from multiple explicit boundaries;
 - non-Executor boundary substitutes for Executor identity;
