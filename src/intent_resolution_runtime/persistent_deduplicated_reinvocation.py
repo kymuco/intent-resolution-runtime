@@ -442,6 +442,31 @@ def _normalize_candidates(
     return tuple(sorted(items, key=lambda item: str(item.identity)))
 
 
+def _contract_target(
+    contract: PersistentDeduplicatedReinvocationContract,
+) -> tuple[RecordIdentity, StableRef, RecordIdentity, StableRef]:
+    return (
+        contract.catalog_snapshot_identity,
+        contract.capability_ref,
+        contract.capability_contract_identity,
+        contract.executor_ref,
+    )
+
+
+def _validate_candidate_targets(
+    candidates: tuple[CandidatePersistentDeduplicationContract, ...],
+    *,
+    selected_contract: PersistentDeduplicatedReinvocationContract,
+    field: str,
+) -> None:
+    selected_target = _contract_target(selected_contract)
+    for candidate in candidates:
+        if _contract_target(candidate.contract) != selected_target:
+            raise ValidationError(
+                f"{field} contains a contract for a foreign capability target"
+            )
+
+
 @dataclass(frozen=True, slots=True)
 class PersistentDeduplicationContractAdmissionAttribution(
     _CanonicalDeduplicationRecord
@@ -542,6 +567,11 @@ class AdmittedPersistentDeduplicationContract(_CanonicalDeduplicationRecord):
                 "AdmittedPersistentDeduplicationContract requires explicit "
                 "candidate provenance"
             )
+        _validate_candidate_targets(
+            candidates,
+            selected_contract=self.contract,
+            field="AdmittedPersistentDeduplicationContract.candidate_inputs",
+        )
         if self.contract.identity not in {
             candidate.contract.identity for candidate in candidates
         }:
@@ -550,7 +580,10 @@ class AdmittedPersistentDeduplicationContract(_CanonicalDeduplicationRecord):
                 "proposed downstream contract"
             )
         protected_events = {
-            self.contract.attribution.contract_event_ref,
+            *(
+                candidate.contract.attribution.contract_event_ref
+                for candidate in candidates
+            ),
             *(candidate.attribution.proposal_event_ref for candidate in candidates),
         }
         if self.admission_attribution.admission_event_ref in protected_events:
