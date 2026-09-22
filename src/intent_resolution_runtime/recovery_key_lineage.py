@@ -356,10 +356,7 @@ def _validate_same_concrete_use(
         raise RecoveryKeyLineageError(
             "recovery Attempt must be a new CapabilityAttempt identity"
         )
-    if (
-        original.attribution.attempt_event_ref
-        == recovery.attribution.attempt_event_ref
-    ):
+    if original.attribution.attempt_event_ref == recovery.attribution.attempt_event_ref:
         raise RecoveryKeyLineageError(
             "recovery Attempt must use a distinct attempt occurrence"
         )
@@ -541,13 +538,8 @@ def build_recovery_key_lineage(
     """Build exact inherited-key lineage for one new recovery Attempt."""
 
     if type(attribution) is not RecoveryKeyLineageAttribution:
-        raise ValidationError(
-            "attribution must be a RecoveryKeyLineageAttribution"
-        )
-    if (
-        type(original_dispatch_binding)
-        is not OriginalDeduplicatedDispatchBinding
-    ):
+        raise ValidationError("attribution must be a RecoveryKeyLineageAttribution")
+    if type(original_dispatch_binding) is not OriginalDeduplicatedDispatchBinding:
         raise ValidationError(
             "original_dispatch_binding must be an OriginalDeduplicatedDispatchBinding"
         )
@@ -591,10 +583,7 @@ class DeduplicatedRecoveryInvocationRequest:
                 "recovery invocation request must carry the exact lineage "
                 "recovery Attempt"
             )
-        if (
-            self.idempotency_key
-            != self.recovery_key_lineage.inherited_idempotency_key
-        ):
+        if self.idempotency_key != self.recovery_key_lineage.inherited_idempotency_key:
             raise RecoveryKeyLineageError(
                 "recovery invocation request must carry the exact inherited "
                 "original key"
