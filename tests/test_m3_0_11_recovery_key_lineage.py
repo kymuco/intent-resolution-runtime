@@ -22,6 +22,7 @@ from intent_resolution_runtime import (
     build_original_deduplicated_dispatch_binding,
     build_recovery_key_lineage,
 )
+from tests.test_capability_attempt_ir import _fixture as _rich_attempt_fixture
 from tests.test_m3_0_10_persistent_deduplicated_reinvocation_contract import (
     _admitted,
     _exact_attempt,
@@ -191,6 +192,20 @@ def _lineage(original, recovery, *, label: str):
     return binding, lineage
 
 
+def test_attempt_prerequisite_occurrences_cover_nested_canonical_events() -> None:
+    attempt, proposal, bound, authorization, _step_ref = _rich_attempt_fixture()
+
+    assert recovery_module._attempt_prerequisite_occurrences(attempt) == {
+        attempt.attribution.attempt_event_ref,
+        attempt.capability_evaluation.attribution.evaluation_event_ref,
+        attempt.capability_match.attribution.match_event_ref,
+        attempt.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref,
+        bound.binding_attribution.binding_event_ref,
+        proposal.attribution.proposal_event_ref,
+        authorization.decision.attribution.decision_event_ref,
+    }
+
+
 def test_binding_builder_rejects_ordinary_m3_4_request() -> None:
     original = _exact_attempt()
     ordinary_request = build_capability_invocation_request(original)
@@ -227,7 +242,15 @@ def test_original_binding_canonicalizes_exact_first_dispatch_material() -> None:
 
 @pytest.mark.parametrize(
     "event_source",
-    ("attempt", "admission", "contract", "proposal"),
+    (
+        "attempt",
+        "evaluation",
+        "match",
+        "snapshot",
+        "admission",
+        "contract",
+        "proposal",
+    ),
 )
 def test_original_binding_occurrence_cannot_alias_protected_lineage(
     event_source: str,
@@ -240,6 +263,11 @@ def test_original_binding_occurrence_cannot_alias_protected_lineage(
     )
     events = {
         "attempt": original.attribution.attempt_event_ref,
+        "evaluation": original.capability_evaluation.attribution.evaluation_event_ref,
+        "match": original.capability_match.attribution.match_event_ref,
+        "snapshot": (
+            original.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref
+        ),
         "admission": admitted.admission_attribution.admission_event_ref,
         "contract": admitted.contract.attribution.contract_event_ref,
         "proposal": admitted.candidate_inputs[0].attribution.proposal_event_ref,
@@ -497,6 +525,34 @@ def test_recovery_lineage_occurrence_cannot_alias_related_occurrences(
             RecoveryKeyLineageAttribution(
                 linker_ref=_ref("irr.recovery_key_linker", "test-host"),
                 lineage_event_ref=events[alias],
+            ),
+            binding,
+            recovery,
+        )
+
+
+def test_recovery_lineage_occurrence_cannot_alias_recovery_nested_evaluation() -> None:
+    original = _exact_attempt()
+    recovery = _description_only_recovery(original)
+    _admitted_contract, _request, binding = _binding(
+        original,
+        label="recovery-nested-evaluation-alias",
+    )
+
+    assert (
+        recovery.capability_evaluation.attribution.evaluation_event_ref
+        != original.capability_evaluation.attribution.evaluation_event_ref
+    )
+    with pytest.raises(
+        ValidationError,
+        match="lineage occurrence must differ",
+    ):
+        build_recovery_key_lineage(
+            RecoveryKeyLineageAttribution(
+                linker_ref=_ref("irr.recovery_key_linker", "test-host"),
+                lineage_event_ref=(
+                    recovery.capability_evaluation.attribution.evaluation_event_ref
+                ),
             ),
             binding,
             recovery,
