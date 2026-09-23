@@ -46,6 +46,27 @@ def _expect_exact_keys(
         raise SerializationError(f"{field} has invalid fields ({', '.join(detail)})")
 
 
+def _attempt_prerequisite_occurrences(attempt: CapabilityAttempt) -> set[StableRef]:
+    """Return every canonical occurrence embedded in one exact CapabilityAttempt."""
+
+    occurrences = {
+        attempt.attribution.attempt_event_ref,
+        attempt.capability_evaluation.attribution.evaluation_event_ref,
+        attempt.capability_match.attribution.match_event_ref,
+        attempt.capability_evaluation.catalog_snapshot.attribution.snapshot_event_ref,
+        *(
+            item.bound_value.binding_attribution.binding_event_ref
+            for item in attempt.bound_inputs
+        ),
+    }
+    for authorization in attempt.presented_authorizations:
+        occurrences.add(
+            authorization.decision.proposal.attribution.proposal_event_ref
+        )
+        occurrences.add(authorization.decision.attribution.decision_event_ref)
+    return occurrences
+
+
 class _CanonicalRecoveryKeyRecord:
     __slots__ = ()
 
@@ -169,7 +190,7 @@ class OriginalDeduplicatedDispatchBinding(_CanonicalRecoveryKeyRecord):
             )
 
         protected_events = {
-            self.original_attempt.attribution.attempt_event_ref,
+            *_attempt_prerequisite_occurrences(self.original_attempt),
             self.admitted_contract.admission_attribution.admission_event_ref,
             self.admitted_contract.contract.attribution.contract_event_ref,
             *(
@@ -445,8 +466,8 @@ class RecoveryKeyLineage(_CanonicalRecoveryKeyRecord):
         admitted = self.original_dispatch_binding.admitted_contract
         protected_events = {
             self.original_dispatch_binding.attribution.binding_event_ref,
-            original.attribution.attempt_event_ref,
-            self.recovery_attempt.attribution.attempt_event_ref,
+            *_attempt_prerequisite_occurrences(original),
+            *_attempt_prerequisite_occurrences(self.recovery_attempt),
             admitted.admission_attribution.admission_event_ref,
             admitted.contract.attribution.contract_event_ref,
             *(
