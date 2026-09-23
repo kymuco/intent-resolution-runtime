@@ -292,7 +292,9 @@ A Host/HDE boundary must prove those facts separately.
 
 `OriginalDeduplicatedDispatchBinding.binding_event_ref` must differ from:
 
-- original Attempt occurrence;
+- every canonical occurrence embedded in the original Attempt, including its Attempt,
+  CapabilityMatchEvaluation, CapabilityMatch, Catalog snapshot, bound-input Binding,
+  presented WorkProposal, and GovernanceDecision occurrences;
 - selected admitted-contract admission occurrence;
 - every candidate proposal occurrence;
 - every candidate downstream-contract occurrence.
@@ -300,10 +302,15 @@ A Host/HDE boundary must prove those facts separately.
 `RecoveryKeyLineage.lineage_event_ref` must differ from:
 
 - original dispatch binding occurrence;
-- original Attempt occurrence;
-- recovery Attempt occurrence.
+- every canonical occurrence embedded in the original Attempt;
+- every canonical occurrence embedded in the recovery Attempt;
+- selected admitted-contract admission occurrence;
+- every candidate proposal occurrence;
+- every candidate downstream-contract occurrence.
 
-This prevents one occurrence from silently playing multiple semantic roles.
+This prevents one occurrence from silently playing multiple semantic roles, including
+when that occurrence is nested inside an Attempt rather than stored on its top-level
+attribution.
 
 ## Canonical vs mechanism state
 
@@ -327,7 +334,7 @@ The mechanism request is deliberately not canonical lifecycle IR.
 1. the public binding builder rejects ordinary M3.4 CapabilityInvocationRequest;
 2. exact M3.0.10 deduplicated request builds one canonical relation;
 3. binding preserves exact original Attempt/admitted contract/key;
-4. binding occurrence cannot alias protected predecessor occurrences;
+4. binding occurrence cannot alias original-Attempt prerequisite or contract occurrences;
 5. recovery Attempt must have a new identity;
 6. recovery Attempt must have a new attempt occurrence;
 7. description-only drift does not create false incompatibility;
@@ -339,7 +346,7 @@ The mechanism request is deliberately not canonical lifecycle IR.
 13. executor_ref drift fails closed;
 14. recovery lineage inherits the exact original key;
 15. forged inherited key fails closed;
-16. lineage occurrence is distinct from binding/original/recovery occurrences;
+16. lineage occurrence is distinct from binding, both Attempts' prerequisite, and contract occurrences;
 17. canonical binding/lineage roundtrip preserves exact identity;
 18. recovery invocation mechanism state preserves exact lineage/Attempt/key;
 19. recovery invocation request is non-canonical;
