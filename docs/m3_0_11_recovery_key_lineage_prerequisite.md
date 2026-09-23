@@ -229,8 +229,8 @@ recovery key == original key
 The lineage occurrence must differ from:
 
 - original binding occurrence;
-- original Attempt occurrence;
-- recovery Attempt occurrence;
+- every canonical occurrence embedded in the original Attempt;
+- every canonical occurrence embedded in the recovery Attempt;
 - admitted dedup-contract admission occurrence;
 - selected and candidate downstream-contract occurrences;
 - candidate proposal occurrences.
