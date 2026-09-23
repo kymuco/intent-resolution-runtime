@@ -60,9 +60,7 @@ def _attempt_prerequisite_occurrences(attempt: CapabilityAttempt) -> set[StableR
         ),
     }
     for authorization in attempt.presented_authorizations:
-        occurrences.add(
-            authorization.decision.proposal.attribution.proposal_event_ref
-        )
+        occurrences.add(authorization.decision.proposal.attribution.proposal_event_ref)
         occurrences.add(authorization.decision.attribution.decision_event_ref)
     return occurrences
 
