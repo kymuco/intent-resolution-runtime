@@ -268,6 +268,13 @@ from .successor_resolution import (
     SuccessorResolutionKind,
     SuccessorResolutionLineage,
 )
+from .successor_cognitive_provider import (
+    SuccessorCognitiveProviderIntegrationError,
+    SuccessorCognitiveProviderPort,
+    SuccessorCognitiveProviderRequest,
+    build_successor_cognitive_provider_request,
+    invoke_successor_cognitive_provider,
+)
 from .successor_semantic_resolution import (
     SuccessorCandidateResolution,
     SuccessorResolutionAdmitter,
@@ -661,6 +668,9 @@ __all__ = [
     "SerializationError",
     "SourceAttribution",
     "StableRef",
+    "SuccessorCognitiveProviderRequest",
+    "SuccessorCognitiveProviderPort",
+    "SuccessorCognitiveProviderIntegrationError",
     "SuccessorCandidateResolution",
     "SuccessorResolutionAdmitter",
     "SuccessorResolutionFrontier",
@@ -703,6 +713,7 @@ __all__ = [
     "build_capability_invocation_request",
     "build_capability_match_evaluation",
     "build_cognitive_provider_request",
+    "build_successor_cognitive_provider_request",
     "build_deduplicated_capability_invocation_request",
     "build_deduplicated_recovery_invocation_request",
     "build_governance_review_request",
@@ -716,6 +727,7 @@ __all__ = [
     "evaluate_binding",
     "evaluate_capability_match_evaluation",
     "invoke_cognitive_provider",
+    "invoke_successor_cognitive_provider",
     "invoke_executor",
     "invoke_governance",
     "invoke_worker",
