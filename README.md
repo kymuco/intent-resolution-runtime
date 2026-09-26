@@ -311,6 +311,7 @@ These systems may later integrate with IRR through explicit boundaries, but they
 - [M3.4 Executor / Capability Invocation Port](docs/m3_4_executor_capability_invocation_port.md)
 - [M3.5 Worker Integration Port](docs/m3_5_worker_integration_port.md)
 - [M3.6 End-to-End Embeddable Host Fixture](docs/m3_6_end_to_end_embeddable_host_fixture.md)
+- [M4.0 Successor Semantic Resolution Candidate & Admission Boundary](docs/m4_0_successor_semantic_resolution.md)
 - [Terminology](docs/terminology.md)
 
 ## Planning record
