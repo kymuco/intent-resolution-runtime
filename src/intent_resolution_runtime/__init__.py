@@ -264,16 +264,16 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
+from .successor_resolution import (
+    SuccessorResolutionKind,
+    SuccessorResolutionLineage,
+)
 from .successor_semantic_resolution import (
     SuccessorCandidateResolution,
     SuccessorResolutionAdmitter,
     SuccessorResolutionFrontier,
     SuccessorResolutionFrontierKind,
     orchestrate_successor_resolution,
-)
-from .successor_resolution import (
-    SuccessorResolutionKind,
-    SuccessorResolutionLineage,
 )
 from .work import (
     WorkContinuationMode,
