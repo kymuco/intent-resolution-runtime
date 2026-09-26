@@ -264,6 +264,13 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
+from .successor_semantic_resolution import (
+    SuccessorCandidateResolution,
+    SuccessorResolutionAdmitter,
+    SuccessorResolutionFrontier,
+    SuccessorResolutionFrontierKind,
+    orchestrate_successor_resolution,
+)
 from .successor_resolution import (
     SuccessorResolutionKind,
     SuccessorResolutionLineage,
@@ -457,6 +464,7 @@ for _ir_type in (
     ContinuationInputAttribution,
     GovernanceContinuationMaterial,
     ContinuationInput,
+    SuccessorCandidateResolution,
     SuccessorResolutionLineage,
 ):
     _seal_ir_type(_ir_type)
@@ -653,6 +661,10 @@ __all__ = [
     "SerializationError",
     "SourceAttribution",
     "StableRef",
+    "SuccessorResolutionFrontierKind",
+    "SuccessorResolutionFrontier",
+    "SuccessorResolutionAdmitter",
+    "SuccessorCandidateResolution",
     "SuccessorResolutionKind",
     "SuccessorResolutionLineage",
     "SymbolicReference",
@@ -715,6 +727,7 @@ __all__ = [
     "orchestrate_capability_governance",
     "orchestrate_capability_requirement_admission",
     "orchestrate_initial_resolution",
+    "orchestrate_successor_resolution",
     "orchestrate_work_binding",
     "orchestrate_work_disposition",
     "orchestrate_worker_lifecycle",
