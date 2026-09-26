@@ -264,16 +264,16 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
-from .successor_resolution import (
-    SuccessorResolutionKind,
-    SuccessorResolutionLineage,
-)
 from .successor_cognitive_provider import (
     SuccessorCognitiveProviderIntegrationError,
     SuccessorCognitiveProviderPort,
     SuccessorCognitiveProviderRequest,
     build_successor_cognitive_provider_request,
     invoke_successor_cognitive_provider,
+)
+from .successor_resolution import (
+    SuccessorResolutionKind,
+    SuccessorResolutionLineage,
 )
 from .successor_semantic_resolution import (
     SuccessorCandidateResolution,
