@@ -20,8 +20,8 @@ from intent_resolution_runtime import (
     ContinuationInputAttribution,
     ContinuationSourceKind,
     HistoryRecord,
-    InMemoryAdmittedHistoryRepository,
     InformationNeed,
+    InMemoryAdmittedHistoryRepository,
     InterchangeableChoicePolicy,
     RecordIdentity,
     ResolutionAttribution,
@@ -34,7 +34,6 @@ from intent_resolution_runtime import (
     StableRef,
     SuccessorCandidateResolution,
     SuccessorResolutionFrontierKind,
-    SuccessorResolutionLineage,
     SymbolicReference,
     ValidationError,
     evaluate_binding,
@@ -462,8 +461,9 @@ def test_equivalent_candidates_require_admission_without_provider_voting() -> No
     assert a.resolution_output is None
 
 
-def test_divergent_candidates_require_adjudication_and_majority_has_no_authority(
-) -> None:
+def test_divergent_candidates_require_adjudication_and_majority_has_no_authority() -> (
+    None
+):
     predecessor = _predecessor()
     context = _context(predecessor)
     continuation = _continuation(predecessor)
@@ -703,7 +703,10 @@ def test_admitter_cannot_replace_attribution_context_or_candidate_provenance() -
             candidate_inputs=_nested(candidates),
         )
 
-    with pytest.raises(ValidationError, match="exact ContextEnvelope"):
+    with pytest.raises(
+        ValidationError,
+        match="same ContextEnvelope identity",
+    ):
         orchestrate_successor_resolution(
             predecessor,
             context,
@@ -914,4 +917,3 @@ def test_successor_candidate_type_is_closed_against_subclassing() -> None:
 
         class _ForbiddenSuccessorCandidate(SuccessorCandidateResolution):
             pass
-
