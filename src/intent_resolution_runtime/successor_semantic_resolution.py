@@ -420,7 +420,8 @@ def _validate_existing_lineage(
         )
     if lineage.continuation_inputs != continuation_inputs:
         raise ValidationError(
-            "existing SuccessorResolutionLineage must preserve exact continuation inputs"
+            "existing SuccessorResolutionLineage must preserve exact "
+            "continuation inputs"
         )
     if lineage.successor.context_envelope_identity != context_envelope_identity:
         raise ValidationError(
@@ -474,7 +475,8 @@ def _validate_output(
     admitted = cast(ResolutionOutput, output)
     if admitted.intent_request_identity != predecessor.intent_request_identity:
         raise ValidationError(
-            "successor-resolution output must preserve predecessor IntentRequest identity"
+            "successor-resolution output must preserve predecessor "
+            "IntentRequest identity"
         )
     if admitted.context_envelope_identity != context_envelope.identity:
         raise ValidationError(
@@ -521,7 +523,8 @@ def orchestrate_successor_resolution(
         )
     if type(context_envelope) is not ContextEnvelope:
         raise ValidationError(
-            "orchestrate_successor_resolution.context_envelope must be a ContextEnvelope"
+            "orchestrate_successor_resolution.context_envelope must be "
+            "a ContextEnvelope"
         )
     if context_envelope.intent_request_identity != predecessor.intent_request_identity:
         raise ValidationError(
