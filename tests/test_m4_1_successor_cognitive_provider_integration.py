@@ -190,7 +190,8 @@ def _sources():
     return request, context, predecessor, continuation
 
 
-def test_builder_preserves_exact_successor_projection_without_candidate_provenance() -> None:
+def test_builder_preserves_exact_successor_projection_without_candidate_provenance(
+) -> None:
     request, context, predecessor, continuation = _sources()
     claim = context.records[0]
 
