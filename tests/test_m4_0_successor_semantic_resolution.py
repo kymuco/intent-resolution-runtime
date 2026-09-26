@@ -910,7 +910,7 @@ def test_frontier_is_noncanonical_and_surface_has_no_execution_authority() -> No
 
 
 def test_successor_candidate_type_is_closed_against_subclassing() -> None:
-    with pytest.raises(TypeError, match="does not support subclassing"):
+    with pytest.raises(TypeError, match="closed IR type and cannot be subclassed"):
 
         class _ForbiddenSuccessorCandidate(SuccessorCandidateResolution):
             pass
