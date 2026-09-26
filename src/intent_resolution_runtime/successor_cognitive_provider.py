@@ -229,7 +229,8 @@ def _validate_source_material(
         )
     if request.context_envelope_identity != context_envelope.identity:
         raise ValidationError(
-            "successor provider request must preserve the exact ContextEnvelope identity"
+            "successor provider request must preserve the exact "
+            "ContextEnvelope identity"
         )
     if request.intent_expression != intent_request.expression:
         raise ValidationError(
@@ -249,7 +250,8 @@ def _validate_source_material(
         )
     if request.predecessor_unresolved_issues != predecessor.unresolved_issues:
         raise ValidationError(
-            "successor provider request must preserve exact predecessor unresolved issues"
+            "successor provider request must preserve exact predecessor "
+            "unresolved issues"
         )
     if request.continuation_inputs != inputs:
         raise ValidationError(
@@ -282,7 +284,8 @@ def build_successor_cognitive_provider_request(
     continuation_inputs: tuple[ContinuationInput, ...],
     disclosed_context_identities: tuple[RecordIdentity, ...] = (),
 ) -> SuccessorCognitiveProviderRequest:
-    """Build one explicit successor provider projection from admitted source material."""
+    """Build one explicit successor provider projection from admitted source
+    material."""
 
     if type(predecessor) is not ResolvedIntent:
         raise ValidationError("predecessor must be a ResolvedIntent")
@@ -359,11 +362,13 @@ def invoke_successor_cognitive_provider(
         )
     if candidate.context_envelope_identity != request.context_envelope_identity:
         raise SuccessorCognitiveProviderIntegrationError(
-            "successor provider CandidateResolution belongs to a foreign ContextEnvelope"
+            "successor provider CandidateResolution belongs to a foreign "
+            "ContextEnvelope"
         )
     if candidate.attribution.provider_ref != request.provider_ref:
         raise SuccessorCognitiveProviderIntegrationError(
-            "successor provider CandidateResolution attribution has the wrong provider_ref"
+            "successor provider CandidateResolution attribution has the wrong "
+            "provider_ref"
         )
     if candidate.attribution.invocation_ref != request.invocation_ref:
         raise SuccessorCognitiveProviderIntegrationError(
