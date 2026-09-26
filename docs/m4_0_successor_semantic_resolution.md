@@ -483,11 +483,14 @@ provider did not receive re-entry material
 
 # 12. Persistence implications
 
-`SuccessorCandidateResolution` is canonical IR and therefore must eventually be
-supported by the M3.1 admitted-history parser/registry.
+`SuccessorCandidateResolution` is canonical IR and therefore must support the
+existing M3.1 exact-history mechanism.
 
-The implementation slice must add exact history round-trip coverage without changing the
-meaning of existing schemas.
+M3.1 is intentionally schema-agnostic: `HistoryRecord` preserves exact canonical bytes
+and the top-level schema string without a semantic parser registry. The implementation
+slice must therefore add exact `HistoryRecord` persistence/replay coverage plus typed
+`SuccessorCandidateResolution.from_json_bytes(...)` reconstruction without inventing a
+new registry or changing the meaning of existing schemas.
 
 The derived `SuccessorResolutionFrontier` is not persisted.
 
