@@ -335,13 +335,9 @@ def invoke_successor_cognitive_provider(
     """Invoke a successor provider and bind exact proposal provenance mechanically."""
 
     if not isinstance(provider, SuccessorCognitiveProviderPort):
-        raise ValidationError(
-            "provider must satisfy SuccessorCognitiveProviderPort"
-        )
+        raise ValidationError("provider must satisfy SuccessorCognitiveProviderPort")
     if type(request) is not SuccessorCognitiveProviderRequest:
-        raise ValidationError(
-            "request must be a SuccessorCognitiveProviderRequest"
-        )
+        raise ValidationError("request must be a SuccessorCognitiveProviderRequest")
 
     _validate_source_material(
         request,
