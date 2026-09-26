@@ -197,7 +197,12 @@ def _admission(label: str = "successor") -> ResolutionAttribution:
 def _nested(
     candidates: tuple[SuccessorCandidateResolution, ...],
 ) -> tuple[CandidateResolution, ...]:
-    return tuple(sorted((item.candidate for item in candidates), key=lambda item: str(item.identity)))
+    return tuple(
+        sorted(
+            (item.candidate for item in candidates),
+            key=lambda item: str(item.identity),
+        )
+    )
 
 
 def _resolved_admitter(
@@ -457,7 +462,8 @@ def test_equivalent_candidates_require_admission_without_provider_voting() -> No
     assert a.resolution_output is None
 
 
-def test_divergent_candidates_require_adjudication_and_majority_has_no_authority() -> None:
+def test_divergent_candidates_require_adjudication_and_majority_has_no_authority(
+) -> None:
     predecessor = _predecessor()
     context = _context(predecessor)
     continuation = _continuation(predecessor)
@@ -901,3 +907,11 @@ def test_frontier_is_noncanonical_and_surface_has_no_execution_authority() -> No
     ):
         assert forbidden not in parameters
         assert not hasattr(frontier, forbidden)
+
+
+def test_successor_candidate_type_is_closed_against_subclassing() -> None:
+    with pytest.raises(TypeError, match="does not support subclassing"):
+
+        class _ForbiddenSuccessorCandidate(SuccessorCandidateResolution):
+            pass
+
