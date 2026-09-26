@@ -264,6 +264,13 @@ from .resolution import (
     ResolutionIssueKind,
     ResolvedIntent,
 )
+from .successor_cognitive_provider import (
+    SuccessorCognitiveProviderIntegrationError,
+    SuccessorCognitiveProviderPort,
+    SuccessorCognitiveProviderRequest,
+    build_successor_cognitive_provider_request,
+    invoke_successor_cognitive_provider,
+)
 from .successor_resolution import (
     SuccessorResolutionKind,
     SuccessorResolutionLineage,
@@ -662,6 +669,9 @@ __all__ = [
     "SourceAttribution",
     "StableRef",
     "SuccessorCandidateResolution",
+    "SuccessorCognitiveProviderIntegrationError",
+    "SuccessorCognitiveProviderPort",
+    "SuccessorCognitiveProviderRequest",
     "SuccessorResolutionAdmitter",
     "SuccessorResolutionFrontier",
     "SuccessorResolutionFrontierKind",
@@ -708,6 +718,7 @@ __all__ = [
     "build_governance_review_request",
     "build_original_deduplicated_dispatch_binding",
     "build_recovery_key_lineage",
+    "build_successor_cognitive_provider_request",
     "build_worker_handoff_request",
     "derive_capability_idempotency_key",
     "derive_mechanical_capability_match_evaluation",
@@ -718,6 +729,7 @@ __all__ = [
     "invoke_cognitive_provider",
     "invoke_executor",
     "invoke_governance",
+    "invoke_successor_cognitive_provider",
     "invoke_worker",
     "mechanical_capability_evaluator_ref",
     "mechanical_capability_matcher_ref",
