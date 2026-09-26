@@ -51,9 +51,7 @@ def _expect_exact_keys(
             details.append(f"missing={missing}")
         if extra:
             details.append(f"extra={extra}")
-        raise SerializationError(
-            f"{field} has invalid fields ({', '.join(details)})"
-        )
+        raise SerializationError(f"{field} has invalid fields ({', '.join(details)})")
 
 
 def _identity_key(value: RecordIdentity) -> tuple[str, str]:
@@ -173,9 +171,7 @@ class SuccessorCandidateResolution(_CanonicalSuccessorSemanticRecord):
             field=field,
         )
         if obj["schema"] != cls.SCHEMA:
-            raise SerializationError(
-                f"unsupported {field} schema: {obj['schema']!r}"
-            )
+            raise SerializationError(f"unsupported {field} schema: {obj['schema']!r}")
         inputs = _expect_array(
             obj["continuation_inputs"],
             field=f"{field}.continuation_inputs",
@@ -231,9 +227,7 @@ def _normalize_lineages(
     if type(value) is not tuple:
         raise ValidationError(f"{field} must be a tuple")
     if not all(type(item) is SuccessorResolutionLineage for item in value):
-        raise ValidationError(
-            f"{field} must contain SuccessorResolutionLineage values"
-        )
+        raise ValidationError(f"{field} must contain SuccessorResolutionLineage values")
     lineages = cast(tuple[SuccessorResolutionLineage, ...], value)
     identities = [item.identity for item in lineages]
     if len(set(identities)) != len(identities):
