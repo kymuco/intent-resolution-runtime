@@ -8,11 +8,11 @@ import pytest
 
 from intent_resolution_runtime import (
     RecordIdentity,
-    StableRef,
     WorkContinuationMode,
     WorkPlan,
     WorkSymbolicInput,
 )
+from intent_resolution_runtime.binding import SymbolicReference
 from intent_resolution_runtime.bound_work_plan import (
     BoundWorkPlanError,
     HostBoundStep,
@@ -29,7 +29,6 @@ from intent_resolution_runtime.candidate_planning_surface import (
     build_candidate_planning_surface,
     find_structural_plan_candidates,
 )
-from intent_resolution_runtime.binding import SymbolicReference
 from tests.test_g7a1_dynamic_candidate_planning import (
     candidate,
     descriptor,
@@ -46,7 +45,10 @@ def _named(contract, name: str) -> HostContractFieldName:
 
 
 def _material(
-    first, second, *, second_scope: str = "workspace:document",
+    first,
+    second,
+    *,
+    second_scope: str = "workspace:document",
 ) -> HostBoundWorkPlanMaterial:
     first_ref = ref("irr.work_step", "collect")
     second_ref = ref("irr.work_step", "summarize")
@@ -67,9 +69,7 @@ def _material(
                 ),
                 input_fields=(_named(first_input, "source"),),
                 output_fields=(_named(first_output, "metadata"),),
-                input_bindings=(
-                    HostLiteralBinding(first_input, "docs/research.txt"),
-                ),
+                input_bindings=(HostLiteralBinding(first_input, "docs/research.txt"),),
             ),
             HostBoundStep(
                 capability_ref=second.capability_ref,
@@ -126,7 +126,9 @@ def test_host_bound_two_step_plan_has_exact_symbolic_dataflow() -> None:
     assert result.candidate_identity == surface.candidate_identity
     assert result.policy_revision_identity == surface.policy_revision_identity
     assert result.actor_ref == surface.actor_ref
-    assert WorkPlan.from_json_bytes(result.work_plan.canonical_bytes()) == result.work_plan
+    assert (
+        WorkPlan.from_json_bytes(result.work_plan.canonical_bytes()) == result.work_plan
+    )
     steps = {step.operation: step for step in result.work_plan.steps}
     collect = steps["dynamic.collect"]
     summarize = steps["dynamic.summarize"]
@@ -177,9 +179,7 @@ def test_stale_policy_and_catalog_reject_existing_plan() -> None:
         visible_capability_refs=(first.capability_ref, second.capability_ref),
     )
     catalog = candidate(first, second)
-    changed = build_candidate_planning_surface(
-        candidate=catalog, visibility=new_policy
-    )
+    changed = build_candidate_planning_surface(candidate=catalog, visibility=new_policy)
     with pytest.raises(BoundWorkPlanError, match="stale"):
         assert_current_unadmitted_work_plan(old, changed)
     updated_catalog = candidate(first, second, event="updated-source")
@@ -199,29 +199,32 @@ def test_missing_extra_or_foreign_host_field_mapping_fails_closed() -> None:
     one, two = baseline.steps
     with pytest.raises(BoundWorkPlanError, match="mapping differs"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
-            material=replace(
-                baseline, steps=(replace(one, input_fields=()), two)
-            ),
+            surface=surface,
+            sketch=sketch,
+            material=replace(baseline, steps=(replace(one, input_fields=()), two)),
         )
     with pytest.raises(BoundWorkPlanError, match="mapping differs"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
+            surface=surface,
+            sketch=sketch,
             material=replace(
                 baseline,
-                steps=(replace(
-                    one, output_fields=(_named(
-                        ref("foreign.contract", "result"), "metadata"
-                    ),)
-                ), two),
+                steps=(
+                    replace(
+                        one,
+                        output_fields=(
+                            _named(ref("foreign.contract", "result"), "metadata"),
+                        ),
+                    ),
+                    two,
+                ),
             ),
         )
     with pytest.raises(BoundWorkPlanError, match="missing or extra"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
-            material=replace(
-                baseline, steps=(replace(one, input_bindings=()), two)
-            ),
+            surface=surface,
+            sketch=sketch,
+            material=replace(baseline, steps=(replace(one, input_bindings=()), two)),
         )
 
 
@@ -231,26 +234,40 @@ def test_wrong_producer_type_foreign_scope_and_future_binding_fail_closed() -> N
     one, two = baseline.steps
     with pytest.raises(BoundWorkPlanError, match="cross-scope"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
+            surface=surface,
+            sketch=sketch,
             material=_material(first, second, second_scope="workspace:other"),
         )
     with pytest.raises(BoundWorkPlanError, match="missing earlier"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
+            surface=surface,
+            sketch=sketch,
             material=replace(
-                baseline, steps=(one, replace(
-                    two, input_bindings=(HostPriorOutputBinding(
-                        contract_ref=second.input_contracts[0].input_ref,
-                        producer_step_ref=two.step_ref,
-                        producer_output_ref=second.output_contracts[0].output_ref,
-                    ),),
-                )),
+                baseline,
+                steps=(
+                    one,
+                    replace(
+                        two,
+                        input_bindings=(
+                            HostPriorOutputBinding(
+                                contract_ref=second.input_contracts[0].input_ref,
+                                producer_step_ref=two.step_ref,
+                                producer_output_ref=second.output_contracts[
+                                    0
+                                ].output_ref,
+                            ),
+                        ),
+                    ),
+                ),
             ),
         )
     with pytest.raises(BoundWorkPlanError, match="scope requirements"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
-            material=replace(baseline, steps=(replace(one, scope_requirement_refs=()), two)),
+            surface=surface,
+            sketch=sketch,
+            material=replace(
+                baseline, steps=(replace(one, scope_requirement_refs=()), two)
+            ),
         )
 
 
@@ -276,16 +293,24 @@ def test_external_symbolic_input_requires_same_intent_type_and_scope() -> None:
     assert isinstance(result.work_plan.steps[0].inputs[0], WorkSymbolicInput)
     with pytest.raises(BoundWorkPlanError, match="foreign external"):
         materialize_unadmitted_work_plan(
-            surface=surface, sketch=sketch,
+            surface=surface,
+            sketch=sketch,
             material=replace(
                 baseline,
-                steps=(replace(
-                    one,
-                    input_bindings=(HostExternalSymbolicBinding(
-                        contract_ref=first.input_contracts[0].input_ref,
-                        reference=replace(source, semantic_type="workspace.paths"),
-                    ),),
-                ), two),
+                steps=(
+                    replace(
+                        one,
+                        input_bindings=(
+                            HostExternalSymbolicBinding(
+                                contract_ref=first.input_contracts[0].input_ref,
+                                reference=replace(
+                                    source, semantic_type="workspace.paths"
+                                ),
+                            ),
+                        ),
+                    ),
+                    two,
+                ),
             ),
         )
 
