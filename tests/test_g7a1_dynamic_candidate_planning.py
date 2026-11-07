@@ -19,15 +19,15 @@ from intent_resolution_runtime import (
     CapabilityScopeRequirement,
     StableRef,
 )
-from intent_resolution_runtime.capability_catalog_admission import (
-    CandidateCapabilityCatalogSnapshot,
-    CapabilityCatalogSnapshotProposalAttribution,
-)
 from intent_resolution_runtime.candidate_planning_surface import (
     CapabilityPlanningSurfaceError,
     HostPlanningVisibility,
     build_candidate_planning_surface,
     find_structural_plan_candidates,
+)
+from intent_resolution_runtime.capability_catalog_admission import (
+    CandidateCapabilityCatalogSnapshot,
+    CapabilityCatalogSnapshotProposalAttribution,
 )
 from intent_resolution_runtime.identity import RecordIdentity
 
