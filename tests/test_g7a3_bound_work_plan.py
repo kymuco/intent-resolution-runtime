@@ -287,7 +287,8 @@ def test_external_symbolic_input_requires_same_intent_type_and_scope() -> None:
         reference=source,
     )
     result = materialize_unadmitted_work_plan(
-        surface=surface, sketch=sketch,
+        surface=surface,
+        sketch=sketch,
         material=replace(baseline, steps=(replace(one, input_bindings=(bind,)), two)),
     )
     assert isinstance(result.work_plan.steps[0].inputs[0], WorkSymbolicInput)
