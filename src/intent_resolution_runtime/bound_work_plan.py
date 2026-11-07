@@ -130,8 +130,8 @@ class HostBoundStep:
             if len({x.name for x in fields}) != len(fields):
                 raise BoundWorkPlanError(f"duplicate {name} technical name")
         if type(self.input_bindings) is not tuple or not all(
-            type(x) in (HostLiteralBinding, HostPriorOutputBinding,
-                        HostExternalSymbolicBinding)
+            type(x)
+            in (HostLiteralBinding, HostPriorOutputBinding, HostExternalSymbolicBinding)
             for x in self.input_bindings
         ):
             raise BoundWorkPlanError("invalid input bindings")
@@ -207,9 +207,7 @@ def _exact_route(
         raise BoundWorkPlanError("repeated capability in sketch")
     options = {option.capability_ref: option for option in surface.options}
     route = []
-    for ref, operation in zip(
-        sketch.capability_refs, sketch.operations, strict=True
-    ):
+    for ref, operation in zip(sketch.capability_refs, sketch.operations, strict=True):
         option = options.get(ref)
         if option is None or option.operation != operation:
             raise BoundWorkPlanError("sketch operation absent from current catalog")
@@ -232,16 +230,20 @@ def _slot_ref(
     raw = "|".join(
         f"{len(value)}:{value}"
         for value in (
-            plan_ref.namespace, plan_ref.value,
-            step_ref.namespace, step_ref.value,
-            output_ref.namespace, output_ref.value,
+            plan_ref.namespace,
+            plan_ref.value,
+            step_ref.namespace,
+            step_ref.value,
+            output_ref.namespace,
+            output_ref.value,
         )
     )
     return StableRef("irr.g7a3.slot", hashlib.sha256(raw.encode()).hexdigest())
 
 
 def materialize_unadmitted_work_plan(
-    *, surface: CandidatePlanningSurface,
+    *,
+    surface: CandidatePlanningSurface,
     sketch: CandidatePlanSketch,
     material: HostBoundWorkPlanMaterial,
 ) -> UnadmittedBoundWorkPlan:
@@ -259,9 +261,7 @@ def materialize_unadmitted_work_plan(
     produced: dict[tuple[StableRef, StableRef], SymbolicReference] = {}
     steps: list[WorkStep] = []
     descriptor_ids: list[RecordIdentity] = []
-    for index, (option, spec) in enumerate(
-        zip(route, material.steps, strict=True)
-    ):
+    for index, (option, spec) in enumerate(zip(route, material.steps, strict=True)):
         descriptor = option.descriptor
         if spec.capability_ref != option.capability_ref:
             raise BoundWorkPlanError("step capability differs from sketch")
@@ -281,10 +281,13 @@ def materialize_unadmitted_work_plan(
             binding = bindings[input_ref]
             name = input_names[input_ref]
             if type(binding) is HostLiteralBinding:
-                work_inputs.append(WorkLiteralInput(
-                    name=name, semantic_type=contract.semantic_type,
-                    value=binding.value,
-                ))
+                work_inputs.append(
+                    WorkLiteralInput(
+                        name=name,
+                        semantic_type=contract.semantic_type,
+                        value=binding.value,
+                    )
+                )
             elif type(binding) is HostExternalSymbolicBinding:
                 ref = binding.reference
                 if (
@@ -324,22 +327,25 @@ def materialize_unadmitted_work_plan(
             work_outputs.append(
                 WorkOutput(name=output_field_names[output_ref], reference=symbolic)
             )
-        steps.append(WorkStep(
-            resolved_intent_identity=material.resolved_intent_identity,
-            work_plan_ref=material.plan_ref,
-            step_ref=spec.step_ref,
-            operation=descriptor.operation,
-            scope=spec.scope,
-            inputs=tuple(work_inputs),
-            outputs=tuple(work_outputs),
-            depends_on=tuple(dependencies),
-            continuation=(
-                WorkContinuationMode.RETURN_TO_IRR
-                if index == len(route) - 1 else WorkContinuationMode.NONE
-            ),
-            completion_contract=descriptor.completion_contract,
-            description=descriptor.description,
-        ))
+        steps.append(
+            WorkStep(
+                resolved_intent_identity=material.resolved_intent_identity,
+                work_plan_ref=material.plan_ref,
+                step_ref=spec.step_ref,
+                operation=descriptor.operation,
+                scope=spec.scope,
+                inputs=tuple(work_inputs),
+                outputs=tuple(work_outputs),
+                depends_on=tuple(dependencies),
+                continuation=(
+                    WorkContinuationMode.RETURN_TO_IRR
+                    if index == len(route) - 1
+                    else WorkContinuationMode.NONE
+                ),
+                completion_contract=descriptor.completion_contract,
+                description=descriptor.description,
+            )
+        )
         descriptor_ids.append(descriptor.identity)
     required = {steps[-1].step_ref}
     step_by_ref = {step.step_ref: step for step in steps}
