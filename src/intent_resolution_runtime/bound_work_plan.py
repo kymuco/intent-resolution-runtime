@@ -257,7 +257,6 @@ def materialize_unadmitted_work_plan(
         raise BoundWorkPlanError("material must bind every suggested step")
 
     produced: dict[tuple[StableRef, StableRef], SymbolicReference] = {}
-    output_names: dict[tuple[StableRef, StableRef], str] = {}
     steps: list[WorkStep] = []
     descriptor_ids: list[RecordIdentity] = []
     for index, (option, spec) in enumerate(
@@ -322,7 +321,6 @@ def materialize_unadmitted_work_plan(
             )
             key = (spec.step_ref, output_ref)
             produced[key] = symbolic
-            output_names[key] = output_field_names[output_ref]
             work_outputs.append(
                 WorkOutput(name=output_field_names[output_ref], reference=symbolic)
             )
@@ -343,6 +341,16 @@ def materialize_unadmitted_work_plan(
             description=descriptor.description,
         ))
         descriptor_ids.append(descriptor.identity)
+    required = {steps[-1].step_ref}
+    step_by_ref = {step.step_ref: step for step in steps}
+    pending = [steps[-1].step_ref]
+    while pending:
+        for dependency in step_by_ref[pending.pop()].depends_on:
+            if dependency not in required:
+                required.add(dependency)
+                pending.append(dependency)
+    if required != set(step_by_ref):
+        raise BoundWorkPlanError("unrelated step is not required by final goal")
     if sketch.desired_output_semantic_type not in {
         x.reference.semantic_type for x in steps[-1].outputs
     }:
