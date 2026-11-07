@@ -7,6 +7,7 @@ Admission, Governance, Authorization or Attempt. A candidate chain is only
 a structural suggestion; data values, scope feasibility, binding and authority
 MUST be checked independently before real plan admission.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -72,9 +73,7 @@ class HostPlanningVisibility:
         for field in ("policy_revision_identity", "candidate_identity"):
             _exact_identity(getattr(self, field), field)
         refs = self.visible_capability_refs
-        if type(refs) is not tuple or not all(
-            type(item) is StableRef for item in refs
-        ):
+        if type(refs) is not tuple or not all(type(item) is StableRef for item in refs):
             raise CapabilityPlanningSurfaceError(
                 "visible_capability_refs must be exact tuple of StableRef"
             )
@@ -82,9 +81,9 @@ class HostPlanningVisibility:
             raise CapabilityPlanningSurfaceError("duplicate visible capability")
         if len(refs) > _MAX_OPTIONS:
             raise CapabilityPlanningSurfaceError("visibility exceeds bounded options")
-        object.__setattr__(self, "visible_capability_refs", tuple(
-            sorted(refs, key=_ref_key)
-        ))
+        object.__setattr__(
+            self, "visible_capability_refs", tuple(sorted(refs, key=_ref_key))
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -178,17 +177,19 @@ def build_candidate_planning_surface(
         raise CapabilityPlanningSurfaceError("exact Host visibility required")
     if candidate.identity != visibility.candidate_identity:
         raise CapabilityPlanningSurfaceError("stale or foreign candidate identity")
-    descriptors = {
-        item.capability_ref: item for item in candidate.snapshot.descriptors
-    }
+    descriptors = {item.capability_ref: item for item in candidate.snapshot.descriptors}
     missing = set(visibility.visible_capability_refs) - descriptors.keys()
     if missing:
         raise CapabilityPlanningSurfaceError("visibility includes foreign capability")
-    options = tuple(sorted(
-        (PlanningOption(descriptors[ref])
-         for ref in visibility.visible_capability_refs),
-        key=lambda option: (option.operation, *_ref_key(option.capability_ref)),
-    ))
+    options = tuple(
+        sorted(
+            (
+                PlanningOption(descriptors[ref])
+                for ref in visibility.visible_capability_refs
+            ),
+            key=lambda option: (option.operation, *_ref_key(option.capability_ref)),
+        )
+    )
     hints: set[tuple[StableRef, StableRef, str]] = set()
     for producer in options:
         for consumer in options:
@@ -200,7 +201,8 @@ def build_candidate_planning_surface(
             for semantic in shared:
                 hints.add((producer.capability_ref, consumer.capability_ref, semantic))
     edges = tuple(
-        PlanningDependencyHint(*edge) for edge in sorted(
+        PlanningDependencyHint(*edge)
+        for edge in sorted(
             hints,
             key=lambda edge: (*_ref_key(edge[0]), *_ref_key(edge[1]), edge[2]),
         )
@@ -214,6 +216,18 @@ def build_candidate_planning_surface(
         options=options,
         dependency_hints=edges,
     )
+
+
+def _contributes_to_goal(route: tuple[PlanningOption, ...], goal: str) -> bool:
+    """Every suggested step must contribute an exact type needed downstream."""
+    required = {goal}
+    for option in reversed(route):
+        outputs = set(option.output_semantic_types)
+        if not (outputs & required):
+            return False
+        required.difference_update(outputs)
+        required.update(option.input_semantic_types)
+    return True
 
 
 def find_structural_plan_candidates(
@@ -239,8 +253,12 @@ def find_structural_plan_candidates(
     known: set[str] = set()
     for semantic in available_input_semantic_types:
         known.add(_semantic_type(semantic, "available input"))
-    if (type(max_steps) is not int or not 1 <= max_steps <= 3
-            or type(max_candidates) is not int or not 1 <= max_candidates <= 32):
+    if (
+        type(max_steps) is not int
+        or not 1 <= max_steps <= 3
+        or type(max_candidates) is not int
+        or not 1 <= max_candidates <= 32
+    ):
         raise CapabilityPlanningSurfaceError("invalid bounded search limits")
     if len(surface.options) > _MAX_OPTIONS:
         raise CapabilityPlanningSurfaceError("oversized planning surface")
@@ -250,9 +268,7 @@ def find_structural_plan_candidates(
     ]
     explored = 0
     for _ in range(max_steps):
-        next_frontier: list[
-            tuple[tuple[PlanningOption, ...], frozenset[str]]
-        ] = []
+        next_frontier: list[tuple[tuple[PlanningOption, ...], frozenset[str]]] = []
         for route, known_types in frontier:
             used = {item.capability_ref for item in route}
             for option in surface.options:
@@ -270,7 +286,7 @@ def find_structural_plan_candidates(
                     raise CapabilityPlanningSurfaceError(
                         "bounded search exhausted; refine candidate catalog"
                     )
-                if goal in outputs:
+                if goal in outputs and _contributes_to_goal(next_route, goal):
                     refs = tuple(item.capability_ref for item in next_route)
                     finished[refs] = CandidatePlanSketch(
                         candidate_identity=surface.candidate_identity,
@@ -286,7 +302,10 @@ def find_structural_plan_candidates(
     return tuple(
         sorted(
             finished.values(),
-            key=lambda item: (len(item.capability_refs), item.operations,
-                              tuple(_ref_key(ref) for ref in item.capability_refs)),
+            key=lambda item: (
+                len(item.capability_refs),
+                item.operations,
+                tuple(_ref_key(ref) for ref in item.capability_refs),
+            ),
         )[:max_candidates]
     )
