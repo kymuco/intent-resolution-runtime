@@ -1,4 +1,5 @@
 """G7A.1: arbitrary new capabilities enter IRR planning through typed catalogs."""
+
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, replace
@@ -150,7 +151,8 @@ def test_new_plugin_changes_planning_without_changing_planner_code() -> None:
         ),
     )
     assert [hint.semantic_type for hint in updated_view.dependency_hints] == [
-        "artifact.metadata", "artifact.metadata"
+        "artifact.metadata",
+        "artifact.metadata",
     ]
     new_suggestions = find_structural_plan_candidates(
         updated_view,
@@ -190,9 +192,7 @@ def test_catalog_change_invalidates_previous_host_policy_evidence() -> None:
     evidence = visibility(first, first_operation.capability_ref)
     upgraded = candidate(first_operation, later_operation)
     with pytest.raises(CapabilityPlanningSurfaceError, match="stale or foreign"):
-        build_candidate_planning_surface(
-            candidate=upgraded, visibility=evidence
-        )
+        build_candidate_planning_surface(candidate=upgraded, visibility=evidence)
     with pytest.raises(CapabilityPlanningSurfaceError, match="foreign capability"):
         build_candidate_planning_surface(
             candidate=first,
@@ -206,21 +206,23 @@ def test_exact_semantics_and_all_inputs_are_required() -> None:
     catalog = candidate(first, second)
     view = build_candidate_planning_surface(
         candidate=catalog,
-        visibility=visibility(
-            catalog, first.capability_ref, second.capability_ref
-        ),
+        visibility=visibility(catalog, first.capability_ref, second.capability_ref),
     )
     assert not find_structural_plan_candidates(
-        view, desired_output_semantic_type="artifact.report",
+        view,
+        desired_output_semantic_type="artifact.report",
         available_input_semantic_types=("workspace.paths",),
     )
     assert not find_structural_plan_candidates(
-        view, desired_output_semantic_type="artifact.report",
+        view,
+        desired_output_semantic_type="artifact.report",
         available_input_semantic_types=(),
     )
     assert not find_structural_plan_candidates(
-        view, desired_output_semantic_type="artifact.report",
-        available_input_semantic_types=("workspace.path",), max_steps=1,
+        view,
+        desired_output_semantic_type="artifact.report",
+        available_input_semantic_types=("workspace.path",),
+        max_steps=1,
     )
 
 
@@ -232,7 +234,8 @@ def test_candidate_result_is_not_workplan_or_authorization() -> None:
         visibility=visibility(catalog, first.capability_ref),
     )
     sketch = find_structural_plan_candidates(
-        view, desired_output_semantic_type="artifact.metadata",
+        view,
+        desired_output_semantic_type="artifact.metadata",
         available_input_semantic_types=("workspace.path",),
     )[0]
     assert sketch.operations == ("plugin.read",)
@@ -252,7 +255,8 @@ def test_no_forged_or_unbounded_visibility() -> None:
         visibility(catalog, first.capability_ref, first.capability_ref)
     with pytest.raises(CapabilityPlanningSurfaceError, match="exact Host visibility"):
         build_candidate_planning_surface(
-            candidate=catalog, visibility=None  # type: ignore[arg-type]
+            candidate=catalog,
+            visibility=None,  # type: ignore[arg-type]
         )
     with pytest.raises(CapabilityPlanningSurfaceError, match="invalid bounded"):
         view = build_candidate_planning_surface(
