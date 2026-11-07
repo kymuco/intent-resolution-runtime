@@ -100,7 +100,9 @@ def _prepare(*, overridden=None):
 
 def test_real_workplan_enters_existing_m32_frontier_as_pending_only():
     request, context, resolved, bound, surface, attribution = _lineage()
-    pending = _prepare(overridden=(request, context, resolved, bound, surface, attribution))
+    pending = _prepare(
+        overridden=(request, context, resolved, bound, surface, attribution)
+    )
     assert type(pending.candidate) is CandidateWorkDisposition
     assert pending.candidate.work_plan == bound.work_plan
     assert pending.candidate.resolved_intent_identity == resolved.identity
@@ -144,9 +146,7 @@ def test_foreign_original_intent_and_context_rejected():
     )
     with pytest.raises(DynamicHumanWorkCandidateError, match="exact original"):
         _prepare(
-            overridden=(
-                fake_request, context, resolved, bound, surface, attribution
-            )
+            overridden=(fake_request, context, resolved, bound, surface, attribution)
         )
     fake_context = replace(
         context,
@@ -157,28 +157,22 @@ def test_foreign_original_intent_and_context_rejected():
     )
     with pytest.raises(DynamicHumanWorkCandidateError, match="exact original"):
         _prepare(
-            overridden=(
-                request, fake_context, resolved, bound, surface, attribution
-            )
+            overridden=(request, fake_context, resolved, bound, surface, attribution)
         )
 
 
 def test_foreign_m31_identity_rejected_without_admission():
     request, context, resolved, bound, surface, attribution = _lineage()
-    altered = replace(
-        resolved, semantics="A different resolved goal"
-    )
+    altered = replace(resolved, semantics="A different resolved goal")
     with pytest.raises(DynamicHumanWorkCandidateError, match="differs"):
-        _prepare(
-            overridden=(
-                request, context, altered, bound, surface, attribution
-            )
-        )
+        _prepare(overridden=(request, context, altered, bound, surface, attribution))
 
 
 def test_new_catalog_or_revoked_policy_invalidates_original_candidate():
     request, context, resolved, bound, surface, attribution = _lineage()
-    pending = _prepare(overridden=(request, context, resolved, bound, surface, attribution))
+    pending = _prepare(
+        overridden=(request, context, resolved, bound, surface, attribution)
+    )
     revised = build_candidate_planning_surface(
         candidate=candidate(
             *[option.descriptor for option in surface.options],
@@ -204,7 +198,12 @@ def test_foreign_proposer_and_empty_rationale_fail_closed():
     with pytest.raises(DynamicHumanWorkCandidateError, match="proposer"):
         _prepare(
             overridden=(
-                request, context, resolved, bound, surface, None,
+                request,
+                context,
+                resolved,
+                bound,
+                surface,
+                None,
             )
         )
     with pytest.raises(DynamicHumanWorkCandidateError, match="rationale"):
