@@ -36,7 +36,6 @@ from tests.test_g7a1_dynamic_candidate_planning import (
     visibility,
 )
 
-
 RESOLVED = RecordIdentity("sha256", "1" * 64)
 
 
