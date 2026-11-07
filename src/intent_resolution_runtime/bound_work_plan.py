@@ -13,7 +13,7 @@ import hashlib
 from dataclasses import dataclass
 
 from .binding import SymbolicReference
-from .candidate_planning_surface import CandidatePlanSketch, CandidatePlanningSurface
+from .candidate_planning_surface import CandidatePlanningSurface, CandidatePlanSketch
 from .identity import RecordIdentity
 from .intent import StableRef
 from .work import (
