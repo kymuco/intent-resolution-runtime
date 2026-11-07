@@ -18,7 +18,7 @@ from .bound_work_plan import (
 )
 from .candidate_planning_surface import CandidatePlanningSurface
 from .context import ContextEnvelope
-from .intent import IntentRequest, OriginKind, StableRef
+from .intent import IntentRequest, OriginKind
 from .resolution import ResolvedIntent
 from .work_disposition import (
     CandidateWorkDisposition,
