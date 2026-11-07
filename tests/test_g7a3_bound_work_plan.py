@@ -281,7 +281,10 @@ def test_external_symbolic_input_requires_same_intent_type_and_scope() -> None:
                 baseline,
                 steps=(replace(
                     one,
-                    input_bindings=(replace(source, semantic_type="workspace.paths"),),
+                    input_bindings=(HostExternalSymbolicBinding(
+                        contract_ref=first.input_contracts[0].input_ref,
+                        reference=replace(source, semantic_type="workspace.paths"),
+                    ),),
                 ), two),
             ),
         )
