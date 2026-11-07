@@ -15,7 +15,6 @@ from intent_resolution_runtime import (
     ResolutionAttribution,
     ResolvedIntent,
     SourceAttribution,
-    StableRef,
 )
 from intent_resolution_runtime.bound_work_plan import (
     materialize_unadmitted_work_plan,
